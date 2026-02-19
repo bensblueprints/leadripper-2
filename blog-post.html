@@ -1,0 +1,729 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title id="pageTitle">Blog Post | LeadRipper</title>
+  <meta name="description" id="pageDescription" content="Read expert insights on lead generation and business growth.">
+  <meta name="keywords" id="pageKeywords" content="lead generation, business growth">
+
+  <!-- Open Graph - dynamically populated -->
+  <meta property="og:title" id="ogTitle" content="Blog Post | LeadRipper">
+  <meta property="og:description" id="ogDescription" content="Read expert insights on lead generation.">
+  <meta property="og:type" content="article">
+  <meta property="og:url" id="ogUrl" content="https://leadripper.com/blog/">
+  <meta property="og:image" id="ogImage" content="https://leadripper.com/og-blog.png">
+
+  <!-- Twitter Card -->
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" id="twitterTitle" content="Blog Post | LeadRipper">
+  <meta name="twitter:description" id="twitterDescription" content="Read expert insights on lead generation.">
+  <meta name="twitter:image" id="twitterImage" content="https://leadripper.com/og-blog.png">
+
+  <link rel="canonical" id="canonical" href="https://leadripper.com/blog/">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@300;400;600;700&family=IBM+Plex+Serif:wght@400;600&family=Orbitron:wght@400;700&display=swap" rel="stylesheet">
+
+  <style>
+    :root {
+      --bg-void: #050508;
+      --bg-deep: #0a0a0f;
+      --bg-surface: #12121a;
+      --bg-elevated: #1a1a24;
+      --bg-hover: #22222e;
+      --border-subtle: rgba(255,255,255,0.06);
+      --border-medium: rgba(255,255,255,0.1);
+      --text-primary: #f0f0f5;
+      --text-secondary: #8888a0;
+      --text-muted: #55556a;
+      --accent-primary: #ff3e00;
+      --accent-secondary: #ff6b3e;
+      --accent-tertiary: #10b981;
+      --glow-primary: rgba(255, 62, 0, 0.15);
+    }
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'IBM Plex Sans', -apple-system, sans-serif;
+      background: var(--bg-void);
+      color: var(--text-primary);
+      line-height: 1.7;
+      min-height: 100vh;
+    }
+
+    /* Header */
+    header {
+      background: var(--bg-deep);
+      border-bottom: 1px solid var(--border-subtle);
+      padding: 1.5rem 2rem;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      backdrop-filter: blur(10px);
+    }
+
+    .header-content {
+      max-width: 1400px;
+      margin: 0 auto;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .logo {
+      font-family: 'Orbitron', sans-serif;
+      font-size: 1.5rem;
+      font-weight: 700;
+      color: var(--accent-primary);
+      text-decoration: none;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    nav {
+      display: flex;
+      gap: 2rem;
+    }
+
+    nav a {
+      color: var(--text-secondary);
+      text-decoration: none;
+      font-weight: 500;
+      transition: color 0.2s;
+    }
+
+    nav a:hover {
+      color: var(--accent-primary);
+    }
+
+    /* Article Container */
+    .article-container {
+      max-width: 900px;
+      margin: 0 auto;
+      padding: 3rem 2rem;
+    }
+
+    /* Breadcrumbs */
+    .breadcrumbs {
+      display: flex;
+      gap: 0.5rem;
+      align-items: center;
+      color: var(--text-muted);
+      font-size: 0.9rem;
+      margin-bottom: 2rem;
+    }
+
+    .breadcrumbs a {
+      color: var(--text-secondary);
+      text-decoration: none;
+      transition: color 0.2s;
+    }
+
+    .breadcrumbs a:hover {
+      color: var(--accent-primary);
+    }
+
+    /* Article Header */
+    .article-header {
+      margin-bottom: 3rem;
+    }
+
+    .article-category {
+      display: inline-block;
+      background: var(--accent-primary);
+      color: white;
+      padding: 0.4rem 1rem;
+      border-radius: 4px;
+      font-size: 0.85rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      margin-bottom: 1rem;
+    }
+
+    .article-title {
+      font-family: 'Orbitron', sans-serif;
+      font-size: 2.5rem;
+      font-weight: 700;
+      line-height: 1.2;
+      margin-bottom: 1rem;
+      color: var(--text-primary);
+    }
+
+    .article-excerpt {
+      font-size: 1.25rem;
+      color: var(--text-secondary);
+      line-height: 1.6;
+      margin-bottom: 1.5rem;
+    }
+
+    .article-meta {
+      display: flex;
+      gap: 2rem;
+      align-items: center;
+      padding-bottom: 2rem;
+      border-bottom: 1px solid var(--border-subtle);
+    }
+
+    .author-info {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+    }
+
+    .author-avatar {
+      width: 48px;
+      height: 48px;
+      border-radius: 50%;
+      background: var(--bg-elevated);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.5rem;
+    }
+
+    .author-details {
+      display: flex;
+      flex-direction: column;
+    }
+
+    .author-name {
+      font-weight: 600;
+      color: var(--text-primary);
+    }
+
+    .publish-date {
+      font-size: 0.9rem;
+      color: var(--text-muted);
+    }
+
+    .reading-time {
+      color: var(--text-muted);
+      font-size: 0.9rem;
+    }
+
+    /* Featured Image */
+    .featured-image {
+      width: 100%;
+      max-height: 500px;
+      object-fit: cover;
+      border-radius: 12px;
+      margin-bottom: 3rem;
+    }
+
+    /* Article Content */
+    .article-content {
+      font-family: 'IBM Plex Serif', Georgia, serif;
+      font-size: 1.125rem;
+      line-height: 1.8;
+      color: var(--text-primary);
+    }
+
+    .article-content h2 {
+      font-family: 'IBM Plex Sans', sans-serif;
+      font-size: 2rem;
+      font-weight: 700;
+      margin: 2.5rem 0 1rem;
+      color: var(--text-primary);
+      line-height: 1.3;
+    }
+
+    .article-content h3 {
+      font-family: 'IBM Plex Sans', sans-serif;
+      font-size: 1.5rem;
+      font-weight: 600;
+      margin: 2rem 0 1rem;
+      color: var(--text-primary);
+    }
+
+    .article-content p {
+      margin-bottom: 1.5rem;
+    }
+
+    .article-content ul,
+    .article-content ol {
+      margin: 1.5rem 0 1.5rem 2rem;
+    }
+
+    .article-content li {
+      margin-bottom: 0.75rem;
+    }
+
+    .article-content a {
+      color: var(--accent-primary);
+      text-decoration: none;
+      border-bottom: 1px solid var(--accent-primary);
+      transition: opacity 0.2s;
+    }
+
+    .article-content a:hover {
+      opacity: 0.8;
+    }
+
+    .article-content blockquote {
+      border-left: 4px solid var(--accent-primary);
+      padding: 1rem 1.5rem;
+      margin: 2rem 0;
+      background: var(--bg-surface);
+      border-radius: 0 8px 8px 0;
+      font-style: italic;
+    }
+
+    .article-content code {
+      background: var(--bg-surface);
+      padding: 0.2rem 0.5rem;
+      border-radius: 4px;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.9em;
+      color: var(--accent-secondary);
+    }
+
+    .article-content pre {
+      background: var(--bg-surface);
+      padding: 1.5rem;
+      border-radius: 8px;
+      overflow-x: auto;
+      margin: 2rem 0;
+    }
+
+    .article-content pre code {
+      background: none;
+      padding: 0;
+      color: var(--text-primary);
+    }
+
+    .article-content img {
+      max-width: 100%;
+      height: auto;
+      border-radius: 8px;
+      margin: 2rem 0;
+    }
+
+    /* Tags */
+    .article-tags {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+      margin: 3rem 0;
+      padding-top: 2rem;
+      border-top: 1px solid var(--border-subtle);
+    }
+
+    .tag {
+      background: var(--bg-surface);
+      border: 1px solid var(--border-medium);
+      color: var(--text-secondary);
+      padding: 0.4rem 0.8rem;
+      border-radius: 6px;
+      font-size: 0.85rem;
+      text-decoration: none;
+      transition: all 0.2s;
+    }
+
+    .tag:hover {
+      background: var(--accent-primary);
+      color: white;
+      border-color: var(--accent-primary);
+    }
+
+    /* Share Buttons */
+    .share-section {
+      background: var(--bg-surface);
+      border: 1px solid var(--border-subtle);
+      border-radius: 12px;
+      padding: 2rem;
+      margin: 3rem 0;
+      text-align: center;
+    }
+
+    .share-section h3 {
+      font-size: 1.25rem;
+      margin-bottom: 1rem;
+    }
+
+    .share-buttons {
+      display: flex;
+      gap: 1rem;
+      justify-content: center;
+      flex-wrap: wrap;
+    }
+
+    .share-btn {
+      background: var(--bg-elevated);
+      border: 1px solid var(--border-medium);
+      color: var(--text-primary);
+      padding: 0.75rem 1.5rem;
+      border-radius: 8px;
+      text-decoration: none;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      transition: all 0.2s;
+      cursor: pointer;
+    }
+
+    .share-btn:hover {
+      background: var(--accent-primary);
+      border-color: var(--accent-primary);
+      transform: translateY(-2px);
+    }
+
+    /* Related Posts */
+    .related-posts {
+      margin: 4rem 0;
+    }
+
+    .related-posts h3 {
+      font-size: 1.75rem;
+      font-weight: 700;
+      margin-bottom: 2rem;
+    }
+
+    .related-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 1.5rem;
+    }
+
+    .related-card {
+      background: var(--bg-surface);
+      border: 1px solid var(--border-subtle);
+      border-radius: 12px;
+      padding: 1.5rem;
+      text-decoration: none;
+      color: inherit;
+      transition: all 0.3s;
+    }
+
+    .related-card:hover {
+      transform: translateY(-4px);
+      border-color: var(--accent-primary);
+      box-shadow: 0 8px 24px var(--glow-primary);
+    }
+
+    .related-card h4 {
+      font-size: 1.125rem;
+      margin-bottom: 0.5rem;
+      color: var(--text-primary);
+    }
+
+    .related-card p {
+      font-size: 0.9rem;
+      color: var(--text-secondary);
+    }
+
+    /* CTA Section */
+    .cta-section {
+      background: linear-gradient(135deg, var(--accent-primary) 0%, var(--accent-secondary) 100%);
+      border-radius: 12px;
+      padding: 3rem;
+      text-align: center;
+      margin: 4rem 0;
+    }
+
+    .cta-section h3 {
+      font-size: 2rem;
+      margin-bottom: 1rem;
+      color: white;
+    }
+
+    .cta-section p {
+      font-size: 1.125rem;
+      margin-bottom: 2rem;
+      color: rgba(255,255,255,0.9);
+    }
+
+    .cta-btn {
+      background: white;
+      color: var(--accent-primary);
+      padding: 1rem 2rem;
+      border-radius: 8px;
+      text-decoration: none;
+      font-weight: 700;
+      font-size: 1.125rem;
+      display: inline-block;
+      transition: transform 0.2s;
+    }
+
+    .cta-btn:hover {
+      transform: scale(1.05);
+    }
+
+    /* Loading State */
+    .loading {
+      text-align: center;
+      padding: 4rem 2rem;
+    }
+
+    .loading-spinner {
+      display: inline-block;
+      width: 40px;
+      height: 40px;
+      border: 3px solid var(--border-medium);
+      border-top-color: var(--accent-primary);
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+    }
+
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+
+    /* Footer */
+    footer {
+      background: var(--bg-deep);
+      border-top: 1px solid var(--border-subtle);
+      padding: 2rem;
+      text-align: center;
+      color: var(--text-muted);
+      margin-top: 4rem;
+    }
+
+    /* Responsive */
+    @media (max-width: 768px) {
+      .article-title {
+        font-size: 2rem;
+      }
+
+      .article-excerpt {
+        font-size: 1.125rem;
+      }
+
+      .article-content {
+        font-size: 1rem;
+      }
+
+      .article-content h2 {
+        font-size: 1.5rem;
+      }
+
+      nav {
+        display: none;
+      }
+    }
+  </style>
+</head>
+<body>
+  <!-- Header -->
+  <header>
+    <div class="header-content">
+      <a href="/" class="logo">
+        <span>⚡</span> LeadRipper
+      </a>
+      <nav>
+        <a href="/">Home</a>
+        <a href="/blog">Blog</a>
+        <a href="/#features">Features</a>
+        <a href="/#pricing">Pricing</a>
+        <a href="/app">Get Started</a>
+      </nav>
+    </div>
+  </header>
+
+  <!-- Article Container -->
+  <div class="article-container" id="articleContainer">
+    <!-- Loading state -->
+    <div class="loading" id="loadingState">
+      <div class="loading-spinner"></div>
+      <p style="margin-top: 1rem;">Loading blog post...</p>
+    </div>
+  </div>
+
+  <!-- Footer -->
+  <footer>
+    <p>&copy; 2026 LeadRipper. All rights reserved. | <a href="/privacy" style="color: var(--accent-primary);">Privacy Policy</a> | <a href="/terms" style="color: var(--accent-primary);">Terms of Service</a></p>
+  </footer>
+
+  <script type="module">
+    import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm';
+
+    const supabase = createClient(
+      'https://afnikqescveajfempelv.supabase.co',
+      'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFmbmlrcWVzY3ZlYWpmZW1wZWx2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njk0MzAzNTAsImV4cCI6MjA4NTAwNjM1MH0.L-0DoA-gWpMHkW7BqQXtMxtjO3jG-Lp3bXKfVqywg3I'
+    );
+
+    // Get slug from URL
+    const pathParts = window.location.pathname.split('/');
+    const slug = pathParts[pathParts.length - 1] || pathParts[pathParts.length - 2];
+
+    async function loadBlogPost() {
+      try {
+        const { data: post, error } = await supabase
+          .from('blog_posts')
+          .select('*')
+          .eq('slug', slug)
+          .eq('status', 'published')
+          .single();
+
+        if (error) throw error;
+        if (!post) throw new Error('Blog post not found');
+
+        renderBlogPost(post);
+        updateSEO(post);
+        incrementViewCount(post.id);
+        loadRelatedPosts(post.category, post.id);
+      } catch (err) {
+        console.error('Error loading blog post:', err);
+        document.getElementById('articleContainer').innerHTML = `
+          <div class="loading">
+            <h2 style="margin-bottom: 1rem;">Post not found</h2>
+            <p style="color: var(--text-secondary); margin-bottom: 2rem;">${err.message}</p>
+            <a href="/blog" class="cta-btn">← Back to Blog</a>
+          </div>
+        `;
+      }
+    }
+
+    function renderBlogPost(post) {
+      const container = document.getElementById('articleContainer');
+      const publishDate = new Date(post.published_at).toLocaleDateString('en-US', {
+        month: 'long',
+        day: 'numeric',
+        year: 'numeric'
+      });
+
+      container.innerHTML = `
+        <div class="breadcrumbs">
+          <a href="/">Home</a>
+          <span>›</span>
+          <a href="/blog">Blog</a>
+          <span>›</span>
+          <span>${post.category}</span>
+        </div>
+
+        <article class="article-header">
+          <span class="article-category">${post.category}</span>
+          <h1 class="article-title">${post.title}</h1>
+          <p class="article-excerpt">${post.excerpt}</p>
+
+          <div class="article-meta">
+            <div class="author-info">
+              <div class="author-avatar">👤</div>
+              <div class="author-details">
+                <div class="author-name">${post.author_name || 'LeadRipper Team'}</div>
+                <div class="publish-date">${publishDate}</div>
+              </div>
+            </div>
+            ${post.reading_time_minutes ? `<div class="reading-time">📖 ${post.reading_time_minutes} min read</div>` : ''}
+          </div>
+        </article>
+
+        ${post.featured_image_url ? `<img src="${post.featured_image_url}" alt="${post.featured_image_alt || post.title}" class="featured-image">` : ''}
+
+        <div class="article-content">
+          ${post.content}
+        </div>
+
+        ${post.tags && post.tags.length > 0 ? `
+          <div class="article-tags">
+            ${post.tags.map(tag => `<a href="/blog?tag=${encodeURIComponent(tag)}" class="tag">#${tag}</a>`).join('')}
+          </div>
+        ` : ''}
+
+        <div class="share-section">
+          <h3>Share this article</h3>
+          <div class="share-buttons">
+            <a href="https://twitter.com/intent/tweet?text=${encodeURIComponent(post.title)}&url=${encodeURIComponent(window.location.href)}" target="_blank" class="share-btn">
+              🐦 Twitter
+            </a>
+            <a href="https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(window.location.href)}" target="_blank" class="share-btn">
+              💼 LinkedIn
+            </a>
+            <a href="https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(window.location.href)}" target="_blank" class="share-btn">
+              📘 Facebook
+            </a>
+            <button onclick="navigator.clipboard.writeText(window.location.href); alert('Link copied!')" class="share-btn">
+              📋 Copy Link
+            </button>
+          </div>
+        </div>
+
+        <div class="cta-section">
+          <h3>Ready to generate quality leads?</h3>
+          <p>Start scraping Google Maps and building your lead database with LeadRipper AI</p>
+          <a href="/app" class="cta-btn">Start Free Trial →</a>
+        </div>
+
+        <div class="related-posts" id="relatedPosts"></div>
+      `;
+    }
+
+    function updateSEO(post) {
+      document.getElementById('pageTitle').textContent = post.meta_title || post.title;
+      document.getElementById('pageDescription').content = post.meta_description || post.excerpt;
+      document.getElementById('pageKeywords').content = post.keywords ? post.keywords.join(', ') : '';
+
+      document.getElementById('ogTitle').content = post.og_title || post.title;
+      document.getElementById('ogDescription').content = post.og_description || post.excerpt;
+      document.getElementById('ogUrl').content = window.location.href;
+      if (post.og_image_url) {
+        document.getElementById('ogImage').content = post.og_image_url;
+      }
+
+      document.getElementById('twitterTitle').content = post.twitter_title || post.title;
+      document.getElementById('twitterDescription').content = post.twitter_description || post.excerpt;
+      if (post.twitter_image_url) {
+        document.getElementById('twitterImage').content = post.twitter_image_url;
+      }
+
+      document.getElementById('canonical').href = post.canonical_url || window.location.href;
+
+      // Add structured data
+      if (post.schema_json) {
+        const script = document.createElement('script');
+        script.type = 'application/ld+json';
+        script.textContent = JSON.stringify(post.schema_json);
+        document.head.appendChild(script);
+      }
+    }
+
+    async function incrementViewCount(postId) {
+      const { error } = await supabase
+        .from('blog_posts')
+        .update({ view_count: supabase.raw('view_count + 1') })
+        .eq('id', postId);
+
+      if (error) console.error('Error incrementing view count:', error);
+    }
+
+    async function loadRelatedPosts(category, currentPostId) {
+      try {
+        const { data: posts, error } = await supabase
+          .from('blog_posts')
+          .select('id, title, slug, excerpt, category')
+          .eq('status', 'published')
+          .eq('category', category)
+          .neq('id', currentPostId)
+          .order('published_at', { ascending: false })
+          .limit(3);
+
+        if (error || !posts || posts.length === 0) return;
+
+        const relatedContainer = document.getElementById('relatedPosts');
+        relatedContainer.innerHTML = `
+          <h3>Related Articles</h3>
+          <div class="related-grid">
+            ${posts.map(post => `
+              <a href="/blog/${post.slug}" class="related-card">
+                <h4>${post.title}</h4>
+                <p>${post.excerpt.substring(0, 100)}...</p>
+              </a>
+            `).join('')}
+          </div>
+        `;
+      } catch (err) {
+        console.error('Error loading related posts:', err);
+      }
+    }
+
+    // Load post on page load
+    loadBlogPost();
+  </script>
+</body>
+</html>

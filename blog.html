@@ -1,0 +1,560 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Blog - Lead Generation Insights & Strategies | LeadRipper</title>
+  <meta name="description" content="Expert insights on lead generation, Google Maps scraping, B2B marketing, and sales automation. Learn proven strategies to grow your business.">
+  <meta name="keywords" content="lead generation blog, google maps scraping, b2b marketing, sales automation, business leads">
+
+  <!-- Open Graph -->
+  <meta property="og:title" content="Blog - Lead Generation Insights | LeadRipper">
+  <meta property="og:description" content="Expert insights on lead generation, Google Maps scraping, B2B marketing, and sales automation.">
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="https://leadripper.com/blog">
+  <meta property="og:image" content="https://leadripper.com/og-blog.png">
+
+  <!-- Twitter Card -->
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="Blog - Lead Generation Insights | LeadRipper">
+  <meta name="twitter:description" content="Expert insights on lead generation, Google Maps scraping, B2B marketing, and sales automation.">
+  <meta name="twitter:image" content="https://leadripper.com/og-blog.png">
+
+  <link rel="canonical" href="https://leadripper.com/blog">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@300;400;600;700&family=Orbitron:wght@400;700&display=swap" rel="stylesheet">
+
+  <style>
+    :root {
+      --bg-void: #050508;
+      --bg-deep: #0a0a0f;
+      --bg-surface: #12121a;
+      --bg-elevated: #1a1a24;
+      --bg-hover: #22222e;
+      --border-subtle: rgba(255,255,255,0.06);
+      --border-medium: rgba(255,255,255,0.1);
+      --text-primary: #f0f0f5;
+      --text-secondary: #8888a0;
+      --text-muted: #55556a;
+      --accent-primary: #ff3e00;
+      --accent-secondary: #ff6b3e;
+      --accent-tertiary: #10b981;
+      --glow-primary: rgba(255, 62, 0, 0.15);
+    }
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'IBM Plex Sans', -apple-system, sans-serif;
+      background: var(--bg-void);
+      color: var(--text-primary);
+      line-height: 1.6;
+      min-height: 100vh;
+    }
+
+    /* Header */
+    header {
+      background: var(--bg-deep);
+      border-bottom: 1px solid var(--border-subtle);
+      padding: 1.5rem 2rem;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      backdrop-filter: blur(10px);
+    }
+
+    .header-content {
+      max-width: 1400px;
+      margin: 0 auto;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .logo {
+      font-family: 'Orbitron', sans-serif;
+      font-size: 1.5rem;
+      font-weight: 700;
+      color: var(--accent-primary);
+      text-decoration: none;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    nav {
+      display: flex;
+      gap: 2rem;
+    }
+
+    nav a {
+      color: var(--text-secondary);
+      text-decoration: none;
+      font-weight: 500;
+      transition: color 0.2s;
+    }
+
+    nav a:hover {
+      color: var(--accent-primary);
+    }
+
+    /* Hero Section */
+    .blog-hero {
+      background: linear-gradient(135deg, var(--bg-deep) 0%, var(--bg-surface) 100%);
+      padding: 4rem 2rem;
+      text-align: center;
+      border-bottom: 1px solid var(--border-subtle);
+    }
+
+    .blog-hero h1 {
+      font-family: 'Orbitron', sans-serif;
+      font-size: 3rem;
+      font-weight: 700;
+      margin-bottom: 1rem;
+      background: linear-gradient(135deg, #fff 0%, var(--accent-primary) 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    .blog-hero p {
+      font-size: 1.25rem;
+      color: var(--text-secondary);
+      max-width: 700px;
+      margin: 0 auto;
+    }
+
+    /* Filter Bar */
+    .filter-bar {
+      background: var(--bg-surface);
+      padding: 1.5rem 2rem;
+      border-bottom: 1px solid var(--border-subtle);
+      position: sticky;
+      top: 73px;
+      z-index: 99;
+      backdrop-filter: blur(10px);
+    }
+
+    .filter-content {
+      max-width: 1400px;
+      margin: 0 auto;
+      display: flex;
+      gap: 1rem;
+      flex-wrap: wrap;
+      align-items: center;
+    }
+
+    .filter-btn {
+      background: var(--bg-elevated);
+      border: 1px solid var(--border-medium);
+      color: var(--text-secondary);
+      padding: 0.5rem 1rem;
+      border-radius: 6px;
+      cursor: pointer;
+      transition: all 0.2s;
+      font-size: 0.9rem;
+      font-weight: 500;
+    }
+
+    .filter-btn:hover,
+    .filter-btn.active {
+      background: var(--accent-primary);
+      color: white;
+      border-color: var(--accent-primary);
+    }
+
+    .search-box {
+      flex: 1;
+      min-width: 250px;
+      position: relative;
+    }
+
+    .search-box input {
+      width: 100%;
+      background: var(--bg-elevated);
+      border: 1px solid var(--border-medium);
+      color: var(--text-primary);
+      padding: 0.5rem 1rem 0.5rem 2.5rem;
+      border-radius: 6px;
+      font-size: 0.9rem;
+    }
+
+    .search-box input:focus {
+      outline: none;
+      border-color: var(--accent-primary);
+    }
+
+    .search-icon {
+      position: absolute;
+      left: 0.75rem;
+      top: 50%;
+      transform: translateY(-50%);
+      color: var(--text-muted);
+      font-size: 1rem;
+    }
+
+    /* Blog Grid */
+    .blog-container {
+      max-width: 1400px;
+      margin: 0 auto;
+      padding: 3rem 2rem;
+    }
+
+    .blog-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+      gap: 2rem;
+      margin-top: 2rem;
+    }
+
+    /* Blog Card */
+    .blog-card {
+      background: var(--bg-surface);
+      border: 1px solid var(--border-subtle);
+      border-radius: 12px;
+      overflow: hidden;
+      transition: all 0.3s;
+      cursor: pointer;
+      text-decoration: none;
+      color: inherit;
+      display: block;
+    }
+
+    .blog-card:hover {
+      transform: translateY(-4px);
+      border-color: var(--accent-primary);
+      box-shadow: 0 8px 24px var(--glow-primary);
+    }
+
+    .blog-card-image {
+      width: 100%;
+      height: 200px;
+      background: linear-gradient(135deg, var(--bg-elevated) 0%, var(--bg-surface) 100%);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .blog-card-image img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+
+    .blog-card-image::after {
+      content: '📊';
+      font-size: 3rem;
+      opacity: 0.3;
+    }
+
+    .blog-card-content {
+      padding: 1.5rem;
+    }
+
+    .blog-card-category {
+      display: inline-block;
+      background: var(--accent-primary);
+      color: white;
+      padding: 0.25rem 0.75rem;
+      border-radius: 4px;
+      font-size: 0.75rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      margin-bottom: 0.75rem;
+    }
+
+    .blog-card-title {
+      font-size: 1.25rem;
+      font-weight: 700;
+      margin-bottom: 0.75rem;
+      color: var(--text-primary);
+      line-height: 1.3;
+    }
+
+    .blog-card-excerpt {
+      color: var(--text-secondary);
+      font-size: 0.95rem;
+      margin-bottom: 1rem;
+      line-height: 1.5;
+      display: -webkit-box;
+      -webkit-line-clamp: 3;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+    }
+
+    .blog-card-meta {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      color: var(--text-muted);
+      font-size: 0.85rem;
+    }
+
+    .blog-card-author {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .blog-card-date {
+      color: var(--text-muted);
+    }
+
+    /* Loading State */
+    .loading {
+      text-align: center;
+      padding: 4rem 2rem;
+      color: var(--text-secondary);
+    }
+
+    .loading-spinner {
+      display: inline-block;
+      width: 40px;
+      height: 40px;
+      border: 3px solid var(--border-medium);
+      border-top-color: var(--accent-primary);
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+    }
+
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+
+    /* Empty State */
+    .empty-state {
+      text-align: center;
+      padding: 4rem 2rem;
+      color: var(--text-secondary);
+    }
+
+    .empty-state h3 {
+      font-size: 1.5rem;
+      margin-bottom: 0.5rem;
+      color: var(--text-primary);
+    }
+
+    /* Responsive */
+    @media (max-width: 768px) {
+      .blog-hero h1 {
+        font-size: 2rem;
+      }
+
+      .blog-grid {
+        grid-template-columns: 1fr;
+        gap: 1.5rem;
+      }
+
+      nav {
+        display: none;
+      }
+
+      .filter-content {
+        flex-direction: column;
+      }
+
+      .search-box {
+        width: 100%;
+      }
+    }
+
+    /* Footer */
+    footer {
+      background: var(--bg-deep);
+      border-top: 1px solid var(--border-subtle);
+      padding: 2rem;
+      text-align: center;
+      color: var(--text-muted);
+      margin-top: 4rem;
+    }
+  </style>
+</head>
+<body>
+  <!-- Header -->
+  <header>
+    <div class="header-content">
+      <a href="/" class="logo">
+        <span>⚡</span> LeadRipper
+      </a>
+      <nav>
+        <a href="/">Home</a>
+        <a href="/blog">Blog</a>
+        <a href="/#features">Features</a>
+        <a href="/#pricing">Pricing</a>
+        <a href="/app">Get Started</a>
+      </nav>
+    </div>
+  </header>
+
+  <!-- Hero -->
+  <section class="blog-hero">
+    <h1>Lead Generation Insights</h1>
+    <p>Expert strategies, tutorials, and best practices for B2B lead generation, Google Maps scraping, and sales automation</p>
+  </section>
+
+  <!-- Filter Bar -->
+  <div class="filter-bar">
+    <div class="filter-content">
+      <button class="filter-btn active" data-category="all">All Posts</button>
+      <button class="filter-btn" data-category="lead-generation">Lead Generation</button>
+      <button class="filter-btn" data-category="google-maps-scraping">Google Maps</button>
+      <button class="filter-btn" data-category="sales-automation">Sales Automation</button>
+      <button class="filter-btn" data-category="b2b-marketing">B2B Marketing</button>
+      <button class="filter-btn" data-category="case-studies">Case Studies</button>
+
+      <div class="search-box">
+        <span class="search-icon">🔍</span>
+        <input type="text" id="searchInput" placeholder="Search blog posts...">
+      </div>
+    </div>
+  </div>
+
+  <!-- Blog Grid -->
+  <div class="blog-container">
+    <div id="blogGrid" class="blog-grid">
+      <!-- Loading state -->
+      <div class="loading" id="loadingState">
+        <div class="loading-spinner"></div>
+        <p style="margin-top: 1rem;">Loading blog posts...</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Footer -->
+  <footer>
+    <p>&copy; 2026 LeadRipper. All rights reserved. | <a href="/privacy" style="color: var(--accent-primary);">Privacy Policy</a> | <a href="/terms" style="color: var(--accent-primary);">Terms of Service</a></p>
+  </footer>
+
+  <script type="module">
+    import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm';
+
+    const supabase = createClient(
+      'https://afnikqescveajfempelv.supabase.co',
+      'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFmbmlrcWVzY3ZlYWpmZW1wZWx2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njk0MzAzNTAsImV4cCI6MjA4NTAwNjM1MH0.L-0DoA-gWpMHkW7BqQXtMxtjO3jG-Lp3bXKfVqywg3I'
+    );
+
+    let allPosts = [];
+    let filteredPosts = [];
+    let currentCategory = 'all';
+
+    async function loadBlogPosts() {
+      try {
+        const { data, error } = await supabase
+          .from('blog_posts')
+          .select('*')
+          .eq('status', 'published')
+          .order('published_at', { ascending: false });
+
+        if (error) throw error;
+
+        allPosts = data || [];
+        filteredPosts = allPosts;
+        renderBlogPosts();
+      } catch (err) {
+        console.error('Error loading blog posts:', err);
+        document.getElementById('loadingState').innerHTML = `
+          <h3>Unable to load blog posts</h3>
+          <p style="margin-top: 0.5rem;">${err.message}</p>
+          <p style="margin-top: 1rem; color: var(--text-muted);">Please check back later or contact support.</p>
+        `;
+      }
+    }
+
+    function renderBlogPosts() {
+      const grid = document.getElementById('blogGrid');
+
+      if (filteredPosts.length === 0) {
+        grid.innerHTML = `
+          <div class="empty-state">
+            <h3>No posts found</h3>
+            <p>Try adjusting your filters or search terms</p>
+          </div>
+        `;
+        return;
+      }
+
+      grid.innerHTML = filteredPosts.map(post => `
+        <a href="/blog/${post.slug}" class="blog-card">
+          <div class="blog-card-image">
+            ${post.featured_image_url ?
+              `<img src="${post.featured_image_url}" alt="${post.featured_image_alt || post.title}" loading="lazy">` :
+              ''}
+          </div>
+          <div class="blog-card-content">
+            <span class="blog-card-category">${post.category}</span>
+            <h2 class="blog-card-title">${post.title}</h2>
+            <p class="blog-card-excerpt">${post.excerpt}</p>
+            <div class="blog-card-meta">
+              <div class="blog-card-author">
+                <span>${post.author_name || 'LeadRipper Team'}</span>
+              </div>
+              <span class="blog-card-date">${new Date(post.published_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}</span>
+            </div>
+          </div>
+        </a>
+      `).join('');
+    }
+
+    // Filter functionality
+    document.querySelectorAll('.filter-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+
+        currentCategory = btn.dataset.category;
+        filterPosts();
+      });
+    });
+
+    // Search functionality
+    document.getElementById('searchInput').addEventListener('input', (e) => {
+      filterPosts();
+    });
+
+    function filterPosts() {
+      const searchTerm = document.getElementById('searchInput').value.toLowerCase();
+
+      filteredPosts = allPosts.filter(post => {
+        const matchesCategory = currentCategory === 'all' || post.category.toLowerCase().replace(/\s+/g, '-') === currentCategory;
+        const matchesSearch = !searchTerm ||
+          post.title.toLowerCase().includes(searchTerm) ||
+          post.excerpt.toLowerCase().includes(searchTerm) ||
+          (post.tags && post.tags.some(tag => tag.toLowerCase().includes(searchTerm)));
+
+        return matchesCategory && matchesSearch;
+      });
+
+      renderBlogPosts();
+    }
+
+    // Load posts on page load
+    loadBlogPosts();
+  </script>
+
+  <!-- Schema.org structured data -->
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "Blog",
+    "name": "LeadRipper Blog",
+    "description": "Expert insights on lead generation, Google Maps scraping, B2B marketing, and sales automation",
+    "url": "https://leadripper.com/blog",
+    "publisher": {
+      "@type": "Organization",
+      "name": "LeadRipper",
+      "logo": {
+        "@type": "ImageObject",
+        "url": "https://leadripper.com/logo.png"
+      }
+    }
+  }
+  </script>
+</body>
+</html>
