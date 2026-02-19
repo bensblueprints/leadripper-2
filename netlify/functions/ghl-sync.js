@@ -191,10 +191,17 @@ exports.handler = async (event, context) => {
       console.error('Failed to parse industry pipelines:', e, 'Raw value:', settings.ghl_industry_pipelines);
     }
 
-    // Get leads to sync
+    // Get leads to sync - ONLY VALIDATED EMAILS (no bounces)
     let leadsQuery = `
-      SELECT id, business_name, phone, email, address, city, state, industry, website
-      FROM lr_leads WHERE user_id = $1 AND ghl_synced = false
+      SELECT id, business_name, phone, email, address, city, state, industry, website,
+             email_verified, email_score, is_disposable
+      FROM lr_leads
+      WHERE user_id = $1
+        AND ghl_synced = false
+        AND email IS NOT NULL
+        AND email != ''
+        AND (email_verified = true OR email_score >= 60)
+        AND (is_disposable = false OR is_disposable IS NULL)
     `;
     const values = [decoded.userId];
 
@@ -208,6 +215,22 @@ exports.handler = async (event, context) => {
     const leadsResult = await pool.query(leadsQuery, values);
     const leads = leadsResult.rows;
 
+    // Count how many leads were filtered out due to validation issues
+    let filteredCountQuery = `
+      SELECT COUNT(*) as filtered_count
+      FROM lr_leads
+      WHERE user_id = $1
+        AND ghl_synced = false
+        AND (
+          email IS NULL
+          OR email = ''
+          OR (email_verified = false AND email_score < 60)
+          OR is_disposable = true
+        )
+    `;
+    const filteredCountResult = await pool.query(filteredCountQuery, [decoded.userId]);
+    const filteredCount = parseInt(filteredCountResult.rows[0]?.filtered_count || 0);
+
     if (leads.length === 0) {
       return {
         statusCode: 200,
@@ -215,7 +238,9 @@ exports.handler = async (event, context) => {
         body: JSON.stringify({
           success: true,
           message: 'No leads to sync',
-          syncedCount: 0
+          syncedCount: 0,
+          filteredCount,
+          filteredMessage: filteredCount > 0 ? `${filteredCount} leads have invalid/unverified emails and cannot be synced. Run email validation to fix.` : null
         })
       };
     }
@@ -288,6 +313,8 @@ exports.handler = async (event, context) => {
         message: `Synced ${syncedCount} leads to GoHighLevel`,
         syncedCount,
         errorCount,
+        filteredCount,
+        filteredMessage: filteredCount > 0 ? `${filteredCount} leads skipped due to invalid/unverified emails` : null,
         errors: errors.slice(0, 5) // Only return first 5 errors
       })
     };

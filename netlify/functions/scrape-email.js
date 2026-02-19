@@ -249,10 +249,50 @@ exports.handler = async (event, context) => {
     const scrapedEmail = await scrapeWebsiteForEmail(lead.website);
 
     if (scrapedEmail) {
-      // Update the lead with the found email
+      // Validate the email before saving
+      let validationResult = null;
+      try {
+        const validateResponse = await fetch(`${process.env.URL || 'https://leadripper-2.netlify.app'}/.netlify/functions/validate-email`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            email: scrapedEmail,
+            options: {
+              checkSMTP: false, // Quick validation to avoid slowdowns
+              skipDisposable: true,
+              skipRoleBased: false
+            }
+          })
+        });
+
+        if (validateResponse.ok) {
+          validationResult = await validateResponse.json();
+        }
+      } catch (validationError) {
+        console.error('Email validation failed:', validationError);
+        // Continue even if validation fails
+      }
+
+      // Determine if email is verified based on validation
+      const isVerified = validationResult ? validationResult.valid : false;
+      const emailScore = validationResult ? validationResult.score : 0;
+      const warnings = validationResult ? validationResult.warnings.join('; ') : '';
+      const isDisposable = validationResult ? validationResult.checks.disposable : false;
+      const isRoleBased = validationResult ? validationResult.checks.roleBased : false;
+
+      // Update the lead with the found email and validation results
       await pool.query(
-        `UPDATE lr_leads SET email = $1, updated_at = NOW() WHERE id = $2`,
-        [scrapedEmail, leadId]
+        `UPDATE lr_leads SET
+          email = $1,
+          email_verified = $2,
+          email_score = $3,
+          email_warnings = $4,
+          email_validation_date = NOW(),
+          is_disposable = $5,
+          is_role_based = $6,
+          updated_at = NOW()
+         WHERE id = $7`,
+        [scrapedEmail, isVerified, emailScore, warnings, isDisposable, isRoleBased, leadId]
       );
 
       return {
@@ -262,7 +302,13 @@ exports.handler = async (event, context) => {
           success: true,
           email: scrapedEmail,
           source: 'scraped',
-          message: 'Email found and saved'
+          verified: isVerified,
+          score: emailScore,
+          warnings: validationResult ? validationResult.warnings : [],
+          recommendation: validationResult ? validationResult.recommendation : 'Not validated',
+          message: isVerified
+            ? 'Email found, validated, and saved ✅'
+            : `Email found but validation failed (score: ${emailScore}/100) ⚠️`
         })
       };
     }

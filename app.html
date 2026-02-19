@@ -837,6 +837,10 @@
           <span class="nav-icon">📋</span>
           <span>My Leads</span>
         </div>
+        <div class="nav-item" data-section="email-validation">
+          <span class="nav-icon">✉️</span>
+          <span>Email Validation</span>
+        </div>
         <div class="nav-item" data-section="subscription">
           <span class="nav-icon">💳</span>
           <span>Subscription</span>
@@ -1112,6 +1116,110 @@
               <button class="btn" onclick="startCheckout('unlimited', 'monthly')">
                 Start $1 Trial
               </button>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Email Validation Section -->
+      <section id="email-validation-section" class="section">
+        <div class="header">
+          <h1 class="page-title display">EMAIL VALIDATION</h1>
+          <p class="page-subtitle mono">Protect your sending reputation by validating emails before syncing to GoHighLevel</p>
+        </div>
+
+        <!-- Email Health Stats -->
+        <div class="stats-grid">
+          <div class="stat-card">
+            <div class="stat-value mono" id="total-emails-stat">-</div>
+            <div class="stat-label">Total Emails</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-value mono" id="verified-emails-stat">-</div>
+            <div class="stat-label">Verified ✅</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-value mono" id="avg-score-stat">-</div>
+            <div class="stat-label">Avg Score</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-value mono" id="disposable-emails-stat">-</div>
+            <div class="stat-label">Disposable ⚠️</div>
+          </div>
+        </div>
+
+        <!-- Batch Validation Card -->
+        <div class="card">
+          <div class="card-header">
+            <h2 class="card-title display">Batch Validation</h2>
+            <p class="text-muted">Validate all your emails at once</p>
+          </div>
+          <div class="card-content">
+            <p class="mb-4">
+              Run a batch validation to check all your unvalidated emails. This process will:
+            </p>
+            <ul class="mb-4" style="margin-left: 1.5rem; color: var(--text-secondary);">
+              <li>Check email syntax (RFC 5322 compliant)</li>
+              <li>Verify domain MX records</li>
+              <li>Detect disposable email services</li>
+              <li>Identify role-based emails (info@, admin@, etc.)</li>
+              <li>Assign confidence scores (0-100)</li>
+            </ul>
+
+            <div class="form-group">
+              <label class="checkbox-label">
+                <input type="checkbox" id="smtp-check-enabled">
+                <span>Enable SMTP verification (slower but more accurate)</span>
+              </label>
+            </div>
+
+            <div id="batch-validation-status" class="alert" style="display: none; margin-bottom: 1rem;"></div>
+
+            <div class="form-actions">
+              <button class="btn" id="start-batch-validation-btn" onclick="startBatchValidation()">
+                <span id="batch-btn-text">🚀 Start Batch Validation</span>
+              </button>
+              <button class="btn-secondary" onclick="loadEmailValidationStats()">
+                ↻ Refresh Stats
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Validation Progress -->
+        <div class="card" id="validation-progress-card" style="display: none;">
+          <div class="card-header">
+            <h2 class="card-title display">Validation Progress</h2>
+          </div>
+          <div class="card-content">
+            <div class="progress-bar">
+              <div class="progress-fill" id="validation-progress-bar" style="width: 0%;"></div>
+            </div>
+            <div class="progress-stats" style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 1rem; margin-top: 1rem;">
+              <div>
+                <div class="mono" style="font-size: 1.5rem; color: var(--accent);" id="processed-count">0</div>
+                <div class="text-muted">Processed</div>
+              </div>
+              <div>
+                <div class="mono" style="font-size: 1.5rem; color: #10b981;" id="verified-count">0</div>
+                <div class="text-muted">Verified</div>
+              </div>
+              <div>
+                <div class="mono" style="font-size: 1.5rem; color: #ef4444;" id="failed-count">0</div>
+                <div class="text-muted">Failed</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Email Validation Results -->
+        <div class="card">
+          <div class="card-header">
+            <h2 class="card-title display">Recent Validations</h2>
+          </div>
+          <div id="validation-results-container">
+            <div class="text-muted text-center" style="padding: 2rem;">
+              No recent validations. Run batch validation to see results.
             </div>
           </div>
         </div>
@@ -1508,6 +1616,120 @@
         window.location.href = '/app';
       }, 1000);
     }
+
+    // ============================================
+    // EMAIL VALIDATION FUNCTIONS
+    // ============================================
+
+    // Load email validation stats
+    async function loadEmailValidationStats() {
+      try {
+        const response = await fetch(`${API_BASE}/batch-validate-emails`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${authToken}`
+          },
+          body: JSON.stringify({
+            statsOnly: true // Just get stats, don't validate
+          })
+        });
+
+        if (response.ok) {
+          const data = await response.json();
+
+          if (data.stats) {
+            document.getElementById('total-emails-stat').textContent = data.stats.totalLeads || 0;
+            document.getElementById('verified-emails-stat').textContent = data.stats.verifiedEmails || 0;
+            document.getElementById('avg-score-stat').textContent = data.stats.averageScore.toFixed(1) || '0.0';
+            document.getElementById('disposable-emails-stat').textContent = data.stats.disposableEmails || 0;
+          }
+        }
+      } catch (error) {
+        console.error('Failed to load email validation stats:', error);
+      }
+    }
+
+    // Start batch validation
+    async function startBatchValidation() {
+      const btn = document.getElementById('start-batch-validation-btn');
+      const btnText = document.getElementById('batch-btn-text');
+      const statusDiv = document.getElementById('batch-validation-status');
+      const progressCard = document.getElementById('validation-progress-card');
+      const smtpCheck = document.getElementById('smtp-check-enabled').checked;
+
+      // Disable button and show loading
+      btn.disabled = true;
+      btnText.innerHTML = '<span class="loading"></span> Validating...';
+      statusDiv.style.display = 'none';
+      progressCard.style.display = 'block';
+
+      // Reset progress
+      document.getElementById('processed-count').textContent = '0';
+      document.getElementById('verified-count').textContent = '0';
+      document.getElementById('failed-count').textContent = '0';
+      document.getElementById('validation-progress-bar').style.width = '0%';
+
+      try {
+        const response = await fetch(`${API_BASE}/batch-validate-emails`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${authToken}`
+          },
+          body: JSON.stringify({
+            limit: 100,
+            onlyUnvalidated: true,
+            checkSMTP: smtpCheck
+          })
+        });
+
+        const data = await response.json();
+
+        if (response.ok && data.success) {
+          // Update progress
+          document.getElementById('processed-count').textContent = data.batch.processed || 0;
+          document.getElementById('verified-count').textContent = data.batch.verified || 0;
+          document.getElementById('failed-count').textContent = data.batch.failed || 0;
+          document.getElementById('validation-progress-bar').style.width = '100%';
+
+          // Show success message
+          statusDiv.className = 'alert alert-success';
+          statusDiv.textContent = data.message || 'Batch validation completed successfully!';
+          statusDiv.style.display = 'block';
+
+          // Reload stats
+          await loadEmailValidationStats();
+
+          // If there are more emails to validate, offer to continue
+          if (data.batch.processed === 100) {
+            const continueValidation = confirm(
+              `Validated ${data.batch.processed} emails (${data.batch.verified} verified, ${data.batch.failed} failed). \n\nThere may be more emails to validate. Continue?`
+            );
+            if (continueValidation) {
+              setTimeout(() => startBatchValidation(), 1000);
+              return;
+            }
+          }
+        } else {
+          throw new Error(data.message || 'Validation failed');
+        }
+      } catch (error) {
+        console.error('Batch validation error:', error);
+        statusDiv.className = 'alert alert-error';
+        statusDiv.textContent = `Error: ${error.message}`;
+        statusDiv.style.display = 'block';
+      } finally {
+        // Re-enable button
+        btn.disabled = false;
+        btnText.textContent = '🚀 Start Batch Validation';
+      }
+    }
+
+    // Load email validation stats when section is opened
+    document.querySelector('[data-section="email-validation"]').addEventListener('click', () => {
+      loadEmailValidationStats();
+    });
   </script>
 </body>
 </html>
