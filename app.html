@@ -1318,6 +1318,27 @@
           <div id="queue-eta" style="color: var(--text-secondary); font-size: 0.9rem;"></div>
           <button class="btn-secondary" onclick="refreshQueueStatus()" style="margin-top: 1rem;">Refresh Status</button>
         </div>
+
+        <!-- Industry Pipeline Mapping -->
+        <div class="card">
+          <div class="card-header">
+            <h2 class="card-title display">Industry Pipeline Mapping</h2>
+          </div>
+          <p style="color: var(--text-secondary); margin-bottom: 1rem;">
+            Map each scraped industry to a specific GHL pipeline and stage. When leads from that industry sync, they'll go to the mapped pipeline.
+          </p>
+          <div id="industry-mappings-container">
+            <p style="color: var(--text-muted); font-style: italic;">No industries scraped yet. Scrape leads to see industries here.</p>
+          </div>
+          <div style="margin-top: 1rem; padding-top: 1rem; border-top: 1px solid var(--border);">
+            <label class="form-label">Add Custom Industry</label>
+            <div style="display: flex; gap: 0.5rem;">
+              <input type="text" class="form-input mono" id="custom-industry-input" placeholder="e.g., Roofing, HVAC, Plumbing" style="flex: 1;">
+              <button class="btn-secondary" onclick="addCustomIndustry()">Add Industry</button>
+            </div>
+          </div>
+          <button class="btn-secondary" onclick="saveIndustryMappings()" style="margin-top: 1rem;">Save Industry Mappings</button>
+        </div>
       </section>
     </main>
   </div>
@@ -1582,10 +1603,15 @@
         return;
       }
 
-      // Check if user has paid subscription
-      if (!currentUser || currentUser.plan === 'free') {
-        if (confirm('You need an active subscription to start scraping.\n\nStart your $1 trial now to access lead generation?')) {
-          showSection('subscription');
+      // Check if user has leads remaining
+      const leadsRemaining = (currentUser?.leadsLimit || 100) - (currentUser?.leadsUsed || 0);
+      if (leadsRemaining <= 0) {
+        if (currentUser?.plan === 'free') {
+          if (confirm(`You've used all ${currentUser.leadsLimit} free leads!\n\nUpgrade to continue scraping unlimited leads.`)) {
+            showSection('subscription');
+          }
+        } else {
+          alert('You have reached your lead limit for this billing period.');
         }
         return;
       }
@@ -1616,6 +1642,8 @@
 
         if (response.ok) {
           alert(`Scraping started! ${result.citiesToScrape || selectedCities.length} cities queued.`);
+          // Auto-add industry to pipeline mappings
+          autoAddIndustryToMappings(industry);
           selectedCities = [];
           renderCityTags();
           updateScrapeButton();
@@ -1927,7 +1955,180 @@
     // Load settings when settings section is opened
     document.querySelector('[data-section="settings"]').addEventListener('click', () => {
       loadGhlSettings();
+      loadIndustryMappings();
     });
+
+    // ============================================
+    // INDUSTRY PIPELINE MAPPING FUNCTIONS
+    // ============================================
+
+    let industryMappings = {}; // { industry: { pipelineId: '', stageId: '' } }
+    let knownPipelines = []; // Cache of GHL pipelines
+
+    async function loadIndustryMappings() {
+      try {
+        const response = await fetch(`${API_BASE}/get-settings`, {
+          headers: { 'Authorization': `Bearer ${authToken}` }
+        });
+        const data = await response.json();
+
+        if (data.ghl_industry_pipelines) {
+          industryMappings = data.ghl_industry_pipelines;
+          renderIndustryMappings();
+        }
+
+        // Also try to fetch pipelines from GHL if we have API key
+        if (data.hasGhlKey) {
+          fetchGhlPipelines();
+        }
+      } catch (error) {
+        console.error('Failed to load industry mappings:', error);
+      }
+    }
+
+    async function fetchGhlPipelines() {
+      try {
+        const response = await fetch(`${API_BASE}/get-ghl-pipelines`, {
+          headers: { 'Authorization': `Bearer ${authToken}` }
+        });
+        const data = await response.json();
+        if (data.success && data.pipelines) {
+          knownPipelines = data.pipelines;
+          // Re-render with pipeline data
+          renderIndustryMappings();
+        }
+      } catch (error) {
+        console.error('Failed to fetch GHL pipelines:', error);
+      }
+    }
+
+    function renderIndustryMappings() {
+      const container = document.getElementById('industry-mappings-container');
+      const industries = Object.keys(industryMappings);
+
+      if (industries.length === 0) {
+        container.innerHTML = '<p style="color: var(--text-muted); font-style: italic;">No industries scraped yet. Scrape leads to see industries here.</p>';
+        return;
+      }
+
+      let html = '<div style="display: flex; flex-direction: column; gap: 1rem;">';
+
+      for (const industry of industries) {
+        const mapping = industryMappings[industry] || {};
+        html += `
+          <div class="industry-mapping-row" style="background: var(--surface); padding: 1rem; border: 1px solid var(--border); border-radius: 4px;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.75rem;">
+              <span class="mono" style="color: var(--accent); font-weight: 600; text-transform: uppercase;">${escapeHtml(industry)}</span>
+              <button onclick="removeIndustryMapping('${escapeHtml(industry)}')" style="background: transparent; border: none; color: var(--red); cursor: pointer; font-size: 0.8rem;">Remove</button>
+            </div>
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.5rem;">
+              <div>
+                <label class="form-label" style="font-size: 0.7rem;">Pipeline ID</label>
+                <input type="text" class="form-input mono"
+                  value="${escapeHtml(mapping.pipelineId || '')}"
+                  placeholder="Pipeline ID"
+                  onchange="updateIndustryMapping('${escapeHtml(industry)}', 'pipelineId', this.value)"
+                  style="font-size: 0.85rem; padding: 0.5rem;">
+              </div>
+              <div>
+                <label class="form-label" style="font-size: 0.7rem;">Stage ID</label>
+                <input type="text" class="form-input mono"
+                  value="${escapeHtml(mapping.stageId || '')}"
+                  placeholder="Stage ID"
+                  onchange="updateIndustryMapping('${escapeHtml(industry)}', 'stageId', this.value)"
+                  style="font-size: 0.85rem; padding: 0.5rem;">
+              </div>
+            </div>
+          </div>
+        `;
+      }
+
+      html += '</div>';
+      container.innerHTML = html;
+    }
+
+    function escapeHtml(text) {
+      const div = document.createElement('div');
+      div.textContent = text;
+      return div.innerHTML;
+    }
+
+    function updateIndustryMapping(industry, field, value) {
+      if (!industryMappings[industry]) {
+        industryMappings[industry] = {};
+      }
+      industryMappings[industry][field] = value;
+    }
+
+    function addCustomIndustry() {
+      const input = document.getElementById('custom-industry-input');
+      const industry = input.value.trim().toLowerCase();
+
+      if (!industry) {
+        alert('Please enter an industry name');
+        return;
+      }
+
+      if (industryMappings[industry]) {
+        alert('This industry already exists in your mappings');
+        return;
+      }
+
+      industryMappings[industry] = { pipelineId: '', stageId: '' };
+      input.value = '';
+      renderIndustryMappings();
+    }
+
+    function removeIndustryMapping(industry) {
+      if (confirm(`Remove "${industry}" from pipeline mappings?`)) {
+        delete industryMappings[industry];
+        renderIndustryMappings();
+      }
+    }
+
+    async function saveIndustryMappings() {
+      try {
+        const response = await fetch(`${API_BASE}/update-settings`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${authToken}`
+          },
+          body: JSON.stringify({
+            ghlIndustryPipelines: industryMappings
+          })
+        });
+
+        const data = await response.json();
+        if (data.success) {
+          alert('Industry pipeline mappings saved!');
+        } else {
+          alert('Failed to save mappings: ' + (data.error || 'Unknown error'));
+        }
+      } catch (error) {
+        console.error('Save industry mappings error:', error);
+        alert('Failed to save mappings');
+      }
+    }
+
+    // Auto-add industry when scraping
+    function autoAddIndustryToMappings(industry) {
+      const normalizedIndustry = industry.trim().toLowerCase();
+      if (normalizedIndustry && !industryMappings[normalizedIndustry]) {
+        industryMappings[normalizedIndustry] = { pipelineId: '', stageId: '' };
+        // Save automatically
+        fetch(`${API_BASE}/update-settings`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${authToken}`
+          },
+          body: JSON.stringify({
+            ghlIndustryPipelines: industryMappings
+          })
+        }).catch(err => console.error('Auto-save industry failed:', err));
+      }
+    }
   </script>
 </body>
 </html>
