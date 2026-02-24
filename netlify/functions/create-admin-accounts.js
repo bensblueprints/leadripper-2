@@ -53,6 +53,7 @@ exports.handler = async (event, context) => {
         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, NOW())
         ON CONFLICT (email)
         DO UPDATE SET
+          password_hash = $2,
           plan = $5,
           leads_limit = $6,
           is_admin = $7,
