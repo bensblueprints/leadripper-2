@@ -1466,12 +1466,15 @@
 
     // Update Dashboard
     function updateDashboard() {
+      const isUnlimited = currentUser.leadsLimit === -1;
+      const limitDisplay = isUnlimited ? 'Unlimited' : (currentUser.leadsLimit || 50);
+
       document.getElementById('stat-plan').textContent = (currentUser.plan || 'free').toUpperCase();
       document.getElementById('stat-leads-used').textContent = currentUser.leadsUsed || 0;
-      document.getElementById('stat-leads-limit').textContent = `/ ${currentUser.leadsLimit || 50} limit`;
+      document.getElementById('stat-leads-limit').textContent = isUnlimited ? '/ Unlimited' : `/ ${limitDisplay} limit`;
 
       document.getElementById('sub-plan').textContent = (currentUser.plan || 'free').toUpperCase();
-      document.getElementById('sub-limit').textContent = currentUser.leadsLimit || 50;
+      document.getElementById('sub-limit').textContent = limitDisplay;
       document.getElementById('sub-used').textContent = currentUser.leadsUsed || 0;
     }
 
@@ -1603,9 +1606,12 @@
         return;
       }
 
-      // Check if user has leads remaining
-      const leadsRemaining = (currentUser?.leadsLimit || 100) - (currentUser?.leadsUsed || 0);
-      if (leadsRemaining <= 0) {
+      // Check if user has leads remaining (-1 means unlimited)
+      const leadsLimit = currentUser?.leadsLimit;
+      const leadsUsed = currentUser?.leadsUsed || 0;
+      const isUnlimited = leadsLimit === -1;
+      const leadsRemaining = isUnlimited ? Infinity : (leadsLimit || 100) - leadsUsed;
+      if (!isUnlimited && leadsRemaining <= 0) {
         if (currentUser?.plan === 'free') {
           if (confirm(`You've used all ${currentUser.leadsLimit} free leads!\n\nUpgrade to continue scraping unlimited leads.`)) {
             showSection('subscription');
