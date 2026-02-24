@@ -1,12 +1,11 @@
+const { Pool } = require('pg');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
-const { createClient } = require('@supabase/supabase-js');
 
-// Supabase client
-const supabase = createClient(
-  process.env.SUPABASE_URL || 'https://eyaitfxwjhsrizsbqcem.supabase.co',
-  process.env.SUPABASE_SERVICE_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImV5YWl0Znh3amhzcml6c2JxY2VtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzAzODk0NDYsImV4cCI6MjA4NTk2NTQ0Nn0.xihzbULV2wrhX3JvB8ZER98wUKPlwX2xzEBuYrJVDNA'
-);
+const pool = new Pool({
+  connectionString: process.env.DATABASE_URL,
+  ssl: { rejectUnauthorized: false }
+});
 
 const JWT_SECRET = process.env.JWT_SECRET || 'leadripper-secret-key-2026';
 
@@ -42,19 +41,13 @@ exports.handler = async (event, context) => {
       };
     }
 
-    // Check if user exists using Supabase
-    const { data: existingUsers, error: checkError } = await supabase
-      .from('lr_users')
-      .select('id')
-      .eq('email', email.toLowerCase())
-      .limit(1);
+    // Check if user exists using pg
+    const existingResult = await pool.query(
+      'SELECT id FROM lr_users WHERE email = $1',
+      [email.toLowerCase()]
+    );
 
-    if (checkError) {
-      console.error('Error checking existing user:', checkError);
-      throw new Error('Database query failed');
-    }
-
-    if (existingUsers && existingUsers.length > 0) {
+    if (existingResult.rows.length > 0) {
       return {
         statusCode: 400,
         headers,
@@ -65,35 +58,24 @@ exports.handler = async (event, context) => {
     // Hash password
     const passwordHash = await bcrypt.hash(password, 10);
 
-    // Create user with 100 free leads using Supabase
-    const { data: userData, error: insertError } = await supabase
-      .from('lr_users')
-      .insert([{
-        email: email.toLowerCase(),
-        password_hash: passwordHash,
-        name: name,
-        company: company,
-        plan: 'free',
-        leads_limit: 100,
-        leads_used: 0
-      }])
-      .select()
-      .single();
+    // Create user with 100 free leads
+    const userResult = await pool.query(
+      `INSERT INTO lr_users (email, password_hash, name, company, plan, leads_limit, leads_used, created_at)
+       VALUES ($1, $2, $3, $4, 'free', 100, 0, NOW())
+       RETURNING id, email, name, company, plan, leads_limit, leads_used, created_at`,
+      [email.toLowerCase(), passwordHash, name || '', company || '']
+    );
 
-    if (insertError) {
-      console.error('Error creating user:', insertError);
-      throw new Error('Failed to create user account');
-    }
-
-    const user = userData;
+    const user = userResult.rows[0];
 
     // Create user settings record
-    const { error: settingsError } = await supabase
-      .from('lr_user_settings')
-      .insert([{ user_id: user.id }]);
-
-    if (settingsError) {
-      console.error('Error creating user settings:', settingsError);
+    try {
+      await pool.query(
+        'INSERT INTO lr_user_settings (user_id, created_at) VALUES ($1, NOW()) ON CONFLICT (user_id) DO NOTHING',
+        [user.id]
+      );
+    } catch (settingsError) {
+      console.error('Error creating user settings:', settingsError.message);
     }
 
     // Generate JWT

@@ -33,7 +33,7 @@ exports.handler = async (event, context) => {
         email: 'ben@advancedmarketing.co',
         name: 'Ben',
         company: 'Advanced Marketing',
-        password: 'BenAdmin2026!',
+        password: 'JEsus777$$!!',
         plan: 'unlimited',
         leads_limit: -1,
         is_admin: true

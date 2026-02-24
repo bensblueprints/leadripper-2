@@ -1,12 +1,11 @@
+const { Pool } = require('pg');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
-const { createClient } = require('@supabase/supabase-js');
 
-// Supabase client
-const supabase = createClient(
-  process.env.SUPABASE_URL || 'https://eyaitfxwjhsrizsbqcem.supabase.co',
-  process.env.SUPABASE_SERVICE_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImV5YWl0Znh3amhzcml6c2JxY2VtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzAzODk0NDYsImV4cCI6MjA4NTk2NTQ0Nn0.xihzbULV2wrhX3JvB8ZER98wUKPlwX2xzEBuYrJVDNA'
-);
+const pool = new Pool({
+  connectionString: process.env.DATABASE_URL,
+  ssl: { rejectUnauthorized: false }
+});
 
 const JWT_SECRET = process.env.JWT_SECRET || 'leadripper-secret-key-2026';
 
@@ -41,19 +40,14 @@ exports.handler = async (event, context) => {
       };
     }
 
-    // Find user using Supabase
-    const { data: users, error: queryError } = await supabase
-      .from('lr_users')
-      .select('id, email, password_hash, name, company, plan, leads_limit, leads_used, trial_ends_at, is_admin, created_at')
-      .eq('email', email.toLowerCase())
-      .limit(1);
+    // Find user using pg (Neon database)
+    const result = await pool.query(
+      `SELECT id, email, password_hash, name, company, plan, leads_limit, leads_used, trial_ends_at, is_admin, created_at
+       FROM lr_users WHERE email = $1`,
+      [email.toLowerCase()]
+    );
 
-    if (queryError) {
-      console.error('Error finding user:', queryError);
-      throw new Error('Database query failed');
-    }
-
-    if (!users || users.length === 0) {
+    if (result.rows.length === 0) {
       return {
         statusCode: 401,
         headers,
@@ -61,7 +55,7 @@ exports.handler = async (event, context) => {
       };
     }
 
-    const user = users[0];
+    const user = result.rows[0];
 
     // Verify password
     const isValid = await bcrypt.compare(password, user.password_hash);
