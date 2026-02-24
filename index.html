@@ -694,6 +694,92 @@
         gap: 2rem;
       }
     }
+
+    /* Email Gate Styles */
+    .email-gate {
+      max-width: 500px;
+      margin: 0 auto 3rem;
+      text-align: center;
+    }
+
+    .email-gate h3 {
+      font-family: 'Syne', sans-serif;
+      font-size: 1.5rem;
+      margin-bottom: 0.5rem;
+      color: var(--accent-primary);
+    }
+
+    .email-gate p {
+      color: var(--text-secondary);
+      margin-bottom: 1.5rem;
+    }
+
+    .email-gate-form {
+      display: flex;
+      gap: 0.75rem;
+      flex-wrap: wrap;
+      justify-content: center;
+    }
+
+    .email-gate-form input {
+      flex: 1;
+      min-width: 250px;
+      padding: 1rem 1.25rem;
+      background: var(--bg-elevated);
+      border: 1px solid var(--border);
+      border-radius: 0.5rem;
+      color: var(--text-primary);
+      font-size: 1rem;
+      font-family: 'Manrope', sans-serif;
+      transition: all 0.3s ease;
+    }
+
+    .email-gate-form input:focus {
+      outline: none;
+      border-color: var(--accent-primary);
+      box-shadow: 0 0 0 3px rgba(255, 62, 0, 0.1);
+    }
+
+    .email-gate-form input::placeholder {
+      color: var(--text-muted);
+    }
+
+    .email-gate-form button {
+      padding: 1rem 2rem;
+      white-space: nowrap;
+    }
+
+    .email-gate-message {
+      margin-top: 1rem;
+      padding: 0.75rem 1rem;
+      border-radius: 0.5rem;
+      font-size: 0.9rem;
+      display: none;
+    }
+
+    .email-gate-message.success {
+      display: block;
+      background: rgba(16, 185, 129, 0.1);
+      color: var(--accent-success);
+      border: 1px solid rgba(16, 185, 129, 0.3);
+    }
+
+    .email-gate-message.error {
+      display: block;
+      background: rgba(239, 68, 68, 0.1);
+      color: #ef4444;
+      border: 1px solid rgba(239, 68, 68, 0.3);
+    }
+
+    .email-gate-note {
+      margin-top: 1rem;
+      font-size: 0.85rem;
+      color: var(--text-muted);
+    }
+
+    .hero-cta-secondary {
+      margin-top: 1.5rem;
+    }
   </style>
 </head>
 <body>
@@ -727,9 +813,20 @@
         Stop wasting hours on fake emails and manual imports. LeadRipper finds verified email addresses,
         syncs them directly to your GHL account, and triggers your automation workflows instantly.
       </p>
-      <div class="hero-cta">
-        <a href="/app" class="btn btn-primary">Start Free Trial - Get 100 Leads</a>
+      <!-- Email Gate -->
+      <div class="email-gate" id="email-gate">
+        <h3>Get 100 Free Leads</h3>
+        <p>Enter your email to unlock free lead scraping - no credit card required</p>
+        <form class="email-gate-form" id="email-gate-form">
+          <input type="email" id="gate-email" placeholder="your@email.com" required>
+          <button type="submit" class="btn btn-primary">Unlock Free Leads</button>
+        </form>
+        <div class="email-gate-message" id="gate-message"></div>
+        <p class="email-gate-note">We'll send you tips on maximizing your lead generation</p>
+      </div>
+      <div class="hero-cta-secondary">
         <a href="#how-it-works" class="btn btn-secondary">See How It Works</a>
+        <a href="/setup-guide" class="btn btn-secondary">GHL Setup Guide</a>
       </div>
     </div>
   </section>
@@ -957,5 +1054,60 @@
       <p>&copy; 2026 LeadRipper. All rights reserved.</p>
     </div>
   </footer>
+
+  <script>
+    // Email Gate Form Handler
+    document.getElementById('email-gate-form').addEventListener('submit', async function(e) {
+      e.preventDefault();
+
+      const emailInput = document.getElementById('gate-email');
+      const messageDiv = document.getElementById('gate-message');
+      const submitBtn = this.querySelector('button[type="submit"]');
+      const email = emailInput.value.trim();
+
+      // Disable button during submission
+      submitBtn.disabled = true;
+      submitBtn.textContent = 'Processing...';
+      messageDiv.className = 'email-gate-message';
+      messageDiv.style.display = 'none';
+
+      try {
+        const response = await fetch('/api/capture-marketing-email', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({ email, source: 'homepage_gate' })
+        });
+
+        const data = await response.json();
+
+        if (data.success) {
+          messageDiv.textContent = data.message || 'Success! Redirecting to your free leads...';
+          messageDiv.className = 'email-gate-message success';
+
+          // Store that email gate was completed
+          sessionStorage.setItem('email_gate_completed', 'true');
+          sessionStorage.setItem('gate_email', email);
+
+          // Redirect to app after short delay
+          setTimeout(() => {
+            window.location.href = '/app?source=email_gate';
+          }, 1500);
+        } else {
+          messageDiv.textContent = data.error || 'Something went wrong. Please try again.';
+          messageDiv.className = 'email-gate-message error';
+          submitBtn.disabled = false;
+          submitBtn.textContent = 'Unlock Free Leads';
+        }
+      } catch (error) {
+        console.error('Email gate error:', error);
+        messageDiv.textContent = 'Connection error. Please try again.';
+        messageDiv.className = 'email-gate-message error';
+        submitBtn.disabled = false;
+        submitBtn.textContent = 'Unlock Free Leads';
+      }
+    });
+  </script>
 </body>
 </html>

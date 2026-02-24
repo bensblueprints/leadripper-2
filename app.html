@@ -1256,13 +1256,67 @@
           </div>
           <div class="form-group">
             <label class="form-label">GHL API Key</label>
-            <input type="password" class="form-input mono" placeholder="Enter your GHL API key">
+            <input type="password" class="form-input mono" id="ghl-api-key" placeholder="Enter your GHL API key">
           </div>
           <div class="form-group">
             <label class="form-label">GHL Location ID</label>
-            <input type="text" class="form-input mono" placeholder="Enter your GHL location ID">
+            <input type="text" class="form-input mono" id="ghl-location-id" placeholder="Enter your GHL location ID">
           </div>
-          <button class="btn-secondary">Save Integration</button>
+          <button class="btn-secondary" onclick="saveGhlSettings()">Save Integration</button>
+          <a href="/setup-guide" target="_blank" class="btn-secondary" style="margin-left: 0.5rem; display: inline-block;">View Setup Guide</a>
+        </div>
+
+        <!-- Slow-Drip Sync Settings -->
+        <div class="card">
+          <div class="card-header">
+            <h2 class="card-title display">Slow-Drip GHL Sync</h2>
+          </div>
+          <p style="color: var(--text-secondary); margin-bottom: 1rem;">
+            Enable slow-drip to send leads to GHL one at a time, ensuring each lead triggers your automations properly.
+          </p>
+          <div class="form-group">
+            <label class="form-label" style="display: flex; align-items: center; gap: 0.5rem; cursor: pointer;">
+              <input type="checkbox" id="ghl-drip-enabled" style="width: auto; cursor: pointer;">
+              Enable Slow-Drip Sync
+            </label>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Drip Interval</label>
+            <select class="form-input mono" id="ghl-drip-interval">
+              <option value="5">1 lead every 5 minutes</option>
+              <option value="15" selected>1 lead every 15 minutes</option>
+              <option value="30">1 lead every 30 minutes</option>
+              <option value="60">1 lead every hour</option>
+            </select>
+          </div>
+          <button class="btn-secondary" onclick="saveDripSettings()">Save Drip Settings</button>
+        </div>
+
+        <!-- Drip Queue Status -->
+        <div class="card" id="drip-queue-card" style="display: none;">
+          <div class="card-header">
+            <h2 class="card-title display">Drip Queue Status</h2>
+          </div>
+          <div class="stats-grid" style="grid-template-columns: repeat(4, 1fr); gap: 1rem; margin-bottom: 1rem;">
+            <div class="stat-card">
+              <div class="stat-value mono" id="queue-pending">0</div>
+              <div class="stat-label">Pending</div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-value mono" id="queue-completed">0</div>
+              <div class="stat-label">Completed</div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-value mono" id="queue-failed">0</div>
+              <div class="stat-label">Failed</div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-value mono" id="queue-today">0</div>
+              <div class="stat-label">Today</div>
+            </div>
+          </div>
+          <div id="queue-eta" style="color: var(--text-secondary); font-size: 0.9rem;"></div>
+          <button class="btn-secondary" onclick="refreshQueueStatus()" style="margin-top: 1rem;">Refresh Status</button>
         </div>
       </section>
     </main>
@@ -1729,6 +1783,150 @@
     // Load email validation stats when section is opened
     document.querySelector('[data-section="email-validation"]').addEventListener('click', () => {
       loadEmailValidationStats();
+    });
+
+    // ==========================================
+    // GHL Drip Settings Functions
+    // ==========================================
+
+    async function loadGhlSettings() {
+      if (!authToken) return;
+
+      try {
+        const response = await fetch(`${API_BASE}/get-settings`, {
+          headers: { 'Authorization': `Bearer ${authToken}` }
+        });
+        const settings = await response.json();
+
+        // Populate GHL integration fields
+        if (settings.ghl_location_id) {
+          document.getElementById('ghl-location-id').value = settings.ghl_location_id;
+        }
+        if (settings.hasGhlKey) {
+          document.getElementById('ghl-api-key').placeholder = '••••••••••••••••';
+        }
+
+        // Populate drip settings
+        document.getElementById('ghl-drip-enabled').checked = settings.ghl_drip_enabled || false;
+        document.getElementById('ghl-drip-interval').value = settings.ghl_drip_interval || 15;
+
+        // Show queue card if drip is enabled
+        if (settings.ghl_drip_enabled) {
+          document.getElementById('drip-queue-card').style.display = 'block';
+          refreshQueueStatus();
+        }
+      } catch (error) {
+        console.error('Failed to load GHL settings:', error);
+      }
+    }
+
+    async function saveGhlSettings() {
+      const apiKey = document.getElementById('ghl-api-key').value;
+      const locationId = document.getElementById('ghl-location-id').value;
+
+      if (!locationId) {
+        alert('Please enter your GHL Location ID');
+        return;
+      }
+
+      try {
+        const payload = { ghlLocationId: locationId };
+        if (apiKey && apiKey !== '••••••••••••••••') {
+          payload.ghlApiKey = apiKey;
+        }
+
+        const response = await fetch(`${API_BASE}/update-settings`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${authToken}`
+          },
+          body: JSON.stringify(payload)
+        });
+
+        const data = await response.json();
+        if (data.success) {
+          alert('GHL integration settings saved!');
+          document.getElementById('ghl-api-key').value = '';
+          document.getElementById('ghl-api-key').placeholder = '••••••••••••••••';
+        } else {
+          alert('Failed to save settings: ' + (data.error || 'Unknown error'));
+        }
+      } catch (error) {
+        console.error('Save GHL settings error:', error);
+        alert('Failed to save settings');
+      }
+    }
+
+    async function saveDripSettings() {
+      const dripEnabled = document.getElementById('ghl-drip-enabled').checked;
+      const dripInterval = parseInt(document.getElementById('ghl-drip-interval').value);
+
+      try {
+        const response = await fetch(`${API_BASE}/update-settings`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${authToken}`
+          },
+          body: JSON.stringify({
+            ghlDripEnabled: dripEnabled,
+            ghlDripInterval: dripInterval
+          })
+        });
+
+        const data = await response.json();
+        if (data.success) {
+          alert('Drip sync settings saved!');
+
+          // Show/hide queue card based on drip enabled
+          const queueCard = document.getElementById('drip-queue-card');
+          if (dripEnabled) {
+            queueCard.style.display = 'block';
+            refreshQueueStatus();
+          } else {
+            queueCard.style.display = 'none';
+          }
+        } else {
+          alert('Failed to save settings: ' + (data.error || 'Unknown error'));
+        }
+      } catch (error) {
+        console.error('Save drip settings error:', error);
+        alert('Failed to save settings');
+      }
+    }
+
+    async function refreshQueueStatus() {
+      try {
+        const response = await fetch(`${API_BASE}/get-drip-queue-status`, {
+          headers: { 'Authorization': `Bearer ${authToken}` }
+        });
+        const data = await response.json();
+
+        if (data.success) {
+          document.getElementById('queue-pending').textContent = data.stats.pending;
+          document.getElementById('queue-completed').textContent = data.stats.completed;
+          document.getElementById('queue-failed').textContent = data.stats.failed;
+          document.getElementById('queue-today').textContent = data.stats.completedToday;
+
+          const etaDiv = document.getElementById('queue-eta');
+          if (data.stats.pending > 0 && data.estimatedCompletion) {
+            const eta = new Date(data.estimatedCompletion);
+            etaDiv.textContent = `Estimated completion: ${eta.toLocaleString()}`;
+          } else if (data.stats.pending === 0) {
+            etaDiv.textContent = 'Queue is empty - all leads synced!';
+          } else {
+            etaDiv.textContent = '';
+          }
+        }
+      } catch (error) {
+        console.error('Failed to load queue status:', error);
+      }
+    }
+
+    // Load settings when settings section is opened
+    document.querySelector('[data-section="settings"]').addEventListener('click', () => {
+      loadGhlSettings();
     });
   </script>
 </body>

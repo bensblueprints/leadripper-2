@@ -1,0 +1,885 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>GHL Setup Guide | LeadRipper</title>
+  <meta name="description" content="Complete guide to setting up GoHighLevel integration with LeadRipper. Learn how to create pipelines, automations, and maximize your lead conversion.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=Manrope:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg-primary: #0a0a0a;
+      --bg-secondary: #111111;
+      --bg-elevated: #1a1a1a;
+      --bg-card: #222222;
+      --text-primary: #f0f0f5;
+      --text-secondary: #8888a0;
+      --text-muted: #55556a;
+      --accent-primary: #ff3e00;
+      --accent-secondary: #ff6b35;
+      --accent-success: #10b981;
+      --accent-warning: #f59e0b;
+      --accent-info: #3b82f6;
+      --border: rgba(255, 255, 255, 0.06);
+    }
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    html {
+      scroll-behavior: smooth;
+    }
+
+    body {
+      font-family: 'Manrope', -apple-system, BlinkMacSystemFont, sans-serif;
+      background: var(--bg-primary);
+      color: var(--text-primary);
+      line-height: 1.7;
+    }
+
+    .container {
+      max-width: 900px;
+      margin: 0 auto;
+      padding: 0 2rem;
+    }
+
+    /* Header */
+    header {
+      padding: 1.5rem 0;
+      border-bottom: 1px solid var(--border);
+      background: rgba(10, 10, 10, 0.95);
+      backdrop-filter: blur(10px);
+      position: sticky;
+      top: 0;
+      z-index: 100;
+    }
+
+    .header-content {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .logo {
+      font-family: 'Syne', sans-serif;
+      font-size: 1.25rem;
+      font-weight: 800;
+      background: linear-gradient(135deg, var(--accent-primary), var(--accent-secondary));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      text-decoration: none;
+    }
+
+    .btn {
+      padding: 0.6rem 1.25rem;
+      border-radius: 0.5rem;
+      font-weight: 600;
+      text-decoration: none;
+      font-size: 0.9rem;
+      transition: all 0.3s ease;
+    }
+
+    .btn-primary {
+      background: linear-gradient(135deg, var(--accent-primary), var(--accent-secondary));
+      color: white;
+    }
+
+    .btn-primary:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 0 20px rgba(255, 62, 0, 0.4);
+    }
+
+    /* Hero */
+    .hero {
+      padding: 4rem 0 3rem;
+      text-align: center;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .hero h1 {
+      font-family: 'Syne', sans-serif;
+      font-size: 2.5rem;
+      font-weight: 700;
+      margin-bottom: 1rem;
+    }
+
+    .hero h1 span {
+      background: linear-gradient(135deg, var(--accent-primary), var(--accent-secondary));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .hero p {
+      color: var(--text-secondary);
+      font-size: 1.1rem;
+      max-width: 600px;
+      margin: 0 auto;
+    }
+
+    /* Table of Contents */
+    .toc {
+      background: var(--bg-secondary);
+      border-radius: 1rem;
+      padding: 2rem;
+      margin: 3rem 0;
+      border: 1px solid var(--border);
+    }
+
+    .toc h2 {
+      font-family: 'Syne', sans-serif;
+      font-size: 1.25rem;
+      margin-bottom: 1rem;
+      color: var(--accent-primary);
+    }
+
+    .toc ol {
+      list-style: none;
+      counter-reset: toc;
+    }
+
+    .toc li {
+      counter-increment: toc;
+      margin-bottom: 0.5rem;
+    }
+
+    .toc a {
+      color: var(--text-secondary);
+      text-decoration: none;
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      padding: 0.5rem 0;
+      transition: color 0.2s;
+    }
+
+    .toc a:hover {
+      color: var(--accent-primary);
+    }
+
+    .toc a::before {
+      content: counter(toc) ".";
+      color: var(--accent-primary);
+      font-weight: 600;
+      min-width: 1.5rem;
+    }
+
+    /* Content Sections */
+    .section {
+      padding: 3rem 0;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .section:last-child {
+      border-bottom: none;
+    }
+
+    .section h2 {
+      font-family: 'Syne', sans-serif;
+      font-size: 1.75rem;
+      font-weight: 700;
+      margin-bottom: 1.5rem;
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+    }
+
+    .section h2 .number {
+      background: linear-gradient(135deg, var(--accent-primary), var(--accent-secondary));
+      color: white;
+      width: 2.5rem;
+      height: 2.5rem;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.25rem;
+    }
+
+    .section h3 {
+      font-family: 'Syne', sans-serif;
+      font-size: 1.25rem;
+      font-weight: 600;
+      margin: 2rem 0 1rem;
+      color: var(--accent-secondary);
+    }
+
+    .section p {
+      color: var(--text-secondary);
+      margin-bottom: 1rem;
+    }
+
+    /* Steps */
+    .steps {
+      background: var(--bg-secondary);
+      border-radius: 1rem;
+      padding: 1.5rem;
+      margin: 1.5rem 0;
+      border: 1px solid var(--border);
+    }
+
+    .step {
+      display: flex;
+      gap: 1rem;
+      margin-bottom: 1.5rem;
+    }
+
+    .step:last-child {
+      margin-bottom: 0;
+    }
+
+    .step-number {
+      flex-shrink: 0;
+      width: 2rem;
+      height: 2rem;
+      background: var(--bg-elevated);
+      border: 1px solid var(--accent-primary);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 700;
+      font-size: 0.9rem;
+      color: var(--accent-primary);
+    }
+
+    .step-content h4 {
+      font-weight: 600;
+      margin-bottom: 0.25rem;
+    }
+
+    .step-content p {
+      color: var(--text-secondary);
+      font-size: 0.95rem;
+      margin-bottom: 0;
+    }
+
+    /* Code Blocks */
+    .code-block {
+      background: var(--bg-elevated);
+      border-radius: 0.5rem;
+      padding: 1rem 1.25rem;
+      margin: 1rem 0;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.9rem;
+      overflow-x: auto;
+      border: 1px solid var(--border);
+    }
+
+    /* Tips/Warnings */
+    .tip, .warning, .info {
+      border-radius: 0.5rem;
+      padding: 1rem 1.25rem;
+      margin: 1.5rem 0;
+      display: flex;
+      gap: 1rem;
+      align-items: flex-start;
+    }
+
+    .tip {
+      background: rgba(16, 185, 129, 0.1);
+      border: 1px solid rgba(16, 185, 129, 0.3);
+    }
+
+    .tip .icon { color: var(--accent-success); }
+
+    .warning {
+      background: rgba(245, 158, 11, 0.1);
+      border: 1px solid rgba(245, 158, 11, 0.3);
+    }
+
+    .warning .icon { color: var(--accent-warning); }
+
+    .info {
+      background: rgba(59, 130, 246, 0.1);
+      border: 1px solid rgba(59, 130, 246, 0.3);
+    }
+
+    .info .icon { color: var(--accent-info); }
+
+    /* Pipeline Diagram */
+    .pipeline-diagram {
+      background: var(--bg-secondary);
+      border-radius: 1rem;
+      padding: 2rem;
+      margin: 1.5rem 0;
+      border: 1px solid var(--border);
+      overflow-x: auto;
+    }
+
+    .pipeline-stages {
+      display: flex;
+      gap: 0.5rem;
+      align-items: center;
+      min-width: max-content;
+    }
+
+    .pipeline-stage {
+      background: var(--bg-elevated);
+      border: 1px solid var(--border);
+      border-radius: 0.5rem;
+      padding: 1rem 1.5rem;
+      text-align: center;
+      min-width: 120px;
+    }
+
+    .pipeline-stage.active {
+      border-color: var(--accent-primary);
+      box-shadow: 0 0 15px rgba(255, 62, 0, 0.2);
+    }
+
+    .pipeline-stage h4 {
+      font-size: 0.9rem;
+      font-weight: 600;
+      margin-bottom: 0.25rem;
+    }
+
+    .pipeline-stage p {
+      font-size: 0.75rem;
+      color: var(--text-muted);
+      margin: 0;
+    }
+
+    .pipeline-arrow {
+      color: var(--accent-primary);
+      font-size: 1.5rem;
+    }
+
+    /* Automation Cards */
+    .automation-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+      gap: 1rem;
+      margin: 1.5rem 0;
+    }
+
+    .automation-card {
+      background: var(--bg-secondary);
+      border: 1px solid var(--border);
+      border-radius: 0.75rem;
+      padding: 1.5rem;
+      transition: all 0.3s ease;
+    }
+
+    .automation-card:hover {
+      border-color: var(--accent-primary);
+      transform: translateY(-2px);
+    }
+
+    .automation-card .icon {
+      font-size: 2rem;
+      margin-bottom: 1rem;
+    }
+
+    .automation-card h4 {
+      font-weight: 600;
+      margin-bottom: 0.5rem;
+    }
+
+    .automation-card p {
+      color: var(--text-secondary);
+      font-size: 0.9rem;
+      margin: 0;
+    }
+
+    /* Footer */
+    footer {
+      padding: 3rem 0;
+      text-align: center;
+      color: var(--text-muted);
+      font-size: 0.9rem;
+    }
+
+    footer a {
+      color: var(--accent-primary);
+      text-decoration: none;
+    }
+
+    /* Responsive */
+    @media (max-width: 768px) {
+      .hero h1 {
+        font-size: 2rem;
+      }
+
+      .pipeline-stages {
+        flex-direction: column;
+      }
+
+      .pipeline-arrow {
+        transform: rotate(90deg);
+      }
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="container">
+      <div class="header-content">
+        <a href="/" class="logo">LeadRipper</a>
+        <a href="/app" class="btn btn-primary">Go to App</a>
+      </div>
+    </div>
+  </header>
+
+  <main class="container">
+    <!-- Hero -->
+    <section class="hero">
+      <h1><span>GoHighLevel</span> Setup Guide</h1>
+      <p>Everything you need to connect LeadRipper to GHL and set up automated workflows that convert leads into customers.</p>
+    </section>
+
+    <!-- Table of Contents -->
+    <nav class="toc">
+      <h2>In This Guide</h2>
+      <ol>
+        <li><a href="#intro">Introduction to the Integration</a></li>
+        <li><a href="#api-key">Getting Your GHL API Key</a></li>
+        <li><a href="#location-id">Finding Your Location ID</a></li>
+        <li><a href="#pipelines">Creating Pipelines in GHL</a></li>
+        <li><a href="#stages">Setting Up Pipeline Stages</a></li>
+        <li><a href="#automations">Creating Trigger Automations</a></li>
+        <li><a href="#connect">Connecting LeadRipper</a></li>
+        <li><a href="#slow-drip">Understanding Slow-Drip Sync</a></li>
+        <li><a href="#troubleshooting">Troubleshooting</a></li>
+      </ol>
+    </nav>
+
+    <!-- Section 1: Introduction -->
+    <section id="intro" class="section">
+      <h2><span class="number">1</span> Introduction</h2>
+      <p>
+        LeadRipper integrates directly with GoHighLevel (GHL) to automatically sync your scraped leads as contacts
+        and opportunities. When a lead enters your GHL pipeline, your automations kick in immediately - sending emails,
+        SMS, voicemails, and tasks without any manual work.
+      </p>
+
+      <div class="info">
+        <span class="icon">ℹ️</span>
+        <div>
+          <strong>How it works:</strong> LeadRipper creates a Contact in GHL with all the business info, then adds that
+          contact as an Opportunity in your specified pipeline. When the opportunity enters a stage, any automations
+          attached to that stage trigger automatically.
+        </div>
+      </div>
+    </section>
+
+    <!-- Section 2: API Key -->
+    <section id="api-key" class="section">
+      <h2><span class="number">2</span> Getting Your GHL API Key</h2>
+      <p>You'll need a GHL API key to authorize LeadRipper to create contacts and opportunities in your account.</p>
+
+      <div class="steps">
+        <div class="step">
+          <div class="step-number">1</div>
+          <div class="step-content">
+            <h4>Log into GoHighLevel</h4>
+            <p>Go to <strong>app.gohighlevel.com</strong> and sign into your account.</p>
+          </div>
+        </div>
+        <div class="step">
+          <div class="step-number">2</div>
+          <div class="step-content">
+            <h4>Navigate to Settings</h4>
+            <p>Click <strong>Settings</strong> in the left sidebar (gear icon).</p>
+          </div>
+        </div>
+        <div class="step">
+          <div class="step-number">3</div>
+          <div class="step-content">
+            <h4>Go to Business Profile</h4>
+            <p>Under the Settings menu, click <strong>Business Profile</strong>.</p>
+          </div>
+        </div>
+        <div class="step">
+          <div class="step-number">4</div>
+          <div class="step-content">
+            <h4>Find API Key Section</h4>
+            <p>Scroll down to find the <strong>API Key</strong> section. Click <strong>Generate</strong> if you don't have one.</p>
+          </div>
+        </div>
+        <div class="step">
+          <div class="step-number">5</div>
+          <div class="step-content">
+            <h4>Copy Your API Key</h4>
+            <p>Copy the API key and paste it into LeadRipper's settings. Keep this key secure!</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="warning">
+        <span class="icon">⚠️</span>
+        <div>
+          <strong>Security Note:</strong> Never share your API key publicly. LeadRipper stores your key securely
+          and only uses it to create contacts and opportunities in your GHL account.
+        </div>
+      </div>
+    </section>
+
+    <!-- Section 3: Location ID -->
+    <section id="location-id" class="section">
+      <h2><span class="number">3</span> Finding Your Location ID</h2>
+      <p>The Location ID identifies which GHL sub-account to sync leads to.</p>
+
+      <div class="steps">
+        <div class="step">
+          <div class="step-number">1</div>
+          <div class="step-content">
+            <h4>Open Your GHL Dashboard</h4>
+            <p>Make sure you're in the correct sub-account (location) you want to sync leads to.</p>
+          </div>
+        </div>
+        <div class="step">
+          <div class="step-number">2</div>
+          <div class="step-content">
+            <h4>Look at the URL</h4>
+            <p>Your Location ID is in the URL after <code>/location/</code>. It looks like: <code>abc123XYZ</code></p>
+          </div>
+        </div>
+        <div class="step">
+          <div class="step-number">3</div>
+          <div class="step-content">
+            <h4>Alternative: Settings > Business Info</h4>
+            <p>Go to Settings > Business Info. The Location ID may be displayed there or in Company ID field.</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="code-block">
+        Example URL: https://app.gohighlevel.com/location/<strong style="color: var(--accent-primary);">fl5rL3eZQWBq2GYlDPkl</strong>/dashboard
+      </div>
+    </section>
+
+    <!-- Section 4: Pipelines -->
+    <section id="pipelines" class="section">
+      <h2><span class="number">4</span> Creating Pipelines in GHL</h2>
+      <p>
+        A pipeline represents your sales process. Each stage in the pipeline represents a step in converting
+        a lead into a customer. LeadRipper will add leads to the first stage of your pipeline.
+      </p>
+
+      <div class="steps">
+        <div class="step">
+          <div class="step-number">1</div>
+          <div class="step-content">
+            <h4>Go to Opportunities</h4>
+            <p>In GHL, click <strong>Opportunities</strong> in the left sidebar.</p>
+          </div>
+        </div>
+        <div class="step">
+          <div class="step-number">2</div>
+          <div class="step-content">
+            <h4>Click Pipelines</h4>
+            <p>At the top, click the <strong>Pipelines</strong> tab to see your existing pipelines.</p>
+          </div>
+        </div>
+        <div class="step">
+          <div class="step-number">3</div>
+          <div class="step-content">
+            <h4>Create New Pipeline</h4>
+            <p>Click <strong>+ Add Pipeline</strong>. Name it something like "LeadRipper Leads" or by industry (e.g., "Roofing Leads").</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="tip">
+        <span class="icon">💡</span>
+        <div>
+          <strong>Pro Tip:</strong> Create separate pipelines for different industries. This allows you to set up
+          industry-specific automations (e.g., different email templates for roofers vs. HVAC companies).
+        </div>
+      </div>
+    </section>
+
+    <!-- Section 5: Stages -->
+    <section id="stages" class="section">
+      <h2><span class="number">5</span> Setting Up Pipeline Stages</h2>
+      <p>
+        Stages represent where a lead is in your sales process. Here's a recommended stage setup:
+      </p>
+
+      <div class="pipeline-diagram">
+        <div class="pipeline-stages">
+          <div class="pipeline-stage active">
+            <h4>New Lead</h4>
+            <p>Just arrived</p>
+          </div>
+          <span class="pipeline-arrow">→</span>
+          <div class="pipeline-stage">
+            <h4>Contacted</h4>
+            <p>Initial outreach</p>
+          </div>
+          <span class="pipeline-arrow">→</span>
+          <div class="pipeline-stage">
+            <h4>Qualified</h4>
+            <p>Interested & verified</p>
+          </div>
+          <span class="pipeline-arrow">→</span>
+          <div class="pipeline-stage">
+            <h4>Proposal Sent</h4>
+            <p>Quote delivered</p>
+          </div>
+          <span class="pipeline-arrow">→</span>
+          <div class="pipeline-stage">
+            <h4>Won / Lost</h4>
+            <p>Final outcome</p>
+          </div>
+        </div>
+      </div>
+
+      <h3>Creating Stages</h3>
+      <div class="steps">
+        <div class="step">
+          <div class="step-number">1</div>
+          <div class="step-content">
+            <h4>Edit Your Pipeline</h4>
+            <p>Click on your pipeline, then click <strong>Edit Pipeline</strong> or the settings icon.</p>
+          </div>
+        </div>
+        <div class="step">
+          <div class="step-number">2</div>
+          <div class="step-content">
+            <h4>Add Stages</h4>
+            <p>Click <strong>+ Add Stage</strong> for each stage. Name them clearly (New Lead, Contacted, etc.).</p>
+          </div>
+        </div>
+        <div class="step">
+          <div class="step-number">3</div>
+          <div class="step-content">
+            <h4>Order Matters</h4>
+            <p>The first stage is where LeadRipper will place new leads. Make sure it's your "New Lead" or "Fresh Lead" stage.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Section 6: Automations -->
+    <section id="automations" class="section">
+      <h2><span class="number">6</span> Creating Trigger Automations</h2>
+      <p>
+        This is where the magic happens. Automations trigger when a lead enters a stage, allowing you to
+        automatically send emails, SMS, voicemails, and more.
+      </p>
+
+      <div class="automation-grid">
+        <div class="automation-card">
+          <div class="icon">📧</div>
+          <h4>Email Sequences</h4>
+          <p>Send a welcome email, then follow-up emails over the next few days.</p>
+        </div>
+        <div class="automation-card">
+          <div class="icon">📱</div>
+          <h4>SMS Messages</h4>
+          <p>Instant text message to the business letting them know you can help.</p>
+        </div>
+        <div class="automation-card">
+          <div class="icon">📞</div>
+          <h4>Voice Drops</h4>
+          <p>Ringless voicemail that goes directly to their voicemail box.</p>
+        </div>
+        <div class="automation-card">
+          <div class="icon">✅</div>
+          <h4>Tasks</h4>
+          <p>Create a task for your sales team to call the lead.</p>
+        </div>
+      </div>
+
+      <h3>Setting Up a "New Lead" Automation</h3>
+      <div class="steps">
+        <div class="step">
+          <div class="step-number">1</div>
+          <div class="step-content">
+            <h4>Go to Automations</h4>
+            <p>In GHL, click <strong>Automations</strong> (or <strong>Workflows</strong>) in the sidebar.</p>
+          </div>
+        </div>
+        <div class="step">
+          <div class="step-number">2</div>
+          <div class="step-content">
+            <h4>Create New Workflow</h4>
+            <p>Click <strong>+ Create Workflow</strong>. Choose "Start from Scratch".</p>
+          </div>
+        </div>
+        <div class="step">
+          <div class="step-number">3</div>
+          <div class="step-content">
+            <h4>Add Trigger</h4>
+            <p>Click <strong>Add New Trigger</strong>. Select <strong>Pipeline Stage Changed</strong>.</p>
+          </div>
+        </div>
+        <div class="step">
+          <div class="step-number">4</div>
+          <div class="step-content">
+            <h4>Configure Trigger</h4>
+            <p>Select your pipeline and the "New Lead" stage. This fires when a lead enters that stage.</p>
+          </div>
+        </div>
+        <div class="step">
+          <div class="step-number">5</div>
+          <div class="step-content">
+            <h4>Add Actions</h4>
+            <p>Add your actions: Send Email, Send SMS, Create Task, etc. Chain them together with delays.</p>
+          </div>
+        </div>
+        <div class="step">
+          <div class="step-number">6</div>
+          <div class="step-content">
+            <h4>Save & Publish</h4>
+            <p>Name your workflow, click <strong>Save</strong>, then toggle it to <strong>Published</strong>.</p>
+          </div>
+        </div>
+      </div>
+
+      <h3>Example Email Template</h3>
+      <div class="code-block" style="white-space: pre-wrap;">Subject: Quick question about {{contact.company_name}}
+
+Hi {{contact.first_name}},
+
+I came across {{contact.company_name}} and wanted to reach out.
+
+We help businesses like yours [your value proposition here].
+
+Would you be open to a quick 10-minute call to see if we might be a good fit?
+
+Just reply to this email or give me a call at [your phone].
+
+Best,
+[Your Name]</div>
+
+      <div class="tip">
+        <span class="icon">💡</span>
+        <div>
+          <strong>Best Practice:</strong> Use merge fields like <code>{{contact.company_name}}</code> and
+          <code>{{contact.first_name}}</code> to personalize your outreach. GHL will automatically replace
+          these with the actual lead data.
+        </div>
+      </div>
+    </section>
+
+    <!-- Section 7: Connect LeadRipper -->
+    <section id="connect" class="section">
+      <h2><span class="number">7</span> Connecting LeadRipper</h2>
+      <p>Now let's connect everything in LeadRipper.</p>
+
+      <div class="steps">
+        <div class="step">
+          <div class="step-number">1</div>
+          <div class="step-content">
+            <h4>Go to LeadRipper Settings</h4>
+            <p>Log into LeadRipper and click <strong>Settings</strong> in the sidebar.</p>
+          </div>
+        </div>
+        <div class="step">
+          <div class="step-number">2</div>
+          <div class="step-content">
+            <h4>Enter GHL Credentials</h4>
+            <p>Paste your <strong>GHL API Key</strong> and <strong>Location ID</strong> into the fields.</p>
+          </div>
+        </div>
+        <div class="step">
+          <div class="step-number">3</div>
+          <div class="step-content">
+            <h4>Save Integration</h4>
+            <p>Click <strong>Save Integration</strong>. Your credentials are now securely stored.</p>
+          </div>
+        </div>
+        <div class="step">
+          <div class="step-number">4</div>
+          <div class="step-content">
+            <h4>Test the Connection</h4>
+            <p>Scrape a few leads and click "Sync to GHL". Check your GHL Opportunities to verify they appeared.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Section 8: Slow Drip -->
+    <section id="slow-drip" class="section">
+      <h2><span class="number">8</span> Understanding Slow-Drip Sync</h2>
+      <p>
+        Slow-drip sync sends leads to GHL one at a time, instead of all at once. This is crucial for
+        triggering automations properly.
+      </p>
+
+      <h3>Why Slow-Drip?</h3>
+      <p>
+        When you bulk-sync 100 leads at once, GHL's automation system can get overwhelmed. Emails might not send,
+        SMS messages might be skipped, and voicemails may fail. Slow-drip ensures each lead triggers your
+        automation workflow properly.
+      </p>
+
+      <h3>Setting Up Slow-Drip</h3>
+      <div class="steps">
+        <div class="step">
+          <div class="step-number">1</div>
+          <div class="step-content">
+            <h4>Enable Slow-Drip</h4>
+            <p>In LeadRipper Settings, check <strong>Enable Slow-Drip Sync</strong>.</p>
+          </div>
+        </div>
+        <div class="step">
+          <div class="step-number">2</div>
+          <div class="step-content">
+            <h4>Set Your Interval</h4>
+            <p>Choose how often to send leads: every 5, 15, 30, or 60 minutes.</p>
+          </div>
+        </div>
+        <div class="step">
+          <div class="step-number">3</div>
+          <div class="step-content">
+            <h4>Sync Your Leads</h4>
+            <p>Click "Sync to GHL" - leads will be queued and sent automatically over time.</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="info">
+        <span class="icon">ℹ️</span>
+        <div>
+          <strong>Example:</strong> With 100 leads and a 15-minute interval, all leads will sync over ~25 hours.
+          Each lead triggers your automation individually, ensuring reliable delivery.
+        </div>
+      </div>
+    </section>
+
+    <!-- Section 9: Troubleshooting -->
+    <section id="troubleshooting" class="section">
+      <h2><span class="number">9</span> Troubleshooting</h2>
+
+      <h3>Leads not appearing in GHL?</h3>
+      <ul style="color: var(--text-secondary); margin-left: 1.5rem; margin-bottom: 1.5rem;">
+        <li>Double-check your API Key and Location ID are correct</li>
+        <li>Make sure you've run email validation first (only verified emails sync)</li>
+        <li>Check that leads have valid email addresses (not empty)</li>
+        <li>If using slow-drip, check the queue status - leads may still be pending</li>
+      </ul>
+
+      <h3>Automations not triggering?</h3>
+      <ul style="color: var(--text-secondary); margin-left: 1.5rem; margin-bottom: 1.5rem;">
+        <li>Verify your workflow is <strong>Published</strong> (not just saved)</li>
+        <li>Check that the trigger is set to the correct pipeline and stage</li>
+        <li>If bulk-syncing, try enabling slow-drip to prevent overwhelm</li>
+        <li>Check GHL's Workflow History for any error messages</li>
+      </ul>
+
+      <h3>Still having issues?</h3>
+      <p>
+        Contact us at <a href="mailto:support@leadripper.com">support@leadripper.com</a> and we'll help you
+        get set up.
+      </p>
+    </section>
+  </main>
+
+  <footer>
+    <div class="container">
+      <p>
+        <a href="/">LeadRipper</a> &mdash; Real Emails, Real Results<br>
+        Questions? <a href="mailto:support@leadripper.com">support@leadripper.com</a>
+      </p>
+    </div>
+  </footer>
+</body>
+</html>

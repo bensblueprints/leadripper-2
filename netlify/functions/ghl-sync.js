@@ -172,6 +172,88 @@ exports.handler = async (event, context) => {
       };
     }
 
+    // Check if slow-drip is enabled - redirect to queue instead of bulk sync
+    if (settings.ghl_drip_enabled) {
+      // Queue leads for drip instead of instant sync
+      let leadsQuery = `
+        SELECT l.id
+        FROM lr_leads l
+        LEFT JOIN lr_ghl_queue q ON l.id = q.lead_id
+        WHERE l.user_id = $1
+          AND l.ghl_synced = false
+          AND l.email IS NOT NULL
+          AND l.email != ''
+          AND (l.email_verified = true OR l.email_score >= 60)
+          AND (l.is_disposable = false OR l.is_disposable IS NULL)
+          AND q.id IS NULL
+      `;
+      const queueValues = [decoded.userId];
+
+      if (leadIds && leadIds.length > 0) {
+        leadsQuery += ` AND l.id = ANY($2)`;
+        queueValues.push(leadIds);
+      }
+
+      const leadsResult = await pool.query(leadsQuery, queueValues);
+      const leads = leadsResult.rows;
+
+      if (leads.length === 0) {
+        return {
+          statusCode: 200,
+          headers,
+          body: JSON.stringify({
+            success: true,
+            message: 'No new leads to queue',
+            queuedCount: 0,
+            mode: 'drip'
+          })
+        };
+      }
+
+      // Calculate scheduled times based on drip interval
+      const intervalMinutes = settings.ghl_drip_interval || 15;
+      const now = new Date();
+      let queuedCount = 0;
+
+      // Get current queue position for this user
+      const queueCountResult = await pool.query(
+        `SELECT COUNT(*) as count FROM lr_ghl_queue WHERE user_id = $1 AND status = 'pending'`,
+        [decoded.userId]
+      );
+      let queuePosition = parseInt(queueCountResult.rows[0]?.count || 0);
+
+      for (const lead of leads) {
+        const scheduledFor = new Date(now.getTime() + (queuePosition * intervalMinutes * 60 * 1000));
+
+        await pool.query(
+          `INSERT INTO lr_ghl_queue (user_id, lead_id, status, scheduled_for)
+           VALUES ($1, $2, 'pending', $3)
+           ON CONFLICT (lead_id) DO NOTHING`,
+          [decoded.userId, lead.id, scheduledFor]
+        );
+
+        queuePosition++;
+        queuedCount++;
+      }
+
+      const totalMinutes = queuePosition * intervalMinutes;
+      const estimatedCompletion = new Date(now.getTime() + (totalMinutes * 60 * 1000));
+
+      return {
+        statusCode: 200,
+        headers,
+        body: JSON.stringify({
+          success: true,
+          message: `Added ${queuedCount} leads to the slow-drip queue. They will sync automatically every ${intervalMinutes} minutes.`,
+          queuedCount,
+          totalInQueue: queuePosition,
+          intervalMinutes,
+          estimatedCompletion: estimatedCompletion.toISOString(),
+          mode: 'drip'
+        })
+      };
+    }
+
     // Parse industry pipelines
     let industryPipelines = {};
     try {

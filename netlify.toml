@@ -2,6 +2,10 @@
   functions = "netlify/functions"
   publish = "."
 
+# Scheduled function for GHL drip queue processing (every 5 minutes)
+[functions."process-ghl-queue"]
+  schedule = "*/5 * * * *"
+
 [[headers]]
   for = "/*"
   [headers.values]
@@ -39,4 +43,9 @@
 [[redirects]]
   from = "/blog/:slug"
   to = "/blog-post.html"
+  status = 200
+
+[[redirects]]
+  from = "/setup-guide"
+  to = "/setup-guide.html"
   status = 200

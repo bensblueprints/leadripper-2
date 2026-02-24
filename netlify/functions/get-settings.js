@@ -50,7 +50,7 @@ exports.handler = async (event, context) => {
 
   try {
     const result = await pool.query(
-      `SELECT ghl_api_key, ghl_location_id, ghl_auto_sync, ghl_pipeline_id, ghl_stage_id, ghl_industry_pipelines, resend_api_key, webhook_url
+      `SELECT ghl_api_key, ghl_location_id, ghl_auto_sync, ghl_pipeline_id, ghl_stage_id, ghl_industry_pipelines, ghl_drip_enabled, ghl_drip_interval, resend_api_key, webhook_url
        FROM lr_user_settings WHERE user_id = $1`,
       [decoded.userId]
     );
@@ -66,6 +66,8 @@ exports.handler = async (event, context) => {
           ghl_pipeline_id: null,
           ghl_stage_id: null,
           ghl_industry_pipelines: {},
+          ghl_drip_enabled: false,
+          ghl_drip_interval: 15,
           resend_api_key: null,
           webhook_url: null,
           hasGhlKey: false,
@@ -95,6 +97,8 @@ exports.handler = async (event, context) => {
         ghl_pipeline_id: settings.ghl_pipeline_id,
         ghl_stage_id: settings.ghl_stage_id,
         ghl_industry_pipelines: industryPipelines,
+        ghl_drip_enabled: settings.ghl_drip_enabled || false,
+        ghl_drip_interval: settings.ghl_drip_interval || 15,
         resend_api_key: settings.resend_api_key ? '••••••••' : null,
         webhook_url: settings.webhook_url,
         hasGhlKey: !!settings.ghl_api_key,

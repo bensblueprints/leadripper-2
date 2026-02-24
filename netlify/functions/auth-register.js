@@ -65,7 +65,7 @@ exports.handler = async (event, context) => {
     // Hash password
     const passwordHash = await bcrypt.hash(password, 10);
 
-    // Create user with 50 free leads using Supabase
+    // Create user with 100 free leads using Supabase
     const { data: userData, error: insertError } = await supabase
       .from('lr_users')
       .insert([{
@@ -74,7 +74,7 @@ exports.handler = async (event, context) => {
         name: name,
         company: company,
         plan: 'free',
-        leads_limit: 50,
+        leads_limit: 100,
         leads_used: 0
       }])
       .select()
