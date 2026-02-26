@@ -1124,16 +1124,180 @@
       <!-- Email Validation Section -->
       <section id="email-validation-section" class="section">
         <div class="header">
-          <h1 class="page-title display">EMAIL VALIDATION</h1>
-          <p class="page-subtitle mono">Protect your sending reputation by validating emails before syncing to GoHighLevel</p>
+          <h1 class="page-title display">EMAIL TOOLS</h1>
+          <p class="page-subtitle mono">Discover missing emails & validate existing ones with StartupHub.ai</p>
         </div>
 
         <!-- Email Health Stats -->
         <div class="stats-grid">
           <div class="stat-card">
             <div class="stat-value mono" id="total-emails-stat">-</div>
-            <div class="stat-label">Total Emails</div>
+            <div class="stat-label">Total Leads</div>
           </div>
+          <div class="stat-card">
+            <div class="stat-value mono" id="with-email-stat">-</div>
+            <div class="stat-label">With Email ✅</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-value mono" id="without-email-stat">-</div>
+            <div class="stat-label">Missing Email 🔍</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-value mono" id="discovered-emails-stat">-</div>
+            <div class="stat-label">Discovered 🎯</div>
+          </div>
+        </div>
+
+        <!-- Single Email Discovery Card -->
+        <div class="card">
+          <div class="card-header">
+            <h2 class="card-title display">🔍 Discover Email by Name</h2>
+            <span class="badge badge-accent">Powered by StartupHub.ai</span>
+          </div>
+          <div class="card-content">
+            <p style="color: var(--text-dim); margin-bottom: 1.5rem;">
+              Find business emails when you have a contact name and company. Uses AI pattern matching across 50+ email formats.
+            </p>
+
+            <form id="single-email-discover-form">
+              <div class="form-row">
+                <div class="form-group">
+                  <label class="form-label">First Name *</label>
+                  <input type="text" class="form-input mono" id="discover-first-name" placeholder="John" required>
+                </div>
+                <div class="form-group">
+                  <label class="form-label">Last Name</label>
+                  <input type="text" class="form-input mono" id="discover-last-name" placeholder="Smith">
+                </div>
+              </div>
+              <div class="form-row">
+                <div class="form-group">
+                  <label class="form-label">Company Domain *</label>
+                  <input type="text" class="form-input mono" id="discover-domain" placeholder="acme.com" required>
+                </div>
+                <div class="form-group">
+                  <label class="form-label">Or Company Name</label>
+                  <input type="text" class="form-input mono" id="discover-company" placeholder="Acme Inc">
+                </div>
+              </div>
+              <button type="submit" class="btn" id="discover-single-btn">
+                <span id="discover-single-btn-text">🔍 Find Email</span>
+              </button>
+            </form>
+
+            <div id="single-discovery-result" class="mt-2" style="display: none;">
+              <div style="background: var(--surface); border: 1px solid var(--border); padding: 1.5rem;">
+                <div style="display: flex; align-items: center; gap: 1rem; margin-bottom: 1rem;">
+                  <span id="discovery-result-icon" style="font-size: 2rem;">📧</span>
+                  <div>
+                    <div class="mono" id="discovery-result-email" style="font-size: 1.25rem; color: var(--accent);"></div>
+                    <div id="discovery-result-confidence" style="font-size: 0.85rem; color: var(--text-dim);"></div>
+                  </div>
+                </div>
+                <button class="btn-secondary" onclick="copyDiscoveredEmail()" style="font-size: 0.85rem;">
+                  📋 Copy Email
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Batch Email Discovery Card -->
+        <div class="card">
+          <div class="card-header">
+            <h2 class="card-title display">🚀 Batch Email Discovery</h2>
+          </div>
+          <div class="card-content">
+            <p style="color: var(--text-dim); margin-bottom: 1rem;">
+              Automatically discover emails for all your leads that are missing email addresses.
+              Requires leads to have a contact name and business name/website.
+            </p>
+
+            <div id="batch-discovery-stats" style="background: var(--surface); padding: 1rem; margin-bottom: 1.5rem; border: 1px solid var(--border);">
+              <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 1rem; text-align: center;">
+                <div>
+                  <div class="mono" style="font-size: 1.5rem; color: var(--accent);" id="discoverable-count">-</div>
+                  <div style="font-size: 0.8rem; color: var(--text-dim);">Discoverable</div>
+                </div>
+                <div>
+                  <div class="mono" style="font-size: 1.5rem; color: var(--green);" id="already-discovered-count">-</div>
+                  <div style="font-size: 0.8rem; color: var(--text-dim);">Already Found</div>
+                </div>
+                <div>
+                  <div class="mono" style="font-size: 1.5rem; color: var(--yellow);" id="pending-discovery-count">-</div>
+                  <div style="font-size: 0.8rem; color: var(--text-dim);">Pending</div>
+                </div>
+              </div>
+            </div>
+
+            <div id="batch-discovery-status" class="alert" style="display: none; margin-bottom: 1rem;"></div>
+
+            <div class="form-actions">
+              <button class="btn" id="start-batch-discovery-btn" onclick="startBatchDiscovery()">
+                <span id="batch-discovery-btn-text">🚀 Start Batch Discovery</span>
+              </button>
+              <button class="btn-secondary" onclick="loadEmailDiscoveryStats()">
+                ↻ Refresh Stats
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Discovery Progress -->
+        <div class="card" id="discovery-progress-card" style="display: none;">
+          <div class="card-header">
+            <h2 class="card-title display">Discovery Progress</h2>
+          </div>
+          <div class="card-content">
+            <div class="progress-bar" style="height: 8px; background: var(--surface); border: 1px solid var(--border); margin-bottom: 1rem;">
+              <div class="progress-fill" id="discovery-progress-bar" style="width: 0%; height: 100%; background: var(--accent); transition: width 0.3s;"></div>
+            </div>
+            <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 1rem; text-align: center;">
+              <div>
+                <div class="mono" style="font-size: 1.5rem; color: var(--accent);" id="discovery-processed-count">0</div>
+                <div style="font-size: 0.8rem; color: var(--text-dim);">Processed</div>
+              </div>
+              <div>
+                <div class="mono" style="font-size: 1.5rem; color: var(--green);" id="discovery-found-count">0</div>
+                <div style="font-size: 0.8rem; color: var(--text-dim);">Emails Found</div>
+              </div>
+              <div>
+                <div class="mono" style="font-size: 1.5rem; color: var(--red);" id="discovery-failed-count">0</div>
+                <div style="font-size: 0.8rem; color: var(--text-dim);">Not Found</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Discovery Results Table -->
+        <div class="card" id="discovery-results-card" style="display: none;">
+          <div class="card-header">
+            <h2 class="card-title display">Recently Discovered Emails</h2>
+          </div>
+          <div class="table-container">
+            <table>
+              <thead>
+                <tr>
+                  <th>Business</th>
+                  <th>Email Discovered</th>
+                  <th>Confidence</th>
+                  <th>Status</th>
+                </tr>
+              </thead>
+              <tbody id="discovery-results-body"></tbody>
+            </table>
+          </div>
+        </div>
+
+        <hr style="border: none; border-top: 1px solid var(--border); margin: 2rem 0;">
+
+        <!-- Original Email Validation Stats -->
+        <div class="header" style="margin-top: 2rem;">
+          <h2 class="page-title display" style="font-size: 2rem;">EMAIL VALIDATION</h2>
+          <p class="page-subtitle mono">Validate existing emails before syncing to GoHighLevel</p>
+        </div>
+
+        <div class="stats-grid">
           <div class="stat-card">
             <div class="stat-value mono" id="verified-emails-stat">-</div>
             <div class="stat-label">Verified ✅</div>
@@ -1706,6 +1870,209 @@
     }
 
     // ============================================
+    // EMAIL DISCOVERY FUNCTIONS (StartupHub.ai)
+    // ============================================
+
+    // Load email discovery stats
+    async function loadEmailDiscoveryStats() {
+      try {
+        const response = await fetch(`${API_BASE}/email-discover`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${authToken}`
+          },
+          body: JSON.stringify({ statsOnly: true })
+        });
+
+        if (response.ok) {
+          const data = await response.json();
+          if (data.stats) {
+            document.getElementById('total-emails-stat').textContent = data.stats.totalLeads || 0;
+            document.getElementById('with-email-stat').textContent = data.stats.withEmail || 0;
+            document.getElementById('without-email-stat').textContent = data.stats.withoutEmail || 0;
+            document.getElementById('discovered-emails-stat').textContent = data.stats.alreadyDiscovered || 0;
+            document.getElementById('discoverable-count').textContent = data.stats.discoverable || 0;
+            document.getElementById('already-discovered-count').textContent = data.stats.alreadyDiscovered || 0;
+            document.getElementById('pending-discovery-count').textContent =
+              (data.stats.discoverable || 0) - (data.stats.alreadyDiscovered || 0);
+          }
+        }
+      } catch (error) {
+        console.error('Failed to load email discovery stats:', error);
+      }
+    }
+
+    // Single email discovery form
+    document.getElementById('single-email-discover-form')?.addEventListener('submit', async (e) => {
+      e.preventDefault();
+
+      const firstName = document.getElementById('discover-first-name').value.trim();
+      const lastName = document.getElementById('discover-last-name').value.trim();
+      const domain = document.getElementById('discover-domain').value.trim();
+      const company = document.getElementById('discover-company').value.trim();
+
+      if (!firstName) {
+        alert('First name is required');
+        return;
+      }
+
+      if (!domain && !company) {
+        alert('Please enter either a domain or company name');
+        return;
+      }
+
+      const btn = document.getElementById('discover-single-btn');
+      const btnText = document.getElementById('discover-single-btn-text');
+      const resultDiv = document.getElementById('single-discovery-result');
+
+      btn.disabled = true;
+      btnText.innerHTML = '<span class="loading"></span> Searching...';
+      resultDiv.style.display = 'none';
+
+      try {
+        const response = await fetch(`${API_BASE}/email-discover`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${authToken}`
+          },
+          body: JSON.stringify({
+            mode: 'single',
+            firstName,
+            lastName,
+            domain,
+            company
+          })
+        });
+
+        const data = await response.json();
+
+        if (data.success && data.email) {
+          document.getElementById('discovery-result-icon').textContent = '✅';
+          document.getElementById('discovery-result-email').textContent = data.email;
+          document.getElementById('discovery-result-confidence').textContent =
+            `Confidence: ${data.confidence || 'N/A'}% | Domain: ${data.domain || domain || 'derived'}`;
+          resultDiv.style.display = 'block';
+        } else {
+          document.getElementById('discovery-result-icon').textContent = '❌';
+          document.getElementById('discovery-result-email').textContent = 'Email not found';
+          document.getElementById('discovery-result-confidence').textContent =
+            data.error || 'No matching email pattern found for this domain';
+          resultDiv.style.display = 'block';
+        }
+      } catch (error) {
+        console.error('Email discovery error:', error);
+        alert('Error discovering email: ' + error.message);
+      } finally {
+        btn.disabled = false;
+        btnText.textContent = '🔍 Find Email';
+      }
+    });
+
+    // Copy discovered email to clipboard
+    function copyDiscoveredEmail() {
+      const email = document.getElementById('discovery-result-email').textContent;
+      if (email && email !== 'Email not found') {
+        navigator.clipboard.writeText(email).then(() => {
+          alert('Email copied to clipboard!');
+        });
+      }
+    }
+
+    // Start batch email discovery
+    async function startBatchDiscovery() {
+      const btn = document.getElementById('start-batch-discovery-btn');
+      const btnText = document.getElementById('batch-discovery-btn-text');
+      const statusDiv = document.getElementById('batch-discovery-status');
+      const progressCard = document.getElementById('discovery-progress-card');
+      const resultsCard = document.getElementById('discovery-results-card');
+
+      btn.disabled = true;
+      btnText.innerHTML = '<span class="loading"></span> Discovering...';
+      statusDiv.style.display = 'none';
+      progressCard.style.display = 'block';
+
+      // Reset progress
+      document.getElementById('discovery-processed-count').textContent = '0';
+      document.getElementById('discovery-found-count').textContent = '0';
+      document.getElementById('discovery-failed-count').textContent = '0';
+      document.getElementById('discovery-progress-bar').style.width = '0%';
+
+      try {
+        const response = await fetch(`${API_BASE}/email-discover`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${authToken}`
+          },
+          body: JSON.stringify({
+            limit: 50
+          })
+        });
+
+        const data = await response.json();
+
+        if (response.ok && data.success) {
+          // Update progress
+          document.getElementById('discovery-processed-count').textContent = data.batch?.processed || 0;
+          document.getElementById('discovery-found-count').textContent = data.batch?.discovered || 0;
+          document.getElementById('discovery-failed-count').textContent = data.batch?.failed || 0;
+          document.getElementById('discovery-progress-bar').style.width = '100%';
+
+          // Show results table if we have results
+          if (data.results && data.results.length > 0) {
+            resultsCard.style.display = 'block';
+            const tbody = document.getElementById('discovery-results-body');
+            tbody.innerHTML = data.results.map(r => `
+              <tr>
+                <td>${escapeHtml(r.businessName || 'N/A')}</td>
+                <td class="mono" style="color: ${r.status === 'discovered' ? 'var(--green)' : 'var(--text-dim)'}">
+                  ${r.email || '-'}
+                </td>
+                <td>${r.confidence ? r.confidence + '%' : '-'}</td>
+                <td>
+                  <span class="badge ${r.status === 'discovered' ? 'badge-success' : 'badge-warning'}">
+                    ${r.status === 'discovered' ? 'Found' : 'Not Found'}
+                  </span>
+                </td>
+              </tr>
+            `).join('');
+          }
+
+          // Show success message
+          statusDiv.className = 'success-message';
+          statusDiv.textContent = data.message || `Discovered ${data.batch?.discovered || 0} emails!`;
+          statusDiv.style.display = 'block';
+
+          // Reload stats
+          await loadEmailDiscoveryStats();
+
+          // If there are more leads to process, offer to continue
+          if (data.batch?.processed === 50 && data.stats?.withoutEmail > 0) {
+            const continueDiscovery = confirm(
+              `Processed ${data.batch.processed} leads (${data.batch.discovered} emails found).\n\nThere may be more leads to process. Continue?`
+            );
+            if (continueDiscovery) {
+              setTimeout(() => startBatchDiscovery(), 1000);
+              return;
+            }
+          }
+        } else {
+          throw new Error(data.message || 'Discovery failed');
+        }
+      } catch (error) {
+        console.error('Batch discovery error:', error);
+        statusDiv.className = 'error-message';
+        statusDiv.textContent = `Error: ${error.message}`;
+        statusDiv.style.display = 'block';
+      } finally {
+        btn.disabled = false;
+        btnText.textContent = '🚀 Start Batch Discovery';
+      }
+    }
+
+    // ============================================
     // EMAIL VALIDATION FUNCTIONS
     // ============================================
 
@@ -1814,9 +2181,10 @@
       }
     }
 
-    // Load email validation stats when section is opened
+    // Load email validation and discovery stats when section is opened
     document.querySelector('[data-section="email-validation"]').addEventListener('click', () => {
       loadEmailValidationStats();
+      loadEmailDiscoveryStats();
     });
 
     // ==========================================
