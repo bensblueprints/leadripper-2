@@ -1603,15 +1603,19 @@
           <span class="nav-icon">✉️</span>
           <span>Email Validation</span>
         </div>
-        <div class="nav-item crm-only" data-section="pipeline" style="display: none;">
+        <div class="nav-item" data-section="pipeline">
           <span class="nav-icon">📈</span>
           <span>Pipeline Board</span>
         </div>
-        <div class="nav-item crm-only" data-section="email-accounts" style="display: none;">
+        <div class="nav-item" data-section="email-outreach">
+          <span class="nav-icon">🚀</span>
+          <span>Email Outreach</span>
+        </div>
+        <div class="nav-item" data-section="email-accounts">
           <span class="nav-icon">📧</span>
           <span>Email Accounts</span>
         </div>
-        <div class="nav-item crm-only" data-section="ai-calling" style="display: none;">
+        <div class="nav-item" data-section="ai-calling">
           <span class="nav-icon">🤖</span>
           <span>AI Calling</span>
         </div>
@@ -2478,7 +2482,170 @@
         </div>
       </section>
 
-      <!-- Email Accounts Section (CRM Only) -->
+      <!-- Email Outreach Section -->
+      <section id="email-outreach-section" class="section">
+        <div class="header">
+          <div class="header-top">
+            <div>
+              <h1 class="page-title display">EMAIL OUTREACH</h1>
+              <p class="page-subtitle mono">Send cold emails to your leads</p>
+            </div>
+            <div class="header-actions">
+              <button class="btn" onclick="openNewTemplateModal()">+ New Template</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="stats-grid">
+          <div class="stat-card">
+            <div class="stat-value mono" id="stat-emails-sent">0</div>
+            <div class="stat-label">Emails Sent</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-value mono" id="stat-emails-opened">0</div>
+            <div class="stat-label">Opened</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-value mono" id="stat-open-rate">0%</div>
+            <div class="stat-label">Open Rate</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-value mono" id="stat-sent-today">0</div>
+            <div class="stat-label">Sent Today</div>
+          </div>
+        </div>
+
+        <!-- Compose Email Card -->
+        <div class="card">
+          <div class="card-header">
+            <h2 class="card-title display">Compose Campaign</h2>
+          </div>
+
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem;">
+            <!-- Left: Filters -->
+            <div>
+              <h3 style="margin-bottom: 1rem; color: var(--text-dim);">Select Recipients</h3>
+
+              <div class="form-group">
+                <label class="form-label">Filter by City</label>
+                <select id="outreach-filter-city" class="filter-select" onchange="updateOutreachCount()">
+                  <option value="">All Cities</option>
+                </select>
+              </div>
+
+              <div class="form-group">
+                <label class="form-label">Filter by Industry</label>
+                <select id="outreach-filter-industry" class="filter-select" onchange="updateOutreachCount()">
+                  <option value="">All Industries</option>
+                </select>
+              </div>
+
+              <div class="form-group">
+                <label class="form-label">
+                  <input type="checkbox" id="outreach-verified-only" checked onchange="updateOutreachCount()">
+                  Only Verified Emails
+                </label>
+              </div>
+
+              <div class="form-group">
+                <label class="form-label">
+                  <input type="checkbox" id="outreach-exclude-recent" checked onchange="updateOutreachCount()">
+                  Exclude Recently Emailed (7 days)
+                </label>
+              </div>
+
+              <div class="form-group">
+                <label class="form-label">Max Recipients</label>
+                <input type="number" id="outreach-limit" class="form-input" value="25" min="1" max="100" onchange="updateOutreachCount()">
+              </div>
+
+              <div style="background: var(--surface); border: 1px solid var(--border); border-radius: 8px; padding: 1rem; margin-top: 1rem;">
+                <div style="font-size: 2rem; font-weight: bold; color: var(--accent);" id="outreach-recipient-count">0</div>
+                <div style="color: var(--text-dim);">matching leads</div>
+              </div>
+            </div>
+
+            <!-- Right: Email Content -->
+            <div>
+              <div class="form-group">
+                <label class="form-label">From Account</label>
+                <select id="outreach-from-account" class="filter-select">
+                  <option value="">Select email account...</option>
+                </select>
+              </div>
+
+              <div class="form-group">
+                <label class="form-label">Template (optional)</label>
+                <select id="outreach-template" class="filter-select" onchange="loadTemplateContent()">
+                  <option value="">Write custom email...</option>
+                </select>
+              </div>
+
+              <div class="form-group">
+                <label class="form-label">Subject</label>
+                <input type="text" id="outreach-subject" class="form-input" placeholder="Hi {{first_name}}, quick question about {{business_name}}">
+              </div>
+
+              <div class="form-group">
+                <label class="form-label">Email Body</label>
+                <textarea id="outreach-body" class="form-textarea" rows="8" placeholder="Hi {{first_name}},
+
+I noticed {{business_name}} in {{city}} and wanted to reach out...
+
+Available merge tags: {{business_name}}, {{first_name}}, {{email}}, {{phone}}, {{website}}, {{city}}, {{industry}}, {{address}}"></textarea>
+              </div>
+
+              <div style="display: flex; gap: 1rem;">
+                <button class="btn" onclick="sendOutreachEmails()" style="flex: 1;">
+                  🚀 Send Emails
+                </button>
+                <button class="btn-secondary" onclick="previewOutreachEmail()">
+                  👁 Preview
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Email Templates -->
+        <div class="card">
+          <div class="card-header">
+            <h2 class="card-title display">Email Templates</h2>
+          </div>
+          <div id="email-templates-list">
+            <p style="color: var(--text-dim); text-align: center; padding: 2rem;">
+              No templates yet. Create your first template above.
+            </p>
+          </div>
+        </div>
+
+        <!-- Sent Emails History -->
+        <div class="card">
+          <div class="card-header">
+            <h2 class="card-title display">Sent Emails</h2>
+          </div>
+          <div class="table-container">
+            <table>
+              <thead>
+                <tr>
+                  <th>Recipient</th>
+                  <th>Subject</th>
+                  <th>Sent</th>
+                  <th>Opened</th>
+                  <th>Status</th>
+                </tr>
+              </thead>
+              <tbody id="sent-emails-body">
+                <tr>
+                  <td colspan="5" style="text-align: center; color: var(--text-dim);">No emails sent yet</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <!-- Email Accounts Section -->
       <section id="email-accounts-section" class="section">
         <div class="header">
           <div class="header-top">
@@ -4499,6 +4666,11 @@
       document.querySelectorAll('.section').forEach(sec => {
         sec.classList.toggle('active', sec.id === `${section}-section`);
       });
+
+      // Load section-specific data
+      if (section === 'email-outreach') {
+        loadEmailOutreachData();
+      }
     }
 
     // Checkout
@@ -5397,6 +5569,384 @@
           })
         }).catch(err => console.error('Auto-save industry failed:', err));
       }
+    }
+
+    // ============================================
+    // EMAIL OUTREACH FUNCTIONS
+    // ============================================
+
+    let emailTemplates = [];
+    let emailAccounts = [];
+    let sentEmails = [];
+    let outreachStats = { totalSent: 0, totalOpened: 0, openRate: 0, sentToday: 0 };
+
+    // Load email outreach data when section is shown
+    async function loadEmailOutreachData() {
+      await Promise.all([
+        loadOutreachFilters(),
+        loadEmailTemplates(),
+        loadEmailAccountsForOutreach(),
+        loadSentEmails(),
+        updateOutreachCount()
+      ]);
+    }
+
+    // Load available filter options
+    async function loadOutreachFilters() {
+      try {
+        const response = await fetch(`${API_BASE}/get-leads?limit=1`, {
+          headers: { 'Authorization': `Bearer ${authToken}` }
+        });
+        if (response.ok) {
+          const data = await response.json();
+
+          // Populate city filter
+          const citySelect = document.getElementById('outreach-filter-city');
+          if (citySelect && data.availableCities) {
+            citySelect.innerHTML = '<option value="">All Cities</option>' +
+              data.availableCities.map(c => `<option value="${escapeHtml(c)}">${escapeHtml(c)}</option>`).join('');
+          }
+
+          // Populate industry filter
+          const industrySelect = document.getElementById('outreach-filter-industry');
+          if (industrySelect && data.availableIndustries) {
+            industrySelect.innerHTML = '<option value="">All Industries</option>' +
+              data.availableIndustries.map(i => `<option value="${escapeHtml(i)}">${escapeHtml(i)}</option>`).join('');
+          }
+        }
+      } catch (error) {
+        console.error('Failed to load outreach filters:', error);
+      }
+    }
+
+    // Load email templates
+    async function loadEmailTemplates() {
+      try {
+        const response = await fetch(`${API_BASE}/email-templates`, {
+          headers: { 'Authorization': `Bearer ${authToken}` }
+        });
+        if (response.ok) {
+          const data = await response.json();
+          emailTemplates = data.templates || [];
+
+          // Populate template dropdown
+          const templateSelect = document.getElementById('outreach-template');
+          if (templateSelect) {
+            templateSelect.innerHTML = '<option value="">Write custom email...</option>' +
+              emailTemplates.map(t => `<option value="${t.id}">${escapeHtml(t.name)}</option>`).join('');
+          }
+
+          // Render templates list
+          renderEmailTemplates();
+        }
+      } catch (error) {
+        console.error('Failed to load email templates:', error);
+      }
+    }
+
+    // Load email accounts for outreach dropdown
+    async function loadEmailAccountsForOutreach() {
+      try {
+        const response = await fetch(`${API_BASE}/email-accounts`, {
+          headers: { 'Authorization': `Bearer ${authToken}` }
+        });
+        if (response.ok) {
+          const data = await response.json();
+          emailAccounts = data.accounts || [];
+
+          // Populate account dropdown
+          const accountSelect = document.getElementById('outreach-from-account');
+          if (accountSelect) {
+            accountSelect.innerHTML = '<option value="">Select email account...</option>' +
+              emailAccounts.map(a => `<option value="${a.id}" ${a.is_default ? 'selected' : ''}>${escapeHtml(a.email_address)} (${a.sends_today}/${a.daily_send_limit} today)</option>`).join('');
+          }
+        }
+      } catch (error) {
+        console.error('Failed to load email accounts:', error);
+      }
+    }
+
+    // Load sent emails history
+    async function loadSentEmails() {
+      try {
+        const response = await fetch(`${API_BASE}/send-email?limit=50`, {
+          headers: { 'Authorization': `Bearer ${authToken}` }
+        });
+        if (response.ok) {
+          const data = await response.json();
+          sentEmails = data.emails || [];
+          outreachStats = data.stats || { totalSent: 0, totalOpened: 0, openRate: 0, sentToday: 0 };
+
+          // Update stats
+          document.getElementById('stat-emails-sent').textContent = outreachStats.totalSent;
+          document.getElementById('stat-emails-opened').textContent = outreachStats.totalOpened;
+          document.getElementById('stat-open-rate').textContent = outreachStats.openRate + '%';
+          document.getElementById('stat-sent-today').textContent = outreachStats.sentToday;
+
+          // Render sent emails table
+          renderSentEmails();
+        }
+      } catch (error) {
+        console.error('Failed to load sent emails:', error);
+      }
+    }
+
+    // Update recipient count based on filters
+    async function updateOutreachCount() {
+      const city = document.getElementById('outreach-filter-city')?.value || '';
+      const industry = document.getElementById('outreach-filter-industry')?.value || '';
+      const verifiedOnly = document.getElementById('outreach-verified-only')?.checked;
+      const excludeRecent = document.getElementById('outreach-exclude-recent')?.checked;
+      const limit = parseInt(document.getElementById('outreach-limit')?.value) || 25;
+
+      try {
+        let query = `limit=${limit}`;
+        if (city) query += `&city=${encodeURIComponent(city)}`;
+        if (industry) query += `&industry=${encodeURIComponent(industry)}`;
+        if (verifiedOnly) query += `&emailVerified=true`;
+
+        const response = await fetch(`${API_BASE}/get-leads?${query}`, {
+          headers: { 'Authorization': `Bearer ${authToken}` }
+        });
+        if (response.ok) {
+          const data = await response.json();
+          const count = Math.min(data.total || 0, limit);
+          document.getElementById('outreach-recipient-count').textContent = count;
+        }
+      } catch (error) {
+        console.error('Failed to update recipient count:', error);
+      }
+    }
+
+    // Load template content when selected
+    function loadTemplateContent() {
+      const templateId = document.getElementById('outreach-template').value;
+      if (!templateId) return;
+
+      const template = emailTemplates.find(t => t.id == templateId);
+      if (template) {
+        document.getElementById('outreach-subject').value = template.subject || '';
+        document.getElementById('outreach-body').value = template.body || '';
+      }
+    }
+
+    // Send outreach emails
+    async function sendOutreachEmails() {
+      const accountId = document.getElementById('outreach-from-account').value;
+      const subject = document.getElementById('outreach-subject').value;
+      const body = document.getElementById('outreach-body').value;
+
+      if (!accountId) {
+        showToast('Please select an email account', 'error');
+        return;
+      }
+      if (!subject || !body) {
+        showToast('Please enter subject and body', 'error');
+        return;
+      }
+
+      const city = document.getElementById('outreach-filter-city').value;
+      const industry = document.getElementById('outreach-filter-industry').value;
+      const verifiedOnly = document.getElementById('outreach-verified-only').checked;
+      const excludeRecent = document.getElementById('outreach-exclude-recent').checked;
+      const limit = parseInt(document.getElementById('outreach-limit').value) || 25;
+
+      const count = parseInt(document.getElementById('outreach-recipient-count').textContent);
+      if (count === 0) {
+        showToast('No recipients match your filters', 'error');
+        return;
+      }
+
+      if (!confirm(`Send emails to ${count} recipients?`)) return;
+
+      try {
+        showToast('Sending emails...', 'info');
+
+        const response = await fetch(`${API_BASE}/send-email`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${authToken}`
+          },
+          body: JSON.stringify({
+            emailAccountId: accountId,
+            subject,
+            body,
+            filters: {
+              city: city || undefined,
+              industry: industry || undefined,
+              emailVerified: verifiedOnly,
+              excludeRecent,
+              limit
+            }
+          })
+        });
+
+        const data = await response.json();
+
+        if (response.ok && data.success) {
+          showToast(data.message, 'success');
+          await loadSentEmails();
+          await loadEmailAccountsForOutreach();
+        } else {
+          showToast(data.error || 'Failed to send emails', 'error');
+        }
+      } catch (error) {
+        console.error('Send emails error:', error);
+        showToast('Failed to send emails', 'error');
+      }
+    }
+
+    // Preview email with sample data
+    function previewOutreachEmail() {
+      const subject = document.getElementById('outreach-subject').value;
+      const body = document.getElementById('outreach-body').value;
+
+      // Sample lead data for preview
+      const sampleLead = {
+        business_name: 'Acme Corporation',
+        first_name: 'John',
+        email: 'john@acme.com',
+        phone: '(555) 123-4567',
+        website: 'www.acme.com',
+        city: 'New York',
+        industry: 'Technology',
+        address: '123 Main St'
+      };
+
+      const previewSubject = subject
+        .replace(/{{business_name}}/gi, sampleLead.business_name)
+        .replace(/{{first_name}}/gi, sampleLead.first_name)
+        .replace(/{{city}}/gi, sampleLead.city);
+
+      const previewBody = body
+        .replace(/{{business_name}}/gi, sampleLead.business_name)
+        .replace(/{{first_name}}/gi, sampleLead.first_name)
+        .replace(/{{email}}/gi, sampleLead.email)
+        .replace(/{{phone}}/gi, sampleLead.phone)
+        .replace(/{{website}}/gi, sampleLead.website)
+        .replace(/{{city}}/gi, sampleLead.city)
+        .replace(/{{industry}}/gi, sampleLead.industry)
+        .replace(/{{address}}/gi, sampleLead.address);
+
+      alert(`Subject: ${previewSubject}\n\n${previewBody}`);
+    }
+
+    // Render email templates list
+    function renderEmailTemplates() {
+      const container = document.getElementById('email-templates-list');
+      if (!container) return;
+
+      if (emailTemplates.length === 0) {
+        container.innerHTML = '<p style="color: var(--text-dim); text-align: center; padding: 2rem;">No templates yet. Create your first template above.</p>';
+        return;
+      }
+
+      container.innerHTML = emailTemplates.map(t => `
+        <div style="display: flex; justify-content: space-between; align-items: center; padding: 1rem; border-bottom: 1px solid var(--border);">
+          <div>
+            <strong>${escapeHtml(t.name)}</strong>
+            <div style="color: var(--text-dim); font-size: 0.85rem;">${escapeHtml(t.subject || '')}</div>
+          </div>
+          <div style="display: flex; gap: 0.5rem;">
+            <button class="btn-mini" onclick="editTemplate(${t.id})">Edit</button>
+            <button class="btn-mini" style="color: var(--red);" onclick="deleteTemplate(${t.id})">Delete</button>
+          </div>
+        </div>
+      `).join('');
+    }
+
+    // Render sent emails table
+    function renderSentEmails() {
+      const tbody = document.getElementById('sent-emails-body');
+      if (!tbody) return;
+
+      if (sentEmails.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="5" style="text-align: center; color: var(--text-dim);">No emails sent yet</td></tr>';
+        return;
+      }
+
+      tbody.innerHTML = sentEmails.map(e => `
+        <tr>
+          <td>${escapeHtml(e.to_email || e.lead_email || '')}</td>
+          <td>${escapeHtml(e.subject || '').substring(0, 40)}${(e.subject?.length > 40 ? '...' : '')}</td>
+          <td>${new Date(e.sent_at).toLocaleDateString()}</td>
+          <td>${e.opened_at ? '✅ ' + new Date(e.opened_at).toLocaleDateString() : '—'}</td>
+          <td><span class="status-badge ${e.opened_at ? 'active' : 'pending'}">${e.opened_at ? 'Opened' : 'Sent'}</span></td>
+        </tr>
+      `).join('');
+    }
+
+    // Open new template modal
+    function openNewTemplateModal() {
+      const name = prompt('Template Name:');
+      if (!name) return;
+
+      const subject = prompt('Email Subject (use {{business_name}}, {{first_name}}, etc.):');
+      if (subject === null) return;
+
+      const body = prompt('Email Body:');
+      if (body === null) return;
+
+      createEmailTemplate(name, subject, body);
+    }
+
+    // Create email template
+    async function createEmailTemplate(name, subject, body) {
+      try {
+        const response = await fetch(`${API_BASE}/email-templates`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${authToken}`
+          },
+          body: JSON.stringify({ name, subject, body })
+        });
+
+        if (response.ok) {
+          showToast('Template created', 'success');
+          await loadEmailTemplates();
+        } else {
+          const data = await response.json();
+          showToast(data.error || 'Failed to create template', 'error');
+        }
+      } catch (error) {
+        showToast('Failed to create template', 'error');
+      }
+    }
+
+    // Delete email template
+    async function deleteTemplate(id) {
+      if (!confirm('Delete this template?')) return;
+
+      try {
+        const response = await fetch(`${API_BASE}/email-templates`, {
+          method: 'DELETE',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${authToken}`
+          },
+          body: JSON.stringify({ id })
+        });
+
+        if (response.ok) {
+          showToast('Template deleted', 'success');
+          await loadEmailTemplates();
+        }
+      } catch (error) {
+        showToast('Failed to delete template', 'error');
+      }
+    }
+
+    // Edit template
+    function editTemplate(id) {
+      const template = emailTemplates.find(t => t.id == id);
+      if (!template) return;
+
+      document.getElementById('outreach-template').value = id;
+      document.getElementById('outreach-subject').value = template.subject || '';
+      document.getElementById('outreach-body').value = template.body || '';
+      showToast('Template loaded for editing', 'info');
     }
   </script>
 </body>
