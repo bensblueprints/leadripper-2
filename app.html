@@ -505,6 +505,135 @@
       flex-wrap: wrap;
     }
 
+    /* Filters Bar */
+    .filters-bar {
+      display: flex;
+      gap: 12px;
+      padding: 16px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      margin-bottom: 16px;
+      flex-wrap: wrap;
+      align-items: center;
+    }
+
+    .filter-group {
+      flex: 1;
+      min-width: 150px;
+    }
+
+    .filter-input {
+      width: 100%;
+      padding: 10px 14px;
+      background: var(--bg);
+      border: 1px solid var(--border);
+      color: var(--text);
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.85rem;
+      transition: all 0.2s;
+    }
+
+    .filter-input:focus {
+      outline: none;
+      border-color: var(--accent);
+      box-shadow: 0 0 0 1px var(--accent);
+    }
+
+    .filter-select {
+      width: 100%;
+      padding: 10px 14px;
+      background: var(--bg);
+      border: 1px solid var(--border);
+      color: var(--text);
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.85rem;
+      cursor: pointer;
+      appearance: none;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' fill='%23888' viewBox='0 0 16 16'%3E%3Cpath d='M8 11L3 6h10l-5 5z'/%3E%3C/svg%3E");
+      background-repeat: no-repeat;
+      background-position: right 12px center;
+      padding-right: 36px;
+    }
+
+    .filter-select:focus {
+      outline: none;
+      border-color: var(--accent);
+    }
+
+    .filter-select option {
+      background: var(--surface);
+      color: var(--text);
+    }
+
+    /* Expandable Rows */
+    .expand-btn {
+      background: none;
+      border: none;
+      color: var(--text-dim);
+      cursor: pointer;
+      padding: 4px 8px;
+      font-size: 1rem;
+      transition: transform 0.2s;
+    }
+
+    .expand-btn:hover {
+      color: var(--accent);
+    }
+
+    .expand-btn.expanded {
+      transform: rotate(90deg);
+      color: var(--accent);
+    }
+
+    .lead-details-row {
+      background: var(--surface-elevated) !important;
+    }
+
+    .lead-details-row td {
+      padding: 0 !important;
+    }
+
+    .lead-details {
+      padding: 20px;
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 16px;
+    }
+
+    .detail-group {
+      background: var(--surface);
+      padding: 12px;
+      border: 1px solid var(--border);
+    }
+
+    .detail-label {
+      font-size: 0.7rem;
+      color: var(--text-dimmer);
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      margin-bottom: 4px;
+    }
+
+    .detail-value {
+      font-family: 'JetBrains Mono', monospace;
+      color: var(--text);
+      font-size: 0.9rem;
+      word-break: break-all;
+    }
+
+    .detail-value a {
+      color: var(--accent);
+      text-decoration: none;
+    }
+
+    .detail-value a:hover {
+      text-decoration: underline;
+    }
+
+    .rating-stars {
+      color: var(--yellow);
+    }
+
     .error-message {
       background: rgba(255, 0, 51, 0.1);
       border: 1px solid var(--red);
@@ -1274,11 +1403,39 @@
           </div>
         </div>
 
+        <!-- Filters -->
+        <div class="filters-bar">
+          <div class="filter-group">
+            <input type="text" id="filter-search" class="filter-input" placeholder="🔍 Search leads..." onkeyup="debounceSearch(event)">
+          </div>
+          <div class="filter-group">
+            <select id="filter-city" class="filter-select" onchange="applyFilters()">
+              <option value="">All Cities</option>
+            </select>
+          </div>
+          <div class="filter-group">
+            <select id="filter-industry" class="filter-select" onchange="applyFilters()">
+              <option value="">All Industries</option>
+            </select>
+          </div>
+          <div class="filter-group">
+            <select id="filter-status" class="filter-select" onchange="applyFilters()">
+              <option value="">All Status</option>
+              <option value="no-email">No Email</option>
+              <option value="has-email">Has Email</option>
+              <option value="validated">Validated</option>
+              <option value="synced">Synced to GHL</option>
+            </select>
+          </div>
+          <button class="btn-mini" onclick="clearFilters()">Clear</button>
+        </div>
+
         <div class="card">
           <div class="table-container">
             <table id="leads-table">
               <thead>
                 <tr>
+                  <th style="width: 30px;"></th>
                   <th>Business Name</th>
                   <th>Phone</th>
                   <th>Email</th>
@@ -1936,6 +2093,16 @@
     let leadsPage = 1;
     const leadsPerPage = 50;
 
+    // Filter state
+    let filterSearch = '';
+    let filterCity = '';
+    let filterIndustry = '';
+    let filterStatus = '';
+    let searchTimeout = null;
+    let expandedLeads = new Set();
+    let availableCities = [];
+    let availableIndustries = [];
+
     // GHL Configuration state
     let ghlConfig = {
       hasApiKey: false,
@@ -1978,6 +2145,78 @@
       }
     }
 
+    // Debounce search input
+    function debounceSearch(event) {
+      clearTimeout(searchTimeout);
+      searchTimeout = setTimeout(() => {
+        filterSearch = event.target.value;
+        loadLeads(1);
+      }, 300);
+    }
+
+    // Apply filters
+    function applyFilters() {
+      filterCity = document.getElementById('filter-city').value;
+      filterIndustry = document.getElementById('filter-industry').value;
+      filterStatus = document.getElementById('filter-status').value;
+      loadLeads(1);
+    }
+
+    // Clear all filters
+    function clearFilters() {
+      filterSearch = '';
+      filterCity = '';
+      filterIndustry = '';
+      filterStatus = '';
+      document.getElementById('filter-search').value = '';
+      document.getElementById('filter-city').value = '';
+      document.getElementById('filter-industry').value = '';
+      document.getElementById('filter-status').value = '';
+      loadLeads(1);
+    }
+
+    // Populate filter dropdowns
+    function populateFilterDropdowns() {
+      // Extract unique cities and industries from leads
+      const cities = new Set();
+      const industries = new Set();
+
+      leadsData.forEach(lead => {
+        if (lead.city) cities.add(lead.city);
+        if (lead.industry) industries.add(lead.industry);
+      });
+
+      // Update available options (merge with existing)
+      cities.forEach(c => { if (!availableCities.includes(c)) availableCities.push(c); });
+      industries.forEach(i => { if (!availableIndustries.includes(i)) availableIndustries.push(i); });
+
+      // Sort alphabetically
+      availableCities.sort();
+      availableIndustries.sort();
+
+      // Populate city dropdown
+      const citySelect = document.getElementById('filter-city');
+      const currentCity = citySelect.value;
+      citySelect.innerHTML = '<option value="">All Cities</option>' +
+        availableCities.map(c => `<option value="${c}" ${c === currentCity ? 'selected' : ''}>${c}</option>`).join('');
+
+      // Populate industry dropdown
+      const industrySelect = document.getElementById('filter-industry');
+      const currentIndustry = industrySelect.value;
+      industrySelect.innerHTML = '<option value="">All Industries</option>' +
+        availableIndustries.map(i => `<option value="${i}" ${i === currentIndustry ? 'selected' : ''}>${i}</option>`).join('');
+    }
+
+    // Toggle lead expansion
+    function toggleLeadExpand(leadId) {
+      if (expandedLeads.has(leadId)) {
+        expandedLeads.delete(leadId);
+      } else {
+        expandedLeads.add(leadId);
+      }
+      renderLeadsTable();
+    }
+
     // Load Leads
     async function loadLeads(page = 1) {
       if (!authToken) return;
@@ -1989,7 +2228,7 @@
       // Show loading state
       tbody.innerHTML = `
         <tr>
-          <td colspan="6" class="text-center">
+          <td colspan="7" class="text-center">
             <div class="empty-state">
               <div class="empty-icon">⏳</div>
               <div class="empty-title">Loading leads...</div>
@@ -1999,7 +2238,13 @@
       `;
 
       try {
-        const response = await fetch(`${API_BASE}/get-leads?limit=${leadsPerPage}&offset=${offset}`, {
+        // Build query params with filters
+        let queryParams = `limit=${leadsPerPage}&offset=${offset}`;
+        if (filterSearch) queryParams += `&search=${encodeURIComponent(filterSearch)}`;
+        if (filterCity) queryParams += `&city=${encodeURIComponent(filterCity)}`;
+        if (filterIndustry) queryParams += `&industry=${encodeURIComponent(filterIndustry)}`;
+
+        const response = await fetch(`${API_BASE}/get-leads?${queryParams}`, {
           headers: { 'Authorization': `Bearer ${authToken}` }
         });
 
@@ -2011,12 +2256,26 @@
         leadsData = data.leads || [];
         leadsTotal = data.total || 0;
 
+        // Apply client-side status filter
+        if (filterStatus) {
+          leadsData = leadsData.filter(lead => {
+            switch (filterStatus) {
+              case 'no-email': return !lead.email;
+              case 'has-email': return lead.email && !lead.email_verified;
+              case 'validated': return lead.email_verified && !lead.ghl_synced;
+              case 'synced': return lead.ghl_synced;
+              default: return true;
+            }
+          });
+        }
+
+        populateFilterDropdowns();
         renderLeadsTable();
       } catch (error) {
         console.error('Error loading leads:', error);
         tbody.innerHTML = `
           <tr>
-            <td colspan="6" class="text-center">
+            <td colspan="7" class="text-center">
               <div class="empty-state">
                 <div class="empty-icon">⚠️</div>
                 <div class="empty-title">Error loading leads</div>
@@ -2444,11 +2703,11 @@
       if (leadsData.length === 0) {
         tbody.innerHTML = `
           <tr>
-            <td colspan="6" class="text-center">
+            <td colspan="7" class="text-center">
               <div class="empty-state">
                 <div class="empty-icon">📋</div>
-                <div class="empty-title">No leads yet</div>
-                <p>Start scraping to extract business leads</p>
+                <div class="empty-title">${filterSearch || filterCity || filterIndustry || filterStatus ? 'No leads match your filters' : 'No leads yet'}</div>
+                <p>${filterSearch || filterCity || filterIndustry || filterStatus ? 'Try adjusting your filters' : 'Start scraping to extract business leads'}</p>
               </div>
             </td>
           </tr>
@@ -2465,10 +2724,11 @@
       // Pagination header
       html += `
         <tr class="pagination-row">
-          <td colspan="6" style="background: var(--surface); padding: 12px;">
+          <td colspan="7" style="background: var(--surface); padding: 12px;">
             <div style="display: flex; justify-content: space-between; align-items: center;">
               <span class="mono" style="color: var(--text-dim);">
                 Showing ${startItem}-${endItem} of ${leadsTotal} leads
+                ${filterSearch || filterCity || filterIndustry || filterStatus ? '<span style="color: var(--accent);">(filtered)</span>' : ''}
               </span>
               <div style="display: flex; gap: 8px;">
                 <button class="btn-mini" onclick="loadLeads(1)" ${leadsPage === 1 ? 'disabled' : ''}>First</button>
@@ -2484,12 +2744,17 @@
 
       // Lead rows
       leadsData.forEach(lead => {
+        const isExpanded = expandedLeads.has(lead.id);
         const emailCell = lead.email
           ? `<span class="mono" style="color: ${lead.email_verified ? 'var(--green)' : 'var(--text)'};">${lead.email}</span>${lead.email_verified ? '<span class="verified-badge">✓</span>' : ''}`
           : '<span style="color: var(--text-dimmer);">-</span>';
 
+        // Main row
         html += `
-          <tr data-lead-id="${lead.id}">
+          <tr data-lead-id="${lead.id}" class="${isExpanded ? 'expanded-parent' : ''}">
+            <td>
+              <button class="expand-btn ${isExpanded ? 'expanded' : ''}" onclick="toggleLeadExpand(${lead.id})">▶</button>
+            </td>
             <td class="mono">${lead.business_name || '-'}</td>
             <td class="mono">${lead.phone || '-'}</td>
             <td>${emailCell}</td>
@@ -2498,6 +2763,51 @@
             <td class="action-cell">${getActionButton(lead)}</td>
           </tr>
         `;
+
+        // Expanded details row
+        if (isExpanded) {
+          const ratingStars = lead.rating ? '★'.repeat(Math.round(lead.rating)) + '☆'.repeat(5 - Math.round(lead.rating)) : '-';
+          html += `
+            <tr class="lead-details-row">
+              <td colspan="7">
+                <div class="lead-details">
+                  <div class="detail-group">
+                    <div class="detail-label">Full Address</div>
+                    <div class="detail-value">${lead.address || '-'}</div>
+                  </div>
+                  <div class="detail-group">
+                    <div class="detail-label">Website</div>
+                    <div class="detail-value">${lead.website ? `<a href="${lead.website}" target="_blank">${lead.website}</a>` : '-'}</div>
+                  </div>
+                  <div class="detail-group">
+                    <div class="detail-label">Rating</div>
+                    <div class="detail-value"><span class="rating-stars">${ratingStars}</span> ${lead.rating ? `(${lead.rating})` : ''}</div>
+                  </div>
+                  <div class="detail-group">
+                    <div class="detail-label">Reviews</div>
+                    <div class="detail-value">${lead.reviews || 0} reviews</div>
+                  </div>
+                  <div class="detail-group">
+                    <div class="detail-label">Email Score</div>
+                    <div class="detail-value">${lead.email_score ? `${lead.email_score}/100` : 'Not validated'}</div>
+                  </div>
+                  <div class="detail-group">
+                    <div class="detail-label">GHL Status</div>
+                    <div class="detail-value">${lead.ghl_synced ? `Synced (ID: ${lead.ghl_contact_id || 'N/A'})` : 'Not synced'}</div>
+                  </div>
+                  <div class="detail-group">
+                    <div class="detail-label">Created</div>
+                    <div class="detail-value">${lead.created_at ? new Date(lead.created_at).toLocaleString() : '-'}</div>
+                  </div>
+                  <div class="detail-group">
+                    <div class="detail-label">Lead ID</div>
+                    <div class="detail-value mono">#${lead.id}</div>
+                  </div>
+                </div>
+              </td>
+            </tr>
+          `;
+        }
       });
 
       tbody.innerHTML = html;
