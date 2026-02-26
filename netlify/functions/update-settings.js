@@ -49,7 +49,13 @@ exports.handler = async (event, context) => {
   }
 
   try {
-    const { ghlApiKey, ghlLocationId, ghlAutoSync, ghlPipelineId, ghlStageId, ghlIndustryPipelines, ghlDripEnabled, ghlDripInterval, resendApiKey, webhookUrl, name, company } = JSON.parse(event.body);
+    const {
+      ghlApiKey, ghlLocationId, ghlAutoSync, ghlPipelineId, ghlStageId, ghlIndustryPipelines,
+      ghlDripEnabled, ghlDripInterval, resendApiKey, webhookUrl, name, company,
+      // CRM Settings
+      crmMode, elevenlabsApiKey, elevenlabsDefaultVoice, emailSignature,
+      calendarTimezone, calendarWorkingHours, aiCallingEnabled
+    } = JSON.parse(event.body);
 
     // Update user profile if provided
     if (name !== undefined || company !== undefined) {
@@ -76,7 +82,14 @@ exports.handler = async (event, context) => {
     }
 
     // Update settings if provided
-    if (ghlApiKey !== undefined || ghlLocationId !== undefined || ghlAutoSync !== undefined || ghlPipelineId !== undefined || ghlStageId !== undefined || ghlIndustryPipelines !== undefined || ghlDripEnabled !== undefined || ghlDripInterval !== undefined || resendApiKey !== undefined || webhookUrl !== undefined) {
+    const hasSettingsUpdate = ghlApiKey !== undefined || ghlLocationId !== undefined || ghlAutoSync !== undefined ||
+      ghlPipelineId !== undefined || ghlStageId !== undefined || ghlIndustryPipelines !== undefined ||
+      ghlDripEnabled !== undefined || ghlDripInterval !== undefined || resendApiKey !== undefined ||
+      webhookUrl !== undefined || crmMode !== undefined || elevenlabsApiKey !== undefined ||
+      elevenlabsDefaultVoice !== undefined || emailSignature !== undefined || calendarTimezone !== undefined ||
+      calendarWorkingHours !== undefined || aiCallingEnabled !== undefined;
+
+    if (hasSettingsUpdate) {
       // First ensure settings row exists
       await pool.query(
         `INSERT INTO lr_user_settings (user_id, created_at, updated_at) VALUES ($1, NOW(), NOW())
@@ -139,6 +152,43 @@ exports.handler = async (event, context) => {
         paramIndex++;
       }
 
+      // CRM Settings
+      if (crmMode !== undefined) {
+        settingsUpdates.push(`crm_mode = $${paramIndex}`);
+        settingsValues.push(crmMode);
+        paramIndex++;
+      }
+      if (elevenlabsApiKey !== undefined && elevenlabsApiKey !== '••••••••') {
+        settingsUpdates.push(`elevenlabs_api_key = $${paramIndex}`);
+        settingsValues.push(elevenlabsApiKey);
+        paramIndex++;
+      }
+      if (elevenlabsDefaultVoice !== undefined) {
+        settingsUpdates.push(`elevenlabs_default_voice = $${paramIndex}`);
+        settingsValues.push(elevenlabsDefaultVoice);
+        paramIndex++;
+      }
+      if (emailSignature !== undefined) {
+        settingsUpdates.push(`email_signature = $${paramIndex}`);
+        settingsValues.push(emailSignature);
+        paramIndex++;
+      }
+      if (calendarTimezone !== undefined) {
+        settingsUpdates.push(`calendar_timezone = $${paramIndex}`);
+        settingsValues.push(calendarTimezone);
+        paramIndex++;
+      }
+      if (calendarWorkingHours !== undefined) {
+        settingsUpdates.push(`calendar_working_hours = $${paramIndex}`);
+        settingsValues.push(JSON.stringify(calendarWorkingHours));
+        paramIndex++;
+      }
+      if (aiCallingEnabled !== undefined) {
+        settingsUpdates.push(`ai_calling_enabled = $${paramIndex}`);
+        settingsValues.push(aiCallingEnabled);
+        paramIndex++;
+      }
+
       if (settingsUpdates.length > 0) {
         settingsValues.push(decoded.userId);
         await pool.query(
@@ -154,7 +204,11 @@ exports.handler = async (event, context) => {
       [decoded.userId]
     );
     const settingsResult = await pool.query(
-      'SELECT ghl_api_key, ghl_location_id, ghl_auto_sync, ghl_pipeline_id, ghl_stage_id, ghl_industry_pipelines, ghl_drip_enabled, ghl_drip_interval, resend_api_key, webhook_url FROM lr_user_settings WHERE user_id = $1',
+      `SELECT ghl_api_key, ghl_location_id, ghl_auto_sync, ghl_pipeline_id, ghl_stage_id,
+              ghl_industry_pipelines, ghl_drip_enabled, ghl_drip_interval, resend_api_key, webhook_url,
+              crm_mode, elevenlabs_api_key, elevenlabs_default_voice, email_signature,
+              calendar_timezone, calendar_working_hours, ai_calling_enabled
+       FROM lr_user_settings WHERE user_id = $1`,
       [decoded.userId]
     );
 
@@ -188,7 +242,16 @@ exports.handler = async (event, context) => {
           resendApiKey: settings.resend_api_key ? '••••••••' : null,
           webhookUrl: settings.webhook_url,
           hasGhlKey: !!settings.ghl_api_key,
-          hasResendKey: !!settings.resend_api_key
+          hasResendKey: !!settings.resend_api_key,
+          // CRM Settings
+          crmMode: settings.crm_mode || 'ghl',
+          elevenlabsApiKey: settings.elevenlabs_api_key ? '••••••••' : null,
+          elevenlabsDefaultVoice: settings.elevenlabs_default_voice,
+          emailSignature: settings.email_signature,
+          calendarTimezone: settings.calendar_timezone || 'America/New_York',
+          calendarWorkingHours: settings.calendar_working_hours || { start: '09:00', end: '17:00', days: [1,2,3,4,5] },
+          aiCallingEnabled: settings.ai_calling_enabled || false,
+          hasElevenlabsKey: !!settings.elevenlabs_api_key
         }
       })
     };
