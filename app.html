@@ -300,6 +300,116 @@
       background: var(--surface) !important;
     }
 
+    /* Action Buttons */
+    .btn-action {
+      padding: 6px 14px;
+      border: none;
+      border-radius: 2px;
+      font-size: 0.72rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      cursor: pointer;
+      transition: all 0.2s;
+      font-family: 'JetBrains Mono', monospace;
+    }
+
+    .btn-action:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+
+    .btn-action.scrape {
+      background: var(--yellow);
+      color: #000;
+    }
+
+    .btn-action.scrape:hover:not(:disabled) {
+      background: #e6b800;
+      box-shadow: 0 0 10px rgba(255, 204, 0, 0.4);
+    }
+
+    .btn-action.validate {
+      background: var(--accent);
+      color: var(--text);
+    }
+
+    .btn-action.validate:hover:not(:disabled) {
+      background: #ff5522;
+      box-shadow: 0 0 10px var(--accent-glow);
+    }
+
+    .btn-action.sync {
+      background: var(--green);
+      color: #000;
+    }
+
+    .btn-action.sync:hover:not(:disabled) {
+      background: var(--green-dim);
+      box-shadow: 0 0 10px rgba(0, 255, 65, 0.4);
+    }
+
+    .btn-action.configure {
+      background: var(--surface-elevated);
+      color: var(--text-dim);
+      border: 1px solid var(--border);
+    }
+
+    .btn-action.configure:hover:not(:disabled) {
+      background: var(--surface);
+      color: var(--text);
+      border-color: var(--accent);
+    }
+
+    .action-cell {
+      min-width: 140px;
+    }
+
+    .verified-badge {
+      display: inline-block;
+      margin-left: 6px;
+      color: var(--green);
+      font-size: 0.75rem;
+    }
+
+    /* Toast Notifications */
+    .toast {
+      position: fixed;
+      bottom: 20px;
+      right: 20px;
+      padding: 14px 24px;
+      background: var(--surface-elevated);
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      color: var(--text);
+      font-size: 0.9rem;
+      z-index: 10000;
+      transform: translateX(120%);
+      transition: transform 0.3s ease;
+      max-width: 400px;
+      font-family: 'JetBrains Mono', monospace;
+    }
+
+    .toast.show {
+      transform: translateX(0);
+    }
+
+    .toast-success {
+      border-left: 4px solid var(--green);
+    }
+
+    .toast-error {
+      border-left: 4px solid var(--red);
+    }
+
+    .toast-warning {
+      border-left: 4px solid var(--yellow);
+    }
+
+    .toast-info {
+      border-left: 4px solid var(--accent);
+    }
+
     .error-message {
       background: rgba(255, 0, 51, 0.1);
       border: 1px solid var(--red);
@@ -1063,7 +1173,7 @@
                   <th>Email</th>
                   <th>City</th>
                   <th>Industry</th>
-                  <th>Status</th>
+                  <th>Actions</th>
                 </tr>
               </thead>
               <tbody id="leads-table-body">
@@ -1691,6 +1801,7 @@
 
       // Update stats
       updateDashboard();
+      loadGhlSettings();
       loadLeads();
     }
 
@@ -1713,6 +1824,36 @@
     let leadsTotal = 0;
     let leadsPage = 1;
     const leadsPerPage = 50;
+
+    // GHL Configuration state
+    let ghlConfig = {
+      hasApiKey: false,
+      pipelineId: null,
+      stageId: null
+    };
+
+    // Rate limiting for email validation (1 per minute)
+    let lastValidationTime = 0;
+    const VALIDATION_COOLDOWN = 60000; // 60 seconds
+
+    // Load GHL Settings
+    async function loadGhlSettings() {
+      try {
+        const response = await fetch(`${API_BASE}/get-settings`, {
+          headers: { 'Authorization': `Bearer ${authToken}` }
+        });
+        if (response.ok) {
+          const settings = await response.json();
+          ghlConfig = {
+            hasApiKey: settings.hasGhlKey || false,
+            pipelineId: settings.ghl_pipeline_id,
+            stageId: settings.ghl_stage_id
+          };
+        }
+      } catch (error) {
+        console.error('Error loading GHL settings:', error);
+      }
+    }
 
     // Load Leads
     async function loadLeads(page = 1) {
@@ -1764,6 +1905,211 @@
       }
     }
 
+    // Scrape email for a lead
+    async function scrapeEmailForLead(leadId) {
+      const btn = document.getElementById(`action-btn-${leadId}`);
+      if (btn) {
+        btn.innerHTML = 'Scraping...';
+        btn.disabled = true;
+      }
+
+      try {
+        const response = await fetch(`${API_BASE}/scrape-email`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${authToken}`
+          },
+          body: JSON.stringify({ leadId })
+        });
+
+        const data = await response.json();
+
+        if (response.ok && data.email) {
+          // Update the lead in our local data
+          const lead = leadsData.find(l => l.id === leadId);
+          if (lead) {
+            lead.email = data.email;
+          }
+          showToast('Email found: ' + data.email, 'success');
+          renderLeadsTable();
+        } else {
+          showToast(data.error || 'No email found', 'error');
+          if (btn) {
+            btn.innerHTML = 'Scrape Email';
+            btn.disabled = false;
+          }
+        }
+      } catch (error) {
+        console.error('Scrape error:', error);
+        showToast('Failed to scrape email', 'error');
+        if (btn) {
+          btn.innerHTML = 'Scrape Email';
+          btn.disabled = false;
+        }
+      }
+    }
+
+    // Validate email for a lead (rate limited)
+    async function validateEmailForLead(leadId) {
+      const now = Date.now();
+      const timeSinceLastValidation = now - lastValidationTime;
+
+      if (timeSinceLastValidation < VALIDATION_COOLDOWN) {
+        const secondsRemaining = Math.ceil((VALIDATION_COOLDOWN - timeSinceLastValidation) / 1000);
+        showToast(`Please wait ${secondsRemaining}s before validating another email`, 'warning');
+        return;
+      }
+
+      const lead = leadsData.find(l => l.id === leadId);
+      if (!lead || !lead.email) {
+        showToast('No email to validate', 'error');
+        return;
+      }
+
+      const btn = document.getElementById(`action-btn-${leadId}`);
+      if (btn) {
+        btn.innerHTML = 'Validating...';
+        btn.disabled = true;
+      }
+
+      lastValidationTime = now;
+
+      try {
+        const response = await fetch(`${API_BASE}/batch-validate-emails`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${authToken}`
+          },
+          body: JSON.stringify({ leadIds: [leadId], checkSMTP: true })
+        });
+
+        const data = await response.json();
+
+        if (response.ok) {
+          // Update lead in local data
+          lead.email_verified = true;
+          lead.email_score = data.results?.[0]?.score || 0;
+          showToast(`Email validated! Score: ${lead.email_score}`, 'success');
+          renderLeadsTable();
+        } else {
+          showToast(data.error || 'Validation failed', 'error');
+          if (btn) {
+            btn.innerHTML = 'Validate';
+            btn.disabled = false;
+          }
+        }
+      } catch (error) {
+        console.error('Validation error:', error);
+        showToast('Failed to validate email', 'error');
+        if (btn) {
+          btn.innerHTML = 'Validate';
+          btn.disabled = false;
+        }
+      }
+    }
+
+    // Sync lead to GHL
+    async function syncLeadToGhl(leadId) {
+      if (!ghlConfig.hasApiKey) {
+        showToast('Please configure your GHL API key first', 'error');
+        showSection('settings');
+        return;
+      }
+
+      if (!ghlConfig.pipelineId || !ghlConfig.stageId) {
+        showToast('Please configure your GHL pipeline and stage first', 'error');
+        showSection('settings');
+        return;
+      }
+
+      const btn = document.getElementById(`action-btn-${leadId}`);
+      if (btn) {
+        btn.innerHTML = 'Syncing...';
+        btn.disabled = true;
+      }
+
+      try {
+        const response = await fetch(`${API_BASE}/ghl-sync`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${authToken}`
+          },
+          body: JSON.stringify({ leadIds: [leadId], startFlow: true })
+        });
+
+        const data = await response.json();
+
+        if (response.ok && data.success) {
+          const lead = leadsData.find(l => l.id === leadId);
+          if (lead) {
+            lead.ghl_synced = true;
+          }
+          showToast('Lead synced to GHL!', 'success');
+          renderLeadsTable();
+        } else {
+          showToast(data.error || 'Sync failed', 'error');
+          if (btn) {
+            btn.innerHTML = 'Sync to GHL';
+            btn.disabled = false;
+          }
+        }
+      } catch (error) {
+        console.error('GHL sync error:', error);
+        showToast('Failed to sync to GHL', 'error');
+        if (btn) {
+          btn.innerHTML = 'Sync to GHL';
+          btn.disabled = false;
+        }
+      }
+    }
+
+    // Show toast notification
+    function showToast(message, type = 'info') {
+      // Create toast element
+      const toast = document.createElement('div');
+      toast.className = `toast toast-${type}`;
+      toast.innerHTML = message;
+      document.body.appendChild(toast);
+
+      // Animate in
+      setTimeout(() => toast.classList.add('show'), 10);
+
+      // Remove after 4 seconds
+      setTimeout(() => {
+        toast.classList.remove('show');
+        setTimeout(() => toast.remove(), 300);
+      }, 4000);
+    }
+
+    // Get action button for a lead
+    function getActionButton(lead) {
+      // 1. No email - show Scrape Email button
+      if (!lead.email) {
+        return `<button class="btn-action scrape" id="action-btn-${lead.id}" onclick="scrapeEmailForLead(${lead.id})">Scrape Email</button>`;
+      }
+
+      // 2. Has email but not validated - show Validate button
+      if (!lead.email_verified) {
+        return `<button class="btn-action validate" id="action-btn-${lead.id}" onclick="validateEmailForLead(${lead.id})">Validate</button>`;
+      }
+
+      // 3. Email validated - check GHL config
+      if (lead.ghl_synced) {
+        return `<span class="status-badge synced">✓ Synced</span>`;
+      }
+
+      // 4. Check if GHL is configured
+      if (!ghlConfig.hasApiKey || !ghlConfig.pipelineId || !ghlConfig.stageId) {
+        return `<button class="btn-action configure" id="action-btn-${lead.id}" onclick="showSection('settings')">Configure Pipeline</button>`;
+      }
+
+      // 5. Ready to sync
+      return `<button class="btn-action sync" id="action-btn-${lead.id}" onclick="syncLeadToGhl(${lead.id})">Sync to GHL</button>`;
+    }
+
     // Render leads table
     function renderLeadsTable() {
       const tbody = document.getElementById('leads-table-body');
@@ -1811,20 +2157,18 @@
 
       // Lead rows
       leadsData.forEach(lead => {
-        const statusBadge = lead.ghl_synced
-          ? '<span class="status-badge synced">Synced</span>'
-          : (lead.email
-              ? '<span class="status-badge ready">Ready</span>'
-              : '<span class="status-badge pending">No Email</span>');
+        const emailCell = lead.email
+          ? `<span class="mono" style="color: ${lead.email_verified ? 'var(--green)' : 'var(--text)'};">${lead.email}</span>${lead.email_verified ? '<span class="verified-badge">✓</span>' : ''}`
+          : '<span style="color: var(--text-dimmer);">-</span>';
 
         html += `
-          <tr>
+          <tr data-lead-id="${lead.id}">
             <td class="mono">${lead.business_name || '-'}</td>
             <td class="mono">${lead.phone || '-'}</td>
-            <td class="mono">${lead.email || '-'}</td>
+            <td>${emailCell}</td>
             <td>${lead.city || '-'}${lead.state ? ', ' + lead.state : ''}</td>
             <td><span class="industry-badge">${lead.industry || '-'}</span></td>
-            <td>${statusBadge}</td>
+            <td class="action-cell">${getActionButton(lead)}</td>
           </tr>
         `;
       });
