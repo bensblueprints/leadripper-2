@@ -234,6 +234,72 @@
       cursor: not-allowed;
     }
 
+    .btn-mini {
+      padding: 6px 12px;
+      background: var(--surface-elevated);
+      color: var(--text);
+      border: 1px solid var(--border);
+      font-size: 0.75rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .btn-mini:hover:not(:disabled) {
+      background: var(--accent);
+      border-color: var(--accent);
+    }
+
+    .btn-mini:disabled {
+      opacity: 0.4;
+      cursor: not-allowed;
+    }
+
+    .status-badge {
+      display: inline-block;
+      padding: 4px 10px;
+      border-radius: 2px;
+      font-size: 0.7rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      font-family: 'JetBrains Mono', monospace;
+    }
+
+    .status-badge.synced {
+      background: rgba(0, 255, 65, 0.15);
+      color: var(--green);
+      border: 1px solid var(--green);
+    }
+
+    .status-badge.ready {
+      background: rgba(255, 62, 0, 0.15);
+      color: var(--accent);
+      border: 1px solid var(--accent);
+    }
+
+    .status-badge.pending {
+      background: rgba(255, 204, 0, 0.15);
+      color: var(--yellow);
+      border: 1px solid var(--yellow);
+    }
+
+    .industry-badge {
+      display: inline-block;
+      padding: 4px 10px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 2px;
+      font-size: 0.75rem;
+      color: var(--text-dim);
+    }
+
+    .pagination-row {
+      background: var(--surface) !important;
+    }
+
     .error-message {
       background: rgba(255, 0, 51, 0.1);
       border: 1px solid var(--red);
@@ -1642,21 +1708,128 @@
       document.getElementById('sub-used').textContent = currentUser.leadsUsed || 0;
     }
 
+    // Leads state
+    let leadsData = [];
+    let leadsTotal = 0;
+    let leadsPage = 1;
+    const leadsPerPage = 50;
+
     // Load Leads
-    async function loadLeads() {
-      // Placeholder - would fetch from API
+    async function loadLeads(page = 1) {
+      if (!authToken) return;
+
+      leadsPage = page;
+      const offset = (page - 1) * leadsPerPage;
       const tbody = document.getElementById('leads-table-body');
+
+      // Show loading state
       tbody.innerHTML = `
         <tr>
           <td colspan="6" class="text-center">
             <div class="empty-state">
-              <div class="empty-icon">📋</div>
-              <div class="empty-title">No leads yet</div>
-              <p>Start scraping to extract business leads</p>
+              <div class="empty-icon">⏳</div>
+              <div class="empty-title">Loading leads...</div>
             </div>
           </td>
         </tr>
       `;
+
+      try {
+        const response = await fetch(`${API_BASE}/get-leads?limit=${leadsPerPage}&offset=${offset}`, {
+          headers: { 'Authorization': `Bearer ${authToken}` }
+        });
+
+        if (!response.ok) {
+          throw new Error('Failed to fetch leads');
+        }
+
+        const data = await response.json();
+        leadsData = data.leads || [];
+        leadsTotal = data.total || 0;
+
+        renderLeadsTable();
+      } catch (error) {
+        console.error('Error loading leads:', error);
+        tbody.innerHTML = `
+          <tr>
+            <td colspan="6" class="text-center">
+              <div class="empty-state">
+                <div class="empty-icon">⚠️</div>
+                <div class="empty-title">Error loading leads</div>
+                <p>${error.message}</p>
+              </div>
+            </td>
+          </tr>
+        `;
+      }
+    }
+
+    // Render leads table
+    function renderLeadsTable() {
+      const tbody = document.getElementById('leads-table-body');
+
+      if (leadsData.length === 0) {
+        tbody.innerHTML = `
+          <tr>
+            <td colspan="6" class="text-center">
+              <div class="empty-state">
+                <div class="empty-icon">📋</div>
+                <div class="empty-title">No leads yet</div>
+                <p>Start scraping to extract business leads</p>
+              </div>
+            </td>
+          </tr>
+        `;
+        return;
+      }
+
+      const totalPages = Math.ceil(leadsTotal / leadsPerPage);
+      const startItem = (leadsPage - 1) * leadsPerPage + 1;
+      const endItem = Math.min(leadsPage * leadsPerPage, leadsTotal);
+
+      let html = '';
+
+      // Pagination header
+      html += `
+        <tr class="pagination-row">
+          <td colspan="6" style="background: var(--surface); padding: 12px;">
+            <div style="display: flex; justify-content: space-between; align-items: center;">
+              <span class="mono" style="color: var(--text-dim);">
+                Showing ${startItem}-${endItem} of ${leadsTotal} leads
+              </span>
+              <div style="display: flex; gap: 8px;">
+                <button class="btn-mini" onclick="loadLeads(1)" ${leadsPage === 1 ? 'disabled' : ''}>First</button>
+                <button class="btn-mini" onclick="loadLeads(${leadsPage - 1})" ${leadsPage === 1 ? 'disabled' : ''}>Prev</button>
+                <span class="mono" style="padding: 0 12px; color: var(--text);">Page ${leadsPage}/${totalPages}</span>
+                <button class="btn-mini" onclick="loadLeads(${leadsPage + 1})" ${leadsPage >= totalPages ? 'disabled' : ''}>Next</button>
+                <button class="btn-mini" onclick="loadLeads(${totalPages})" ${leadsPage >= totalPages ? 'disabled' : ''}>Last</button>
+              </div>
+            </div>
+          </td>
+        </tr>
+      `;
+
+      // Lead rows
+      leadsData.forEach(lead => {
+        const statusBadge = lead.ghl_synced
+          ? '<span class="status-badge synced">Synced</span>'
+          : (lead.email
+              ? '<span class="status-badge ready">Ready</span>'
+              : '<span class="status-badge pending">No Email</span>');
+
+        html += `
+          <tr>
+            <td class="mono">${lead.business_name || '-'}</td>
+            <td class="mono">${lead.phone || '-'}</td>
+            <td class="mono">${lead.email || '-'}</td>
+            <td>${lead.city || '-'}${lead.state ? ', ' + lead.state : ''}</td>
+            <td><span class="industry-badge">${lead.industry || '-'}</span></td>
+            <td>${statusBadge}</td>
+          </tr>
+        `;
+      });
+
+      tbody.innerHTML = html;
     }
 
     // Navigation
