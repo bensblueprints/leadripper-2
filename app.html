@@ -774,6 +774,12 @@
       background: var(--accent);
     }
 
+    .industry-chip:hover {
+      border-color: var(--accent) !important;
+      background: rgba(255, 62, 0, 0.1) !important;
+      transform: translateY(-1px);
+    }
+
     .page-subtitle {
       color: var(--text-dim);
       font-size: 0.9rem;
@@ -1939,11 +1945,20 @@
             <p style="color: var(--text-muted); font-style: italic;">No industries scraped yet. Scrape leads to see industries here.</p>
           </div>
           <div style="margin-top: 1rem; padding-top: 1rem; border-top: 1px solid var(--border);">
-            <label class="form-label">Add Custom Industry</label>
+            <label class="form-label">Add Industry</label>
+            <p style="color: var(--text-dim); font-size: 0.8rem; margin-bottom: 0.5rem;">
+              Type to search from your scraped industries or enter a custom one
+            </p>
             <div style="display: flex; gap: 0.5rem;">
-              <input type="text" class="form-input mono" id="custom-industry-input" placeholder="e.g., Roofing, HVAC, Plumbing" style="flex: 1;">
+              <input type="text" class="form-input mono" id="custom-industry-input"
+                list="industry-suggestions"
+                placeholder="Start typing... (e.g., Roofing, HVAC)"
+                style="flex: 1;"
+                autocomplete="off">
+              <datalist id="industry-suggestions"></datalist>
               <button class="btn-secondary" onclick="addCustomIndustry()">Add Industry</button>
             </div>
+            <div id="industry-quick-add" style="margin-top: 0.75rem; display: flex; flex-wrap: wrap; gap: 0.5rem;"></div>
           </div>
           <button class="btn-secondary" onclick="saveIndustryMappings()" style="margin-top: 1rem;">Save Industry Mappings</button>
         </div>
@@ -2270,6 +2285,7 @@
         }
 
         populateFilterDropdowns();
+        populateIndustrySuggestions();
         renderLeadsTable();
       } catch (error) {
         console.error('Error loading leads:', error);
@@ -3573,6 +3589,9 @@
 
       html += '</div>';
       container.innerHTML = html;
+
+      // Update suggestions after rendering
+      populateIndustrySuggestions();
     }
 
     function escapeHtml(text) {
@@ -3590,21 +3609,27 @@
 
     function addCustomIndustry() {
       const input = document.getElementById('custom-industry-input');
-      const industry = input.value.trim().toLowerCase();
+      const industry = input.value.trim();
 
       if (!industry) {
-        alert('Please enter an industry name');
+        showToast('Please enter an industry name', 'warning');
         return;
       }
 
-      if (industryMappings[industry]) {
-        alert('This industry already exists in your mappings');
+      // Check case-insensitive
+      const existingKey = Object.keys(industryMappings).find(k =>
+        k.toLowerCase() === industry.toLowerCase()
+      );
+
+      if (existingKey) {
+        showToast('This industry already exists in your mappings', 'warning');
         return;
       }
 
       industryMappings[industry] = { pipelineId: '', stageId: '' };
       input.value = '';
       renderIndustryMappings();
+      showToast(`Added "${industry}" - configure pipeline below`, 'success');
     }
 
     function removeIndustryMapping(industry) {
@@ -3637,6 +3662,70 @@
         console.error('Save industry mappings error:', error);
         alert('Failed to save mappings');
       }
+    }
+
+    // Populate industry suggestions for autocomplete
+    function populateIndustrySuggestions() {
+      const datalist = document.getElementById('industry-suggestions');
+      const quickAddContainer = document.getElementById('industry-quick-add');
+
+      if (!datalist) return;
+
+      // Get industries from leads that aren't already mapped
+      const unmappedIndustries = availableIndustries.filter(ind =>
+        !industryMappings[ind] && !industryMappings[ind.toLowerCase()]
+      );
+
+      // Populate datalist with all available industries
+      datalist.innerHTML = availableIndustries
+        .map(ind => `<option value="${escapeHtml(ind)}">`)
+        .join('');
+
+      // Show quick-add chips for unmapped industries (max 10)
+      if (quickAddContainer) {
+        if (unmappedIndustries.length > 0) {
+          quickAddContainer.innerHTML = `
+            <span style="color: var(--text-dim); font-size: 0.75rem; width: 100%; margin-bottom: 0.25rem;">
+              Quick add from your leads (${unmappedIndustries.length} unmapped):
+            </span>
+            ${unmappedIndustries.slice(0, 10).map(ind => `
+              <button type="button" class="industry-chip" onclick="quickAddIndustry('${escapeHtml(ind)}')"
+                style="background: var(--surface-elevated); border: 1px solid var(--border);
+                       padding: 4px 10px; border-radius: 20px; font-size: 0.75rem;
+                       color: var(--text); cursor: pointer; font-family: 'JetBrains Mono', monospace;
+                       transition: all 0.2s;">
+                + ${escapeHtml(ind)}
+              </button>
+            `).join('')}
+            ${unmappedIndustries.length > 10 ? `<span style="color: var(--text-dimmer); font-size: 0.7rem;">+${unmappedIndustries.length - 10} more</span>` : ''}
+          `;
+        } else if (availableIndustries.length > 0) {
+          quickAddContainer.innerHTML = `
+            <span style="color: var(--green); font-size: 0.75rem;">
+              All scraped industries are mapped
+            </span>
+          `;
+        } else {
+          quickAddContainer.innerHTML = `
+            <span style="color: var(--text-dimmer); font-size: 0.75rem;">
+              Scrape some leads to see industry suggestions here
+            </span>
+          `;
+        }
+      }
+    }
+
+    // Quick add industry from chip click
+    function quickAddIndustry(industry) {
+      if (industryMappings[industry] || industryMappings[industry.toLowerCase()]) {
+        showToast('This industry is already mapped', 'warning');
+        return;
+      }
+
+      industryMappings[industry] = { pipelineId: '', stageId: '' };
+      renderIndustryMappings();
+      populateIndustrySuggestions();
+      showToast(`Added "${industry}" - configure pipeline below`, 'success');
     }
 
     // Auto-add industry when scraping
