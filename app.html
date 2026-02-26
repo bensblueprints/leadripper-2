@@ -410,6 +410,101 @@
       border-left: 4px solid var(--accent);
     }
 
+    /* Bulk Operation Buttons */
+    .btn-bulk {
+      padding: 10px 18px;
+      border: none;
+      border-radius: 2px;
+      font-size: 0.8rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      cursor: pointer;
+      transition: all 0.2s;
+      font-family: 'JetBrains Mono', monospace;
+    }
+
+    .btn-bulk:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+
+    .btn-bulk.scrape {
+      background: var(--yellow);
+      color: #000;
+    }
+
+    .btn-bulk.scrape:hover:not(:disabled) {
+      background: #e6b800;
+      box-shadow: 0 0 15px rgba(255, 204, 0, 0.5);
+    }
+
+    .btn-bulk.validate {
+      background: var(--accent);
+      color: var(--text);
+    }
+
+    .btn-bulk.validate:hover:not(:disabled) {
+      background: #ff5522;
+      box-shadow: 0 0 15px var(--accent-glow);
+    }
+
+    /* Bulk Progress Bar */
+    .bulk-progress {
+      margin-top: 16px;
+      padding: 16px;
+      background: var(--surface-elevated);
+      border: 1px solid var(--border);
+      border-radius: 4px;
+    }
+
+    .bulk-progress.hidden {
+      display: none;
+    }
+
+    .bulk-progress-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 12px;
+    }
+
+    .bulk-progress-header span {
+      font-weight: 600;
+      color: var(--text);
+      font-family: 'JetBrains Mono', monospace;
+    }
+
+    .bulk-progress-bar {
+      height: 8px;
+      background: var(--surface);
+      border-radius: 4px;
+      overflow: hidden;
+      margin-bottom: 8px;
+    }
+
+    .bulk-progress-fill {
+      height: 100%;
+      background: linear-gradient(90deg, var(--accent), var(--green));
+      transition: width 0.3s ease;
+      width: 0%;
+    }
+
+    .bulk-progress-stats {
+      display: flex;
+      justify-content: space-between;
+      font-size: 0.8rem;
+      color: var(--text-dim);
+      font-family: 'JetBrains Mono', monospace;
+    }
+
+    .header-actions {
+      display: flex;
+      gap: 10px;
+      align-items: center;
+      flex-wrap: wrap;
+    }
+
     .error-message {
       background: rgba(255, 0, 51, 0.1);
       border: 1px solid var(--red);
@@ -1158,7 +1253,23 @@
               <p class="page-subtitle mono">Extracted business data</p>
             </div>
             <div class="header-actions">
+              <button class="btn-bulk scrape" id="scrape-all-btn" onclick="scrapeAllEmails()">🔍 Scrape All Emails</button>
+              <button class="btn-bulk validate" id="validate-all-btn" onclick="validateAllEmails()">✓ Validate All</button>
               <button class="btn-secondary" id="export-leads-btn">⬇ Export CSV</button>
+            </div>
+            <!-- Progress bar for bulk operations -->
+            <div id="bulk-progress" class="bulk-progress hidden">
+              <div class="bulk-progress-header">
+                <span id="bulk-progress-label">Processing...</span>
+                <button class="btn-mini" onclick="cancelBulkOperation()">Cancel</button>
+              </div>
+              <div class="bulk-progress-bar">
+                <div id="bulk-progress-fill" class="bulk-progress-fill"></div>
+              </div>
+              <div class="bulk-progress-stats">
+                <span id="bulk-progress-count">0 / 0</span>
+                <span id="bulk-progress-status"></span>
+              </div>
             </div>
           </div>
         </div>
@@ -1832,9 +1943,21 @@
       stageId: null
     };
 
-    // Rate limiting for email validation (1 per minute)
-    let lastValidationTime = 0;
-    const VALIDATION_COOLDOWN = 60000; // 60 seconds
+    // Rate limiting for email validation (100 per hour)
+    let validationCount = 0;
+    let validationWindowStart = Date.now();
+    const MAX_VALIDATIONS_PER_HOUR = 100;
+    const HOUR_MS = 3600000; // 1 hour in milliseconds
+    const VALIDATION_DELAY = 36000; // 36 seconds between validations (100/hour = 1 every 36 sec)
+
+    // Bulk operation state
+    let bulkOperationActive = false;
+    let bulkOperationCancelled = false;
+    let bulkQueue = [];
+    let bulkProcessed = 0;
+    let bulkTotal = 0;
+    let bulkSuccessCount = 0;
+    let bulkFailCount = 0;
 
     // Load GHL Settings
     async function loadGhlSettings() {
@@ -1950,21 +2073,37 @@
       }
     }
 
-    // Validate email for a lead (rate limited)
-    async function validateEmailForLead(leadId) {
+    // Check if we can validate (rate limit: 100/hour)
+    function canValidate() {
       const now = Date.now();
-      const timeSinceLastValidation = now - lastValidationTime;
+      // Reset counter if hour has passed
+      if (now - validationWindowStart >= HOUR_MS) {
+        validationCount = 0;
+        validationWindowStart = now;
+      }
+      return validationCount < MAX_VALIDATIONS_PER_HOUR;
+    }
 
-      if (timeSinceLastValidation < VALIDATION_COOLDOWN) {
-        const secondsRemaining = Math.ceil((VALIDATION_COOLDOWN - timeSinceLastValidation) / 1000);
-        showToast(`Please wait ${secondsRemaining}s before validating another email`, 'warning');
-        return;
+    function getRemainingValidations() {
+      const now = Date.now();
+      if (now - validationWindowStart >= HOUR_MS) {
+        return MAX_VALIDATIONS_PER_HOUR;
+      }
+      return MAX_VALIDATIONS_PER_HOUR - validationCount;
+    }
+
+    // Validate email for a lead (rate limited)
+    async function validateEmailForLead(leadId, skipRateCheck = false) {
+      if (!skipRateCheck && !canValidate()) {
+        const remaining = Math.ceil((HOUR_MS - (Date.now() - validationWindowStart)) / 60000);
+        showToast(`Rate limit reached (100/hour). Reset in ${remaining} minutes`, 'warning');
+        return false;
       }
 
       const lead = leadsData.find(l => l.id === leadId);
       if (!lead || !lead.email) {
         showToast('No email to validate', 'error');
-        return;
+        return false;
       }
 
       const btn = document.getElementById(`action-btn-${leadId}`);
@@ -1973,7 +2112,7 @@
         btn.disabled = true;
       }
 
-      lastValidationTime = now;
+      validationCount++;
 
       try {
         const response = await fetch(`${API_BASE}/batch-validate-emails`, {
@@ -1991,23 +2130,211 @@
           // Update lead in local data
           lead.email_verified = true;
           lead.email_score = data.results?.[0]?.score || 0;
-          showToast(`Email validated! Score: ${lead.email_score}`, 'success');
+          if (!bulkOperationActive) {
+            showToast(`Email validated! Score: ${lead.email_score}`, 'success');
+          }
           renderLeadsTable();
+          return true;
         } else {
-          showToast(data.error || 'Validation failed', 'error');
+          if (!bulkOperationActive) {
+            showToast(data.error || 'Validation failed', 'error');
+          }
           if (btn) {
             btn.innerHTML = 'Validate';
             btn.disabled = false;
           }
+          return false;
         }
       } catch (error) {
         console.error('Validation error:', error);
-        showToast('Failed to validate email', 'error');
+        if (!bulkOperationActive) {
+          showToast('Failed to validate email', 'error');
+        }
         if (btn) {
           btn.innerHTML = 'Validate';
           btn.disabled = false;
         }
+        return false;
       }
+    }
+
+    // ========== BULK OPERATIONS ==========
+
+    // Show/update bulk progress UI
+    function updateBulkProgress(label, processed, total, status = '') {
+      const progressEl = document.getElementById('bulk-progress');
+      const labelEl = document.getElementById('bulk-progress-label');
+      const fillEl = document.getElementById('bulk-progress-fill');
+      const countEl = document.getElementById('bulk-progress-count');
+      const statusEl = document.getElementById('bulk-progress-status');
+
+      progressEl.classList.remove('hidden');
+      labelEl.textContent = label;
+      countEl.textContent = `${processed} / ${total}`;
+      statusEl.textContent = status;
+      fillEl.style.width = `${(processed / total) * 100}%`;
+    }
+
+    function hideBulkProgress() {
+      document.getElementById('bulk-progress').classList.add('hidden');
+    }
+
+    function cancelBulkOperation() {
+      bulkOperationCancelled = true;
+      showToast('Cancelling... will stop after current item', 'info');
+    }
+
+    // Scrape All Emails
+    async function scrapeAllEmails() {
+      if (bulkOperationActive) {
+        showToast('Another bulk operation is already running', 'warning');
+        return;
+      }
+
+      // Find leads without emails
+      const leadsToScrape = leadsData.filter(l => !l.email);
+      if (leadsToScrape.length === 0) {
+        showToast('All leads already have emails!', 'info');
+        return;
+      }
+
+      bulkOperationActive = true;
+      bulkOperationCancelled = false;
+      bulkProcessed = 0;
+      bulkTotal = leadsToScrape.length;
+      bulkSuccessCount = 0;
+      bulkFailCount = 0;
+
+      document.getElementById('scrape-all-btn').disabled = true;
+      document.getElementById('validate-all-btn').disabled = true;
+
+      updateBulkProgress('Scraping emails...', 0, bulkTotal, 'Starting...');
+
+      for (const lead of leadsToScrape) {
+        if (bulkOperationCancelled) {
+          break;
+        }
+
+        updateBulkProgress('Scraping emails...', bulkProcessed, bulkTotal, `Processing: ${lead.business_name}`);
+
+        try {
+          const response = await fetch(`${API_BASE}/scrape-email`, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': `Bearer ${authToken}`
+            },
+            body: JSON.stringify({ leadId: lead.id })
+          });
+
+          const data = await response.json();
+
+          if (response.ok && data.email) {
+            lead.email = data.email;
+            bulkSuccessCount++;
+          } else {
+            bulkFailCount++;
+          }
+        } catch (error) {
+          console.error('Scrape error for lead', lead.id, error);
+          bulkFailCount++;
+        }
+
+        bulkProcessed++;
+        updateBulkProgress('Scraping emails...', bulkProcessed, bulkTotal, `Found: ${bulkSuccessCount} | Failed: ${bulkFailCount}`);
+        renderLeadsTable();
+
+        // Small delay to not overwhelm the server
+        await new Promise(r => setTimeout(r, 500));
+      }
+
+      bulkOperationActive = false;
+      document.getElementById('scrape-all-btn').disabled = false;
+      document.getElementById('validate-all-btn').disabled = false;
+
+      setTimeout(hideBulkProgress, 3000);
+      showToast(`Scraping complete! Found ${bulkSuccessCount} emails, ${bulkFailCount} failed`, bulkSuccessCount > 0 ? 'success' : 'warning');
+    }
+
+    // Validate All Emails (cron-style with rate limiting)
+    async function validateAllEmails() {
+      if (bulkOperationActive) {
+        showToast('Another bulk operation is already running', 'warning');
+        return;
+      }
+
+      // Find leads with emails that aren't validated
+      const leadsToValidate = leadsData.filter(l => l.email && !l.email_verified);
+      if (leadsToValidate.length === 0) {
+        showToast('All emails are already validated!', 'info');
+        return;
+      }
+
+      const remaining = getRemainingValidations();
+      if (remaining === 0) {
+        const resetMinutes = Math.ceil((HOUR_MS - (Date.now() - validationWindowStart)) / 60000);
+        showToast(`Rate limit reached. Reset in ${resetMinutes} minutes`, 'warning');
+        return;
+      }
+
+      bulkOperationActive = true;
+      bulkOperationCancelled = false;
+      bulkProcessed = 0;
+      bulkTotal = Math.min(leadsToValidate.length, remaining);
+      bulkSuccessCount = 0;
+      bulkFailCount = 0;
+
+      document.getElementById('scrape-all-btn').disabled = true;
+      document.getElementById('validate-all-btn').disabled = true;
+
+      const actualToProcess = leadsToValidate.slice(0, bulkTotal);
+
+      if (leadsToValidate.length > remaining) {
+        showToast(`Processing ${remaining} of ${leadsToValidate.length} (rate limit). Remaining will continue in next hour.`, 'info');
+      }
+
+      updateBulkProgress('Validating emails...', 0, bulkTotal, 'Starting (36s between each)...');
+
+      for (let i = 0; i < actualToProcess.length; i++) {
+        if (bulkOperationCancelled) {
+          break;
+        }
+
+        const lead = actualToProcess[i];
+        const timeEstimate = Math.ceil((bulkTotal - bulkProcessed) * 36 / 60);
+        updateBulkProgress('Validating emails...', bulkProcessed, bulkTotal, `~${timeEstimate}min left | ${lead.business_name}`);
+
+        const success = await validateEmailForLead(lead.id, true);
+        if (success) {
+          bulkSuccessCount++;
+        } else {
+          bulkFailCount++;
+        }
+
+        bulkProcessed++;
+        updateBulkProgress('Validating emails...', bulkProcessed, bulkTotal, `Valid: ${bulkSuccessCount} | Failed: ${bulkFailCount}`);
+
+        // Wait 36 seconds between validations (100/hour rate limit)
+        if (i < actualToProcess.length - 1 && !bulkOperationCancelled) {
+          for (let s = 36; s > 0 && !bulkOperationCancelled; s--) {
+            updateBulkProgress('Validating emails...', bulkProcessed, bulkTotal, `Next in ${s}s | Valid: ${bulkSuccessCount} | Failed: ${bulkFailCount}`);
+            await new Promise(r => setTimeout(r, 1000));
+          }
+        }
+      }
+
+      bulkOperationActive = false;
+      document.getElementById('scrape-all-btn').disabled = false;
+      document.getElementById('validate-all-btn').disabled = false;
+
+      setTimeout(hideBulkProgress, 3000);
+
+      const remainingToValidate = leadsData.filter(l => l.email && !l.email_verified).length;
+      let message = `Validation complete! ${bulkSuccessCount} valid, ${bulkFailCount} failed.`;
+      if (remainingToValidate > 0) {
+        message += ` ${remainingToValidate} remaining - run again later.`;
+      }
+      showToast(message, bulkSuccessCount > 0 ? 'success' : 'warning');
     }
 
     // Sync lead to GHL
