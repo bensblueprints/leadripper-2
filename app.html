@@ -3884,14 +3884,16 @@ Available merge tags: {{business_name}}, {{first_name}}, {{email}}, {{phone}}, {
         const result = await response.json();
         console.log('[Agents] Result:', result);
 
-        const container = document.getElementById('ai-agents-list');
-        console.log('[Agents] Container found:', !!container);
+        // Settings page has 'agents-list', AI Calling section has 'ai-agents-list'
+        const settingsContainer = document.getElementById('agents-list');
+        const aiCallingContainer = document.getElementById('ai-agents-list');
+        console.log('[Agents] Settings container found:', !!settingsContainer);
+        console.log('[Agents] AI Calling container found:', !!aiCallingContainer);
         const autoCallSelect = document.getElementById('auto-call-agent');
         const followupSelect = document.getElementById('followup-agent');
 
-        if (result.agents && result.agents.length > 0) {
-          // Populate agent list
-          container.innerHTML = result.agents.map(agent => `
+        const agentListHtml = result.agents && result.agents.length > 0
+          ? result.agents.map(agent => `
             <div style="display: flex; align-items: center; justify-content: space-between; padding: 1rem; background: var(--surface); border: 1px solid var(--border); border-radius: 4px;">
               <div>
                 <div style="font-weight: 600; display: flex; align-items: center; gap: 0.5rem;">
@@ -3907,17 +3909,21 @@ Available merge tags: {{business_name}}, {{first_name}}, {{email}}, {{phone}}, {
                 <button class="btn-mini" onclick="deleteAgent(${agent.id})">Delete</button>
               </div>
             </div>
-          `).join('');
+          `).join('')
+          : '<div style="text-align: center; padding: 2rem; color: var(--text-dim);">No agents yet. Create one to get started!</div>';
 
-          // Populate agent selects
+        // Populate both containers
+        if (settingsContainer) settingsContainer.innerHTML = agentListHtml;
+        if (aiCallingContainer) aiCallingContainer.innerHTML = agentListHtml;
+
+        // Populate agent selects
+        if (result.agents && result.agents.length > 0) {
           const options = result.agents.filter(a => a.is_active).map(agent =>
             `<option value="${agent.id}">${agent.name} (${agent.goal})</option>`
           ).join('');
 
-          autoCallSelect.innerHTML = '<option value="">-- Select an agent --</option>' + options;
-          followupSelect.innerHTML = '<option value="">-- Select an agent --</option>' + options;
-        } else {
-          container.innerHTML = '<div style="text-align: center; padding: 2rem; color: var(--text-dim);">No agents yet. Create one to get started!</div>';
+          if (autoCallSelect) autoCallSelect.innerHTML = '<option value="">-- Select an agent --</option>' + options;
+          if (followupSelect) followupSelect.innerHTML = '<option value="">-- Select an agent --</option>' + options;
         }
       } catch (error) {
         console.error('Failed to load agents:', error);
