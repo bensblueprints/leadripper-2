@@ -3875,13 +3875,17 @@ Available merge tags: {{business_name}}, {{first_name}}, {{email}}, {{phone}}, {
     // =====================================
 
     async function loadAgents() {
+      console.log('[Agents] Loading agents...');
       try {
         const response = await fetch(`${API_BASE}/ai-agents`, {
           headers: { 'Authorization': `Bearer ${authToken}` }
         });
+        console.log('[Agents] Response status:', response.status);
         const result = await response.json();
+        console.log('[Agents] Result:', result);
 
-        const container = document.getElementById('agents-list');
+        const container = document.getElementById('ai-agents-list');
+        console.log('[Agents] Container found:', !!container);
         const autoCallSelect = document.getElementById('auto-call-agent');
         const followupSelect = document.getElementById('followup-agent');
 
