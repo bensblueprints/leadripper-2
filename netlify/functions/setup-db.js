@@ -122,6 +122,23 @@ exports.handler = async (event, context) => {
     `);
     results.push('✅ Created lr_user_settings table');
 
+    // Add missing columns to lr_user_settings if they don't exist
+    const settingsColumns = [
+      { name: 'resend_api_key', type: 'TEXT' },
+      { name: 'ghl_drip_enabled', type: 'BOOLEAN DEFAULT false' },
+      { name: 'ghl_drip_interval', type: 'INTEGER DEFAULT 15' },
+      { name: 'ghl_last_drip_at', type: 'TIMESTAMP' }
+    ];
+
+    for (const col of settingsColumns) {
+      try {
+        await pool.query(`ALTER TABLE lr_user_settings ADD COLUMN IF NOT EXISTS ${col.name} ${col.type}`);
+      } catch (e) {
+        // Column might already exist
+      }
+    }
+    results.push('✅ Added missing columns to lr_user_settings');
+
     // Create coupons table
     await pool.query(`
       CREATE TABLE IF NOT EXISTS lr_coupons (
