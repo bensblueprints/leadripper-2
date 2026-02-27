@@ -3660,6 +3660,14 @@ Available merge tags: {{business_name}}, {{first_name}}, {{email}}, {{phone}}, {
       const voice = document.getElementById('elevenlabs-voice').value;
       const enabled = document.getElementById('ai-calling-enabled').checked;
 
+      console.log('[ElevenLabs Save] Starting save:', {
+        hasApiKey: !!apiKey,
+        apiKeyLength: apiKey?.length,
+        apiKeyPreview: apiKey ? apiKey.substring(0, 8) + '...' : 'empty',
+        voice: voice,
+        enabled: enabled
+      });
+
       try {
         const response = await fetch(`${API_BASE}/update-settings`, {
           method: 'POST',
@@ -3674,13 +3682,18 @@ Available merge tags: {{business_name}}, {{first_name}}, {{email}}, {{phone}}, {
           })
         });
 
+        console.log('[ElevenLabs Save] Response status:', response.status);
         const result = await response.json();
+        console.log('[ElevenLabs Save] Response body:', result);
+
         if (result.success) {
           showToast('AI Calling settings saved', 'success');
         } else {
+          console.error('[ElevenLabs Save] Error from server:', result);
           showToast(result.error || 'Failed to save settings', 'error');
         }
       } catch (error) {
+        console.error('[ElevenLabs Save] Exception:', error);
         showToast('Failed to save settings', 'error');
       }
     }

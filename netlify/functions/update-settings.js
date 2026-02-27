@@ -49,6 +49,9 @@ exports.handler = async (event, context) => {
   }
 
   try {
+    const body = JSON.parse(event.body);
+    console.log('Update settings received:', JSON.stringify(body));
+
     const {
       ghlApiKey, ghlLocationId, ghlAutoSync, ghlPipelineId, ghlStageId, ghlIndustryPipelines,
       ghlDripEnabled, ghlDripInterval, resendApiKey, webhookUrl, name, company,
@@ -57,7 +60,7 @@ exports.handler = async (event, context) => {
       calendarTimezone, calendarWorkingHours, aiCallingEnabled,
       // Auto-call settings
       autoCallEnabled, autoCallAgentId, autoFollowupEnabled, followupAgentId
-    } = JSON.parse(event.body);
+    } = body;
 
     // Update user profile if provided
     if (name !== undefined || company !== undefined) {
@@ -163,6 +166,7 @@ exports.handler = async (event, context) => {
         paramIndex++;
       }
       if (elevenlabsApiKey !== undefined && elevenlabsApiKey !== '••••••••') {
+        console.log('Updating elevenlabs_api_key, value length:', elevenlabsApiKey ? elevenlabsApiKey.length : 0);
         settingsUpdates.push(`elevenlabs_api_key = $${paramIndex}`);
         settingsValues.push(elevenlabsApiKey);
         paramIndex++;
@@ -217,10 +221,13 @@ exports.handler = async (event, context) => {
 
       if (settingsUpdates.length > 0) {
         settingsValues.push(decoded.userId);
-        await pool.query(
-          `UPDATE lr_user_settings SET ${settingsUpdates.join(', ')}, updated_at = NOW() WHERE user_id = $${paramIndex}`,
-          settingsValues
-        );
+        const updateQuery = `UPDATE lr_user_settings SET ${settingsUpdates.join(', ')}, updated_at = NOW() WHERE user_id = $${paramIndex}`;
+        console.log('Executing update query:', updateQuery);
+        console.log('With values count:', settingsValues.length);
+        const updateResult = await pool.query(updateQuery, settingsValues);
+        console.log('Update result rowCount:', updateResult.rowCount);
+      } else {
+        console.log('No settings updates to make');
       }
     }
 
