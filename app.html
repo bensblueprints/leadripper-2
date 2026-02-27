@@ -2359,6 +2359,91 @@
         </div>
         </div><!-- End GHL Settings Container -->
 
+        <!-- ElevenLabs AI Calling Card (available in all modes) -->
+        <div class="card">
+          <div class="card-header">
+            <h2 class="card-title display">🤖 ElevenLabs AI Calling</h2>
+          </div>
+          <p style="color: var(--text-secondary); margin-bottom: 1rem;">
+            Configure your ElevenLabs API for AI-powered outbound calling.
+          </p>
+          <div class="form-group">
+            <label class="form-label">ElevenLabs API Key</label>
+            <input type="password" class="form-input mono" id="elevenlabs-api-key" placeholder="Enter your ElevenLabs API key">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Default Voice</label>
+            <select class="form-input mono" id="elevenlabs-voice">
+              <option value="">-- Connect API to load voices --</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label class="form-label" style="display: flex; align-items: center; gap: 0.5rem; cursor: pointer;">
+              <input type="checkbox" id="ai-calling-enabled" style="width: auto; cursor: pointer;">
+              Enable AI Calling
+            </label>
+          </div>
+          <button class="btn-secondary" onclick="saveElevenlabsSettings()">Save AI Calling Settings</button>
+        </div>
+
+        <!-- Auto-Call Settings Card (available in all modes) -->
+        <div class="card">
+          <div class="card-header">
+            <h2 class="card-title display">📞 Auto-Call for Missing Emails</h2>
+          </div>
+          <p style="color: var(--text-secondary); margin-bottom: 1rem;">
+            Automatically call leads without email addresses during business hours to collect their email.
+          </p>
+          <div class="form-group">
+            <label class="form-label" style="display: flex; align-items: center; gap: 0.5rem; cursor: pointer;">
+              <input type="checkbox" id="auto-call-enabled" style="width: auto; cursor: pointer;">
+              Enable Auto-Call for leads without emails
+            </label>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Email Collection Agent</label>
+            <select class="form-input mono" id="auto-call-agent">
+              <option value="">-- Select an agent --</option>
+            </select>
+            <small style="color: var(--text-dim); display: block; margin-top: 0.25rem;">
+              This agent will call to collect email addresses
+            </small>
+          </div>
+          <div class="form-group">
+            <label class="form-label" style="display: flex; align-items: center; gap: 0.5rem; cursor: pointer;">
+              <input type="checkbox" id="auto-followup-enabled" style="width: auto; cursor: pointer;">
+              Auto-schedule follow-up call after email collected
+            </label>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Follow-up Agent (Decision Maker/Meeting)</label>
+            <select class="form-input mono" id="followup-agent">
+              <option value="">-- Select an agent --</option>
+            </select>
+            <small style="color: var(--text-dim); display: block; margin-top: 0.25rem;">
+              This agent will call back to reach decision-makers or schedule meetings
+            </small>
+          </div>
+          <button class="btn-secondary" onclick="saveAutoCallSettings()">Save Auto-Call Settings</button>
+        </div>
+
+        <!-- AI Agents Manager Card (available in all modes) -->
+        <div class="card">
+          <div class="card-header" style="display: flex; justify-content: space-between; align-items: center;">
+            <h2 class="card-title display">🎯 AI Agents</h2>
+            <button class="btn-mini" onclick="openAgentModal()">+ New Agent</button>
+          </div>
+          <p style="color: var(--text-secondary); margin-bottom: 1rem;">
+            Create and manage AI calling agents with custom personalities and goals.
+          </p>
+          <div id="agents-list" style="display: flex; flex-direction: column; gap: 0.75rem;">
+            <!-- Agents will be loaded here -->
+            <div style="text-align: center; padding: 2rem; color: var(--text-dim);">
+              Loading agents...
+            </div>
+          </div>
+        </div>
+
         <!-- Internal CRM Settings (shown when mode is 'internal') -->
         <div id="internal-crm-settings-container" style="display: none;">
 
@@ -2384,91 +2469,6 @@
                 <svg width="18" height="18" viewBox="0 0 24 24"><path fill="#0078D4" d="M24 7.387v10.478c0 .23-.08.424-.238.576-.149.152-.345.228-.576.228H9.273V6.547h13.913c.23 0 .427.08.576.238.158.158.238.365.238.602zM8.18 17.695V6.547L0 9.566v5.098l8.18 3.031zM24 5.455H9.273V1.636c0-.452.149-.846.457-1.179.308-.333.68-.457 1.12-.457h11.514c.452 0 .846.149 1.179.457.333.308.457.68.457 1.12V5.455zM24 18.545v3.819c0 .452-.149.846-.457 1.179-.333.308-.68.457-1.12.457H10.909c-.452 0-.846-.149-1.179-.457-.333-.308-.457-.68-.457-1.12v-3.878H24z"/></svg>
                 Connect Outlook
               </button>
-            </div>
-          </div>
-
-          <!-- ElevenLabs AI Calling Card -->
-          <div class="card">
-            <div class="card-header">
-              <h2 class="card-title display">🤖 ElevenLabs AI Calling</h2>
-            </div>
-            <p style="color: var(--text-secondary); margin-bottom: 1rem;">
-              Configure your ElevenLabs API for AI-powered outbound calling.
-            </p>
-            <div class="form-group">
-              <label class="form-label">ElevenLabs API Key</label>
-              <input type="password" class="form-input mono" id="elevenlabs-api-key" placeholder="Enter your ElevenLabs API key">
-            </div>
-            <div class="form-group">
-              <label class="form-label">Default Voice</label>
-              <select class="form-input mono" id="elevenlabs-voice">
-                <option value="">-- Connect API to load voices --</option>
-              </select>
-            </div>
-            <div class="form-group">
-              <label class="form-label" style="display: flex; align-items: center; gap: 0.5rem; cursor: pointer;">
-                <input type="checkbox" id="ai-calling-enabled" style="width: auto; cursor: pointer;">
-                Enable AI Calling
-              </label>
-            </div>
-            <button class="btn-secondary" onclick="saveElevenlabsSettings()">Save AI Calling Settings</button>
-          </div>
-
-          <!-- Auto-Call Settings Card -->
-          <div class="card">
-            <div class="card-header">
-              <h2 class="card-title display">📞 Auto-Call for Missing Emails</h2>
-            </div>
-            <p style="color: var(--text-secondary); margin-bottom: 1rem;">
-              Automatically call leads without email addresses during business hours to collect their email.
-            </p>
-            <div class="form-group">
-              <label class="form-label" style="display: flex; align-items: center; gap: 0.5rem; cursor: pointer;">
-                <input type="checkbox" id="auto-call-enabled" style="width: auto; cursor: pointer;">
-                Enable Auto-Call for leads without emails
-              </label>
-            </div>
-            <div class="form-group">
-              <label class="form-label">Email Collection Agent</label>
-              <select class="form-input mono" id="auto-call-agent">
-                <option value="">-- Select an agent --</option>
-              </select>
-              <small style="color: var(--text-dim); display: block; margin-top: 0.25rem;">
-                This agent will call to collect email addresses
-              </small>
-            </div>
-            <div class="form-group">
-              <label class="form-label" style="display: flex; align-items: center; gap: 0.5rem; cursor: pointer;">
-                <input type="checkbox" id="auto-followup-enabled" style="width: auto; cursor: pointer;">
-                Auto-schedule follow-up call after email collected
-              </label>
-            </div>
-            <div class="form-group">
-              <label class="form-label">Follow-up Agent (Decision Maker/Meeting)</label>
-              <select class="form-input mono" id="followup-agent">
-                <option value="">-- Select an agent --</option>
-              </select>
-              <small style="color: var(--text-dim); display: block; margin-top: 0.25rem;">
-                This agent will call back to reach decision-makers or schedule meetings
-              </small>
-            </div>
-            <button class="btn-secondary" onclick="saveAutoCallSettings()">Save Auto-Call Settings</button>
-          </div>
-
-          <!-- AI Agents Manager Card -->
-          <div class="card">
-            <div class="card-header" style="display: flex; justify-content: space-between; align-items: center;">
-              <h2 class="card-title display">🎯 AI Agents</h2>
-              <button class="btn-mini" onclick="openAgentModal()">+ New Agent</button>
-            </div>
-            <p style="color: var(--text-secondary); margin-bottom: 1rem;">
-              Create and manage AI calling agents with custom personalities and goals.
-            </p>
-            <div id="agents-list" style="display: flex; flex-direction: column; gap: 0.75rem;">
-              <!-- Agents will be loaded here -->
-              <div style="text-align: center; padding: 2rem; color: var(--text-dim);">
-                Loading agents...
-              </div>
             </div>
           </div>
 
@@ -4284,15 +4284,33 @@ Available merge tags: {{business_name}}, {{first_name}}, {{email}}, {{phone}}, {
           item.style.display = mode === 'internal' ? 'flex' : 'none';
         });
 
-        // Load internal CRM settings if applicable
+        // Load ElevenLabs and AI Calling settings (available in ALL modes)
+        if (settings.elevenlabsApiKey) {
+          document.getElementById('elevenlabs-api-key').value = settings.elevenlabsApiKey;
+        }
+        if (settings.elevenlabsDefaultVoice) {
+          document.getElementById('elevenlabs-voice').value = settings.elevenlabsDefaultVoice;
+        }
+        document.getElementById('ai-calling-enabled').checked = settings.aiCallingEnabled || false;
+
+        // Load auto-call settings (available in ALL modes)
+        document.getElementById('auto-call-enabled').checked = settings.autoCallEnabled || false;
+        document.getElementById('auto-followup-enabled').checked = settings.autoFollowupEnabled || false;
+
+        // Load agents and populate dropdowns (available in ALL modes)
+        loadAgents();
+        populateAgentDropdowns().then(() => {
+          // Set the selected agents after dropdowns are populated
+          if (settings.autoCallAgentId) {
+            document.getElementById('auto-call-agent').value = settings.autoCallAgentId;
+          }
+          if (settings.followupAgentId) {
+            document.getElementById('followup-agent').value = settings.followupAgentId;
+          }
+        });
+
+        // Load internal CRM-specific settings if applicable
         if (mode === 'internal') {
-          if (settings.elevenlabsApiKey) {
-            document.getElementById('elevenlabs-api-key').value = settings.elevenlabsApiKey;
-          }
-          if (settings.elevenlabsDefaultVoice) {
-            document.getElementById('elevenlabs-voice').value = settings.elevenlabsDefaultVoice;
-          }
-          document.getElementById('ai-calling-enabled').checked = settings.aiCallingEnabled || false;
           if (settings.calendarTimezone) {
             document.getElementById('calendar-timezone').value = settings.calendarTimezone;
           }
@@ -4304,22 +4322,8 @@ Available merge tags: {{business_name}}, {{first_name}}, {{email}}, {{phone}}, {
             document.getElementById('email-signature').value = settings.emailSignature;
           }
 
-          // Load auto-call settings
-          document.getElementById('auto-call-enabled').checked = settings.autoCallEnabled || false;
-          document.getElementById('auto-followup-enabled').checked = settings.autoFollowupEnabled || false;
-
-          // Load agents and populate dropdowns
+          // Load email accounts (CRM-specific)
           loadEmailAccounts();
-          loadAgents();
-          populateAgentDropdowns().then(() => {
-            // Set the selected agents after dropdowns are populated
-            if (settings.autoCallAgentId) {
-              document.getElementById('auto-call-agent').value = settings.autoCallAgentId;
-            }
-            if (settings.followupAgentId) {
-              document.getElementById('followup-agent').value = settings.followupAgentId;
-            }
-          });
 
           // Load pipelines for the board
           loadPipelines();
@@ -5093,11 +5097,12 @@ Available merge tags: {{business_name}}, {{first_name}}, {{email}}, {{phone}}, {
       if (section === 'email-outreach') {
         loadEmailOutreachData();
       } else if (section === 'settings') {
-        // Load integrations data for internal CRM mode
+        // Load AI agents (available in all modes)
+        loadAgents();
+        populateAgentDropdowns();
+        // Load email accounts only for internal CRM mode
         if (crmMode === 'internal') {
           loadEmailAccounts();
-          loadAgents();
-          populateAgentDropdowns();
         }
       }
     }
