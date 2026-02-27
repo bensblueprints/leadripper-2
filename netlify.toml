@@ -6,6 +6,10 @@
 [functions."process-ghl-queue"]
   schedule = "*/5 * * * *"
 
+# Scheduled function for AI auto-call queue processing (every 5 minutes)
+[functions."process-call-queue"]
+  schedule = "*/5 * * * *"
+
 [[headers]]
   for = "/*"
   [headers.values]

@@ -54,7 +54,9 @@ exports.handler = async (event, context) => {
       ghlDripEnabled, ghlDripInterval, resendApiKey, webhookUrl, name, company,
       // CRM Settings
       crmMode, elevenlabsApiKey, elevenlabsDefaultVoice, emailSignature,
-      calendarTimezone, calendarWorkingHours, aiCallingEnabled
+      calendarTimezone, calendarWorkingHours, aiCallingEnabled,
+      // Auto-call settings
+      autoCallEnabled, autoCallAgentId, autoFollowupEnabled, followupAgentId
     } = JSON.parse(event.body);
 
     // Update user profile if provided
@@ -87,7 +89,9 @@ exports.handler = async (event, context) => {
       ghlDripEnabled !== undefined || ghlDripInterval !== undefined || resendApiKey !== undefined ||
       webhookUrl !== undefined || crmMode !== undefined || elevenlabsApiKey !== undefined ||
       elevenlabsDefaultVoice !== undefined || emailSignature !== undefined || calendarTimezone !== undefined ||
-      calendarWorkingHours !== undefined || aiCallingEnabled !== undefined;
+      calendarWorkingHours !== undefined || aiCallingEnabled !== undefined ||
+      autoCallEnabled !== undefined || autoCallAgentId !== undefined ||
+      autoFollowupEnabled !== undefined || followupAgentId !== undefined;
 
     if (hasSettingsUpdate) {
       // First ensure settings row exists
@@ -186,6 +190,28 @@ exports.handler = async (event, context) => {
       if (aiCallingEnabled !== undefined) {
         settingsUpdates.push(`ai_calling_enabled = $${paramIndex}`);
         settingsValues.push(aiCallingEnabled);
+        paramIndex++;
+      }
+
+      // Auto-call settings
+      if (autoCallEnabled !== undefined) {
+        settingsUpdates.push(`auto_call_enabled = $${paramIndex}`);
+        settingsValues.push(autoCallEnabled);
+        paramIndex++;
+      }
+      if (autoCallAgentId !== undefined) {
+        settingsUpdates.push(`auto_call_agent_id = $${paramIndex}`);
+        settingsValues.push(autoCallAgentId);
+        paramIndex++;
+      }
+      if (autoFollowupEnabled !== undefined) {
+        settingsUpdates.push(`auto_followup_enabled = $${paramIndex}`);
+        settingsValues.push(autoFollowupEnabled);
+        paramIndex++;
+      }
+      if (followupAgentId !== undefined) {
+        settingsUpdates.push(`followup_agent_id = $${paramIndex}`);
+        settingsValues.push(followupAgentId);
         paramIndex++;
       }
 

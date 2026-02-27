@@ -53,7 +53,8 @@ exports.handler = async (event, context) => {
       `SELECT ghl_api_key, ghl_location_id, ghl_auto_sync, ghl_pipeline_id, ghl_stage_id,
               ghl_industry_pipelines, ghl_drip_enabled, ghl_drip_interval, resend_api_key, webhook_url,
               crm_mode, elevenlabs_api_key, elevenlabs_default_voice, email_signature,
-              calendar_timezone, calendar_working_hours, ai_calling_enabled, default_email_account_id
+              calendar_timezone, calendar_working_hours, ai_calling_enabled, default_email_account_id,
+              auto_call_enabled, auto_call_agent_id, auto_followup_enabled, followup_agent_id
        FROM lr_user_settings WHERE user_id = $1`,
       [decoded.userId]
     );
@@ -84,7 +85,12 @@ exports.handler = async (event, context) => {
           calendarWorkingHours: { start: '09:00', end: '17:00', days: [1,2,3,4,5] },
           aiCallingEnabled: false,
           hasElevenlabsKey: false,
-          defaultEmailAccountId: null
+          defaultEmailAccountId: null,
+          // Auto-call settings
+          autoCallEnabled: false,
+          autoCallAgentId: null,
+          autoFollowupEnabled: false,
+          followupAgentId: null
         })
       };
     }
@@ -137,7 +143,12 @@ exports.handler = async (event, context) => {
         calendarWorkingHours: calendarWorkingHours,
         aiCallingEnabled: settings.ai_calling_enabled || false,
         hasElevenlabsKey: !!settings.elevenlabs_api_key,
-        defaultEmailAccountId: settings.default_email_account_id
+        defaultEmailAccountId: settings.default_email_account_id,
+        // Auto-call settings
+        autoCallEnabled: settings.auto_call_enabled || false,
+        autoCallAgentId: settings.auto_call_agent_id,
+        autoFollowupEnabled: settings.auto_followup_enabled || false,
+        followupAgentId: settings.followup_agent_id
       })
     };
   } catch (error) {

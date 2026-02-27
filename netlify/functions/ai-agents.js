@@ -151,7 +151,7 @@ exports.handler = async (event, context) => {
       }
 
       // Validate goal
-      const validGoals = ['schedule_meeting', 'qualify_lead', 'collect_info'];
+      const validGoals = ['schedule_meeting', 'qualify_lead', 'collect_info', 'collect_email', 'reach_decision_maker'];
       if (goal && !validGoals.includes(goal)) {
         return {
           statusCode: 400,
