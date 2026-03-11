@@ -3418,9 +3418,11 @@
 
         const data = await response.json();
         if (data.success) {
-          alert('GHL integration settings saved!');
+          alert('GHL integration settings saved! Loading pipelines...');
           document.getElementById('ghl-api-key').value = '';
           document.getElementById('ghl-api-key').placeholder = '••••••••••••••••';
+          // Fetch pipelines after saving API key
+          await fetchGhlPipelines();
         } else {
           alert('Failed to save settings: ' + (data.error || 'Unknown error'));
         }
@@ -3746,6 +3748,57 @@
         }).catch(err => console.error('Auto-save industry failed:', err));
       }
     }
+
+    // ============================================
+    // EXPORT CSV
+    // ============================================
+    document.getElementById('export-leads-btn').addEventListener('click', async () => {
+      const btn = document.getElementById('export-leads-btn');
+      btn.disabled = true;
+      btn.textContent = 'Exporting...';
+
+      try {
+        // Fetch all leads (up to 10000)
+        const response = await fetch(`${API_BASE}/get-leads?limit=10000&offset=0`, {
+          headers: { 'Authorization': `Bearer ${authToken}` }
+        });
+
+        if (!response.ok) throw new Error('Failed to fetch leads');
+        const data = await response.json();
+        const leads = data.leads || [];
+
+        if (leads.length === 0) {
+          alert('No leads to export. Scrape some leads first!');
+          return;
+        }
+
+        const headers = ['Business Name', 'Phone', 'Email', 'Address', 'City', 'State', 'Industry', 'Website', 'Rating', 'Reviews', 'GHL Synced'];
+        const csvRows = [headers.join(',')];
+
+        leads.forEach(lead => {
+          const row = [
+            lead.business_name, lead.phone, lead.email, lead.address,
+            lead.city, lead.state, lead.industry, lead.website,
+            lead.rating, lead.reviews, lead.ghl_synced ? 'Yes' : 'No'
+          ].map(val => `"${(val || '').toString().replace(/"/g, '""')}"`);
+          csvRows.push(row.join(','));
+        });
+
+        const blob = new Blob([csvRows.join('\n')], { type: 'text/csv' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `leadripper-export-${new Date().toISOString().slice(0, 10)}.csv`;
+        a.click();
+        URL.revokeObjectURL(url);
+      } catch (error) {
+        console.error('Export error:', error);
+        alert('Failed to export leads: ' + error.message);
+      } finally {
+        btn.disabled = false;
+        btn.textContent = '⬇ Export CSV';
+      }
+    });
   </script>
 </body>
 </html>

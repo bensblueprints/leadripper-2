@@ -6,7 +6,7 @@ const pool = new Pool({
   ssl: { rejectUnauthorized: false }
 });
 
-const JWT_SECRET = process.env.JWT_SECRET || 'leadripper-secret-key-2024';
+const JWT_SECRET = process.env.JWT_SECRET || 'leadripper-secret-key-2026';
 
 // Plan configurations
 const PLANS = {
