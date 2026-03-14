@@ -65,7 +65,8 @@ exports.handler = async (event, context) => {
       SELECT id, business_name, phone, email, address, city, state, industry,
              website, rating, reviews, ghl_synced, ghl_contact_id, created_at,
              email_verified, email_score, email_validation_date,
-             website_score, website_grade, website_analysis, website_analyzed_at
+             website_score, website_grade, website_analysis, website_analyzed_at,
+             tags, contact_name
       FROM lr_leads WHERE user_id = $1
     `;
     const values = [decoded.userId];

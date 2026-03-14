@@ -2411,6 +2411,11 @@
             </select>
           </div>
           <div class="filter-group">
+            <select id="filter-tag" class="filter-select" onchange="applyFilters()">
+              <option value="">All Tags</option>
+            </select>
+          </div>
+          <div class="filter-group">
             <select id="filter-status" class="filter-select" onchange="applyFilters()">
               <option value="">All Status</option>
               <option value="no-email">No Email</option>
@@ -2429,6 +2434,7 @@
           </select>
           <button class="btn-secondary" onclick="addSelectedToList()" style="font-size: 0.85rem;">Add to List</button>
           <button class="btn-secondary" onclick="createNewListFromSelected()" style="font-size: 0.85rem;">+ New List</button>
+          <button class="btn-secondary" onclick="bulkAddTag()" style="font-size: 0.85rem;">+ Tag</button>
           <button class="btn" onclick="callSelectedLeads()" style="font-size: 0.85rem;">Call Selected</button>
         </div>
 
@@ -6163,6 +6169,7 @@ I noticed {{business_name}} in {{city}} and wanted to reach out..."></textarea>
     let filterCity = '';
     let filterIndustry = '';
     let filterStatus = '';
+    let filterTag = '';
     let searchTimeout = null;
     let expandedLeads = new Set();
     let availableCities = [];
@@ -6224,6 +6231,7 @@ I noticed {{business_name}} in {{city}} and wanted to reach out..."></textarea>
       filterCity = document.getElementById('filter-city').value;
       filterIndustry = document.getElementById('filter-industry').value;
       filterStatus = document.getElementById('filter-status').value;
+      filterTag = document.getElementById('filter-tag')?.value || '';
       loadLeads(1);
     }
 
@@ -6333,6 +6341,17 @@ I noticed {{business_name}} in {{city}} and wanted to reach out..."></textarea>
             }
           });
         }
+
+        // Apply tag filter
+        if (filterTag) {
+          leadsData = leadsData.filter(lead => {
+            const tags = lead.tags || [];
+            return tags.includes(filterTag);
+          });
+        }
+
+        // Load tag filter options
+        loadTagFilter();
 
         populateFilterDropdowns();
         populateIndustrySuggestions();
@@ -6834,6 +6853,92 @@ I noticed {{business_name}} in {{city}} and wanted to reach out..."></textarea>
     }
 
     // Score a single lead's website
+    // =====================================
+    // CONTACT TAGS
+    // =====================================
+    async function addTagToLeadPrompt(leadId) {
+      const tag = prompt('Enter tag name:');
+      if (!tag || !tag.trim()) return;
+      try {
+        const resp = await fetch(`${API_BASE}/contact-tags`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${authToken}` },
+          body: JSON.stringify({ leadId, tag: tag.trim() })
+        });
+        const data = await resp.json();
+        if (data.success) {
+          const lead = leadsData.find(l => l.id === leadId);
+          if (lead) {
+            if (!lead.tags) lead.tags = [];
+            if (!lead.tags.includes(tag.trim())) lead.tags.push(tag.trim());
+          }
+          renderLeadsTable();
+          loadTagFilter();
+          showToast(`Tag "${tag.trim()}" added`, 'success');
+        } else {
+          showToast(data.error || 'Failed', 'error');
+        }
+      } catch (e) { showToast('Failed to add tag', 'error'); }
+    }
+
+    async function removeTagFromLead(leadId, tag) {
+      try {
+        const resp = await fetch(`${API_BASE}/contact-tags`, {
+          method: 'DELETE',
+          headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${authToken}` },
+          body: JSON.stringify({ leadId, tag })
+        });
+        const data = await resp.json();
+        if (data.success) {
+          const lead = leadsData.find(l => l.id === leadId);
+          if (lead && lead.tags) lead.tags = lead.tags.filter(t => t !== tag);
+          renderLeadsTable();
+          showToast(`Tag "${tag}" removed`, 'success');
+        }
+      } catch (e) { showToast('Failed to remove tag', 'error'); }
+    }
+
+    async function bulkAddTag() {
+      if (selectedLeadIds.size === 0) { showToast('No leads selected', 'warning'); return; }
+      const tag = prompt('Enter tag to add to selected leads:');
+      if (!tag || !tag.trim()) return;
+      try {
+        const resp = await fetch(`${API_BASE}/contact-tags`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${authToken}` },
+          body: JSON.stringify({ leadIds: Array.from(selectedLeadIds), tag: tag.trim() })
+        });
+        const data = await resp.json();
+        if (data.success) {
+          // Update local data
+          leadsData.forEach(l => {
+            if (selectedLeadIds.has(l.id)) {
+              if (!l.tags) l.tags = [];
+              if (!l.tags.includes(tag.trim())) l.tags.push(tag.trim());
+            }
+          });
+          renderLeadsTable();
+          loadTagFilter();
+          showToast(`Tagged ${data.updated} leads with "${tag.trim()}"`, 'success');
+        }
+      } catch (e) { showToast('Failed to bulk tag', 'error'); }
+    }
+
+    async function loadTagFilter() {
+      try {
+        const resp = await fetch(`${API_BASE}/contact-tags`, {
+          headers: { 'Authorization': `Bearer ${authToken}` }
+        });
+        const data = await resp.json();
+        const select = document.getElementById('filter-tag');
+        if (select && data.tags) {
+          const current = select.value;
+          select.innerHTML = '<option value="">All Tags</option>' +
+            data.tags.map(t => `<option value="${escapeHtml(t)}" ${t===current?'selected':''}>${escapeHtml(t)}</option>`).join('');
+        }
+      } catch {}
+    }
+
     async function scoreWebsiteForLead(leadId) {
       const lead = leadsData.find(l => l.id === leadId);
       if (!lead || !lead.website) {
@@ -7166,6 +7271,13 @@ I noticed {{business_name}} in {{city}} and wanted to reach out..."></textarea>
                   <div class="detail-group">
                     <div class="detail-label">Website Score</div>
                     <div class="detail-value">${lead.website_score != null ? `${getWebsiteScoreBadge(lead)} ${lead.website_grade} - ${lead.website_score}/100 <button class="btn-secondary" style="font-size:0.75rem;padding:2px 8px;margin-left:8px;" onclick="event.stopPropagation();generateWebsiteReport(${lead.id})">📄 Generate PDF Report</button>` : 'Not analyzed'}</div>
+                  </div>
+                  <div class="detail-group" style="grid-column: 1 / -1;">
+                    <div class="detail-label">Tags</div>
+                    <div class="detail-value" style="display:flex;flex-wrap:wrap;gap:0.3rem;align-items:center;">
+                      ${(lead.tags || []).map(t => `<span style="display:inline-flex;align-items:center;gap:3px;background:rgba(255,62,0,0.15);color:var(--accent);border:1px solid rgba(255,62,0,0.3);padding:2px 8px;border-radius:12px;font-size:0.7rem;">${escapeHtml(t)}<span style="cursor:pointer;margin-left:2px;font-weight:bold;" onclick="event.stopPropagation();removeTagFromLead(${lead.id},'${escapeHtml(t)}')">&times;</span></span>`).join('')}
+                      <button class="btn-mini" style="font-size:0.6rem;padding:1px 6px;" onclick="event.stopPropagation();addTagToLeadPrompt(${lead.id})">+ Tag</button>
+                    </div>
                   </div>
                   <div class="detail-group">
                     <div class="detail-label">GHL Status</div>
