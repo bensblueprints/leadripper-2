@@ -2222,7 +2222,7 @@
         </div>
         <div class="nav-item" data-section="email-outreach">
           <span class="nav-icon">🚀</span>
-          <span>Email Outreach</span>
+          <span>Email Ripper</span>
         </div>
         <div class="nav-item" data-section="email-accounts">
           <span class="nav-icon">📧</span>
@@ -2230,7 +2230,11 @@
         </div>
         <div class="nav-item" data-section="ai-calling">
           <span class="nav-icon">🤖</span>
-          <span>AI Calling</span>
+          <span>Sales Ripper AI</span>
+        </div>
+        <div class="nav-item" data-section="web-ripper">
+          <span class="nav-icon">🌐</span>
+          <span>Web Ripper AI</span>
         </div>
         <div class="nav-item" data-section="workflows">
           <span class="nav-icon">⚡</span>
@@ -3303,8 +3307,8 @@
         <div class="header">
           <div class="header-top">
             <div>
-              <h1 class="page-title display">EMAIL OUTREACH</h1>
-              <p class="page-subtitle mono">Send cold emails to your leads</p>
+              <h1 class="page-title display">EMAIL RIPPER</h1>
+              <p class="page-subtitle mono">Cold email outreach engine</p>
             </div>
             <div class="header-actions">
               <button class="btn" onclick="openNewTemplateModal()">+ New Template</button>
@@ -3799,8 +3803,8 @@ I noticed {{business_name}} in {{city}} and wanted to reach out..."></textarea>
         <div class="header">
           <div class="header-top">
             <div>
-              <h1 class="page-title display">AI CALLING</h1>
-              <p class="page-subtitle mono">Configure AI agents for outbound calls</p>
+              <h1 class="page-title display">SALES RIPPER AI</h1>
+              <p class="page-subtitle mono">AI-powered outbound sales calling</p>
             </div>
             <div class="header-actions">
               <button class="btn" onclick="openNewAgentModal()">+ New Agent</button>
@@ -3886,6 +3890,62 @@ I noticed {{business_name}} in {{city}} and wanted to reach out..."></textarea>
           </div>
           <div id="call-recordings-container">
             <p style="color: var(--text-dim); text-align: center; padding: 1rem;">Loading call history...</p>
+          </div>
+        </div>
+      </section>
+
+      <!-- Web Ripper AI Section -->
+      <section id="web-ripper-section" class="section">
+        <div class="header">
+          <div class="header-top">
+            <div>
+              <h1 class="page-title display">WEB RIPPER AI</h1>
+              <p class="page-subtitle mono">AI-powered website rebuilding for your leads</p>
+            </div>
+            <div class="header-actions">
+              <button class="btn" onclick="loadWebRipperLeads()">🔄 Refresh</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="stats-grid">
+          <div class="stat-card">
+            <div class="stat-value mono" id="stat-wr-total">0</div>
+            <div class="stat-label">Leads with Websites</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-value mono" id="stat-wr-scored">0</div>
+            <div class="stat-label">Sites Scored</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-value mono" id="stat-wr-rebuilt">0</div>
+            <div class="stat-label">Sites Rebuilt</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-value mono" id="stat-wr-sent">0</div>
+            <div class="stat-label">Sent to Customer</div>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-header">
+            <h2 class="card-title display">Website Rebuild Pipeline</h2>
+          </div>
+          <div class="table-container">
+            <table>
+              <thead>
+                <tr>
+                  <th>Business Name</th>
+                  <th>Website URL</th>
+                  <th>Score</th>
+                  <th>Rebuild Status</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody id="web-ripper-table-body">
+                <tr><td colspan="5" style="text-align:center;color:var(--text-dim);padding:2rem;">Loading leads...</td></tr>
+              </tbody>
+            </table>
           </div>
         </div>
       </section>
@@ -6538,13 +6598,18 @@ I noticed {{business_name}} in {{city}} and wanted to reach out..."></textarea>
         return `
           <div style="display:flex;flex-direction:column;gap:6px;width:100%;">
             <div style="display:flex;align-items:center;gap:8px;">
-              <span style="color:#0f0;font-weight:600;">✓ Website Rebuilt</span>
+              <span style="color:#0f0;font-weight:600;">✓ Website Rebuilt — Ready for Review</span>
               <span style="font-size:0.7rem;color:var(--text-dim);">${lead.website_rebuilt_at ? new Date(lead.website_rebuilt_at).toLocaleDateString() : ''}</span>
             </div>
-            ${previewUrl ? `<a href="${previewUrl}" target="_blank" style="color:var(--accent);font-size:0.8rem;text-decoration:underline;">🔗 View Rebuilt Site</a>` : ''}
-            <button id="rebuild-btn-${lead.id}" class="btn-action" style="background:linear-gradient(135deg,#ff3e00,#ff6b35);color:#fff;font-size:0.75rem;padding:4px 12px;border:none;border-radius:6px;cursor:pointer;font-weight:600;width:fit-content;margin-top:4px;" onclick="event.stopPropagation();rebuildWebsiteForLead(${lead.id})">
-              🔄 Rebuild Again
-            </button>
+            ${previewUrl ? `<a href="${previewUrl}" target="_blank" style="color:var(--accent);font-size:0.8rem;text-decoration:underline;">🔗 Preview Rebuilt Site</a>` : ''}
+            <div style="display:flex;gap:8px;margin-top:4px;flex-wrap:wrap;">
+              <button id="rebuild-btn-${lead.id}" class="btn-action" style="background:linear-gradient(135deg,#ff3e00,#ff6b35);color:#fff;font-size:0.75rem;padding:4px 12px;border:none;border-radius:6px;cursor:pointer;font-weight:600;" onclick="event.stopPropagation();rebuildWebsiteForLead(${lead.id})">
+                🔄 Rebuild Again
+              </button>
+              <button class="btn-action" style="background:linear-gradient(135deg,#00cc33,#00ff41);color:#000;font-size:0.75rem;padding:4px 12px;border:none;border-radius:6px;cursor:pointer;font-weight:600;" onclick="event.stopPropagation();sendRebuiltToCustomer(${lead.id})">
+                📧 Send to Customer
+              </button>
+            </div>
           </div>`;
       }
 
@@ -6580,13 +6645,13 @@ I noticed {{business_name}} in {{city}} and wanted to reach out..."></textarea>
           </div>`;
       }
 
-      // Default: show the rebuild button
+      // Default: show the rebuild button (build only, no auto-send)
       return `
         <div style="display:flex;align-items:center;flex-wrap:wrap;gap:8px;">
           <button id="rebuild-btn-${lead.id}" class="btn-action" style="background:linear-gradient(135deg,#ff3e00,#ff6b35);color:#fff;font-size:0.8rem;padding:6px 16px;border:none;border-radius:6px;cursor:pointer;font-weight:600;" onclick="event.stopPropagation();rebuildWebsiteForLead(${lead.id})">
-            🏗️ Rebuild Website & Send to Customer
+            🏗️ Rebuild Website
           </button>
-          <span style="font-size:0.7rem;color:var(--text-dim);">Scrapes site → AI rebuilds → QA tests → Emails preview → AI calls customer</span>
+          <span style="font-size:0.7rem;color:var(--text-dim);">Scrapes site → AI rebuilds → QA tests → Preview for review</span>
           ${lead.website_rebuilt_at ? `<span style="font-size:0.7rem;color:#0f0;">✓ Last rebuilt ${new Date(lead.website_rebuilt_at).toLocaleDateString()}</span>` : ''}
         </div>`;
     }
@@ -6703,7 +6768,7 @@ I noticed {{business_name}} in {{city}} and wanted to reach out..."></textarea>
         } else {
           showToast(data.error || 'Failed to launch rebuild pipeline', 'error');
           if (btn) {
-            btn.innerHTML = '🏗️ Rebuild Website & Send to Customer';
+            btn.innerHTML = '🏗️ Rebuild Website';
             btn.disabled = false;
             btn.style.opacity = '1';
           }
@@ -6712,10 +6777,147 @@ I noticed {{business_name}} in {{city}} and wanted to reach out..."></textarea>
         console.error('Rebuild error:', error);
         showToast('Failed to connect to rebuild service', 'error');
         if (btn) {
-          btn.innerHTML = '🏗️ Rebuild Website & Send to Customer';
+          btn.innerHTML = '🏗️ Rebuild Website';
           btn.disabled = false;
           btn.style.opacity = '1';
         }
+      }
+    }
+
+    // ============================================
+    // WEB RIPPER AI FUNCTIONS
+    // ============================================
+
+    // Load leads with websites for the Web Ripper tab
+    async function loadWebRipperLeads() {
+      const tbody = document.getElementById('web-ripper-table-body');
+      if (!tbody) return;
+
+      // Filter leads that have websites
+      const webLeads = leadsData.filter(l => l.website);
+
+      // Update stats
+      const totalEl = document.getElementById('stat-wr-total');
+      const scoredEl = document.getElementById('stat-wr-scored');
+      const rebuiltEl = document.getElementById('stat-wr-rebuilt');
+      const sentEl = document.getElementById('stat-wr-sent');
+
+      if (totalEl) totalEl.textContent = webLeads.length;
+      if (scoredEl) scoredEl.textContent = webLeads.filter(l => l.website_score != null).length;
+      if (rebuiltEl) rebuiltEl.textContent = webLeads.filter(l => l.rebuild_status === 'complete' && l.rebuild_phase === 'complete').length;
+      if (sentEl) sentEl.textContent = webLeads.filter(l => l.rebuild_sent_to_customer).length;
+
+      if (webLeads.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;color:var(--text-dim);padding:2rem;">No leads with websites found. Scrape some leads first!</td></tr>';
+        return;
+      }
+
+      tbody.innerHTML = webLeads.map(lead => {
+        const isBuilding = lead.rebuild_status === 'in_progress';
+        const isComplete = lead.rebuild_status === 'complete' && lead.rebuild_phase === 'complete';
+        const isSent = lead.rebuild_sent_to_customer;
+        const previewUrl = lead.rebuild_preview_url || lead.rebuilt_website_url || '';
+
+        let statusBadge = '<span class="status-badge ready">Not Started</span>';
+        if (isSent) {
+          statusBadge = '<span class="status-badge synced">Sent to Customer</span>';
+        } else if (isComplete) {
+          statusBadge = '<span class="status-badge pending">Ready for Review</span>';
+        } else if (isBuilding) {
+          statusBadge = '<span class="status-badge" style="background:rgba(255,62,0,0.15);color:var(--accent);border:1px solid var(--accent);">Building...</span>';
+        }
+
+        let scoreBadge = '<span style="color:var(--text-dim);">—</span>';
+        if (lead.website_score != null) {
+          scoreBadge = getWebsiteScoreBadge(lead) + ' ' + (lead.website_grade || '');
+        }
+
+        let actions = '';
+        // Score button
+        if (lead.website_score == null) {
+          actions += `<button class="btn-mini" onclick="event.stopPropagation();scoreWebsiteForLead(${lead.id})" style="margin-right:4px;">Score</button>`;
+        }
+        // Rebuild button
+        if (!isBuilding) {
+          actions += `<button class="btn-mini" onclick="event.stopPropagation();rebuildWebsiteForLead(${lead.id})" style="margin-right:4px;">Rebuild</button>`;
+        }
+        // Preview button (only if rebuild complete)
+        if (isComplete && previewUrl) {
+          actions += `<a href="${previewUrl}" target="_blank" class="btn-mini" style="text-decoration:none;display:inline-block;margin-right:4px;">Preview</a>`;
+        }
+        // Send button (only if rebuild complete and not yet sent)
+        if (isComplete && !isSent) {
+          actions += `<button class="btn-mini" onclick="event.stopPropagation();sendRebuiltToCustomer(${lead.id})" style="background:var(--green);color:#000;border-color:var(--green);">Send</button>`;
+        }
+
+        return `
+          <tr>
+            <td style="font-weight:600;">${lead.business_name || '—'}</td>
+            <td><a href="${lead.website}" target="_blank" style="color:var(--accent);text-decoration:none;font-size:0.85rem;">${lead.website.length > 40 ? lead.website.substring(0, 40) + '...' : lead.website}</a></td>
+            <td>${scoreBadge}</td>
+            <td>${statusBadge}</td>
+            <td class="action-cell">${actions}</td>
+          </tr>`;
+      }).join('');
+    }
+
+    // Send rebuilt website to customer (email + AI call)
+    async function sendRebuiltToCustomer(leadId) {
+      const lead = leadsData.find(l => l.id === leadId);
+      if (!lead) {
+        showToast('Lead not found', 'error');
+        return;
+      }
+
+      const previewUrl = lead.rebuild_preview_url || lead.rebuilt_website_url || '';
+      if (!previewUrl) {
+        showToast('No rebuilt website URL found. Please rebuild first.', 'error');
+        return;
+      }
+
+      if (!lead.email) {
+        showToast('Lead has no email address', 'error');
+        return;
+      }
+
+      if (!confirm(`Send rebuilt website to ${lead.business_name}?\n\nThis will:\n1. Email the preview link to ${lead.email}\n2. Make an AI call to ${lead.phone || 'N/A'}\n\nPreview: ${previewUrl}`)) {
+        return;
+      }
+
+      try {
+        showToast(`📧 Sending rebuilt site to ${lead.business_name}...`, 'info');
+
+        const response = await fetch(`${API_BASE}/send-rebuilt-website`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${authToken}`
+          },
+          body: JSON.stringify({
+            leadId: lead.id,
+            previewUrl: previewUrl,
+            business_name: lead.business_name,
+            contact_email: lead.email,
+            contact_phone: lead.phone || '',
+            contact_name: lead.contact_name || lead.business_name,
+            website_score: lead.website_score,
+            website_grade: lead.website_grade
+          })
+        });
+
+        const data = await response.json();
+
+        if (response.ok) {
+          lead.rebuild_sent_to_customer = true;
+          showToast(`✅ Rebuilt website sent to ${lead.business_name}!`, 'success');
+          renderLeadsTable();
+          loadWebRipperLeads();
+        } else {
+          showToast(data.error || 'Failed to send to customer', 'error');
+        }
+      } catch (error) {
+        console.error('Send rebuilt error:', error);
+        showToast('Failed to send rebuilt website to customer', 'error');
       }
     }
 
@@ -7639,7 +7841,7 @@ I noticed {{business_name}} in {{city}} and wanted to reach out..."></textarea>
                     <div class="detail-value">${lead.website_score != null ? `${getWebsiteScoreBadge(lead)} ${lead.website_grade} - ${lead.website_score}/100 <button class="btn-secondary" style="font-size:0.75rem;padding:2px 8px;margin-left:8px;" onclick="event.stopPropagation();generateWebsiteReport(${lead.id})">📄 Generate PDF Report</button>` : 'Not analyzed'}</div>
                   </div>
                   ${lead.website ? `<div class="detail-group" style="grid-column: 1 / -1;">
-                    <div class="detail-label">AI Website Rebuild</div>
+                    <div class="detail-label">Web Ripper AI</div>
                     <div class="detail-value" id="rebuild-container-${lead.id}">
                       ${getRebuildUI(lead)}
                     </div>
@@ -7708,6 +7910,8 @@ I noticed {{business_name}} in {{city}} and wanted to reach out..."></textarea>
         if (crmMode === 'internal') {
           loadEmailAccounts();
         }
+      } else if (section === 'web-ripper') {
+        loadWebRipperLeads();
       } else if (section === 'workflows') {
         loadWorkflows();
       }
@@ -8725,7 +8929,7 @@ I noticed {{business_name}} in {{city}} and wanted to reach out..."></textarea>
     }
 
     // ============================================
-    // EMAIL OUTREACH FUNCTIONS
+    // EMAIL RIPPER FUNCTIONS
     // ============================================
 
     let emailTemplates = [];
