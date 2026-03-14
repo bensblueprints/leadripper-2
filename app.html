@@ -5419,7 +5419,7 @@ Available merge tags: {{business_name}}, {{first_name}}, {{email}}, {{phone}}, {
       else if (score >= 65) gradeClass = 'grade-b';
       else if (score >= 50) gradeClass = 'grade-c';
       else if (score >= 30) gradeClass = 'grade-d';
-      return `<span class="website-score-badge ${gradeClass}" title="Website Score: ${score}/100">${grade} ${score}</span>`;
+      return `<span class="website-score-badge ${gradeClass}" title="Website Score: ${score}/100">${grade} ${score}</span> <button class="btn-action" style="font-size:0.6rem;padding:1px 5px;background:var(--surface-elevated);border:1px solid var(--border);color:var(--accent);cursor:pointer;" onclick="event.stopPropagation();generateWebsiteReport(${lead.id})" title="Generate PDF Report">PDF</button>`;
     }
 
     // Score a single lead's website
@@ -5458,6 +5458,148 @@ Available merge tags: {{business_name}}, {{first_name}}, {{email}}, {{phone}}, {
         console.error('Score website error:', error);
         showToast('Failed to analyze website', 'error');
       }
+    }
+
+    // Generate a PDF website analysis report
+    function generateWebsiteReport(leadId) {
+      const lead = leadsData.find(l => l.id === leadId);
+      if (!lead || lead.website_score == null) {
+        showToast('Score the website first', 'warning');
+        return;
+      }
+
+      const score = lead.website_score;
+      const grade = lead.website_grade || '?';
+      const analysis = typeof lead.website_analysis === 'string' ? JSON.parse(lead.website_analysis) : lead.website_analysis;
+      const checks = analysis?.checks || {};
+      const analyzedDate = lead.website_analyzed_at ? new Date(lead.website_analyzed_at).toLocaleDateString() : 'N/A';
+
+      let gradeColor = '#ff0033';
+      let gradeLabel = 'Needs a new website';
+      if (score >= 80) { gradeColor = '#00cc33'; gradeLabel = 'Good website'; }
+      else if (score >= 65) { gradeColor = '#88cc00'; gradeLabel = 'Decent - could improve'; }
+      else if (score >= 50) { gradeColor = '#ffcc00'; gradeLabel = 'Mediocre - needs work'; }
+      else if (score >= 30) { gradeColor = '#ff8800'; gradeLabel = 'Poor - needs redesign'; }
+
+      const checkRows = Object.entries(checks).map(([key, check]) => `
+        <tr>
+          <td style="padding:10px 14px;border-bottom:1px solid #eee;font-size:13px;">${check.label}</td>
+          <td style="padding:10px 14px;border-bottom:1px solid #eee;text-align:center;">
+            <span style="display:inline-block;width:24px;height:24px;border-radius:50%;background:${check.pass ? '#00cc33' : '#ff0033'};color:#fff;text-align:center;line-height:24px;font-size:14px;font-weight:bold;">${check.pass ? '✓' : '✗'}</span>
+          </td>
+          <td style="padding:10px 14px;border-bottom:1px solid #eee;font-size:12px;color:#666;">${check.details || (check.pass ? 'Pass' : 'Fail')}</td>
+          <td style="padding:10px 14px;border-bottom:1px solid #eee;text-align:center;font-size:12px;color:#999;">${check.weight} pts</td>
+        </tr>
+      `).join('');
+
+      const failedChecks = Object.values(checks).filter(c => !c.pass);
+      const recommendations = failedChecks.map(c => `<li style="margin-bottom:8px;font-size:13px;">${c.label}: ${c.details || 'Not detected on the website'}</li>`).join('');
+
+      const htmlContent = `
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>Website Analysis Report - ${lead.business_name || 'Unknown'}</title>
+<style>
+  @media print { body { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; } }
+  body { font-family: 'Helvetica Neue', Arial, sans-serif; color: #222; margin: 0; padding: 0; background: #fff; }
+  .page { max-width: 800px; margin: 0 auto; padding: 40px; }
+  .header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 30px; border-bottom: 3px solid #ff3e00; padding-bottom: 20px; }
+  .logo { font-size: 24px; font-weight: 700; color: #ff3e00; }
+  .logo-sub { font-size: 11px; color: #999; margin-top: 2px; }
+  .report-date { font-size: 12px; color: #999; text-align: right; }
+  .business-name { font-size: 28px; font-weight: 700; margin-bottom: 4px; }
+  .business-url { font-size: 14px; color: #666; margin-bottom: 30px; }
+  .score-section { display: flex; align-items: center; gap: 30px; background: #f8f8f8; border-radius: 12px; padding: 24px; margin-bottom: 30px; }
+  .score-circle { width: 100px; height: 100px; border-radius: 50%; display: flex; align-items: center; justify-content: center; flex-direction: column; color: #fff; flex-shrink: 0; }
+  .score-number { font-size: 32px; font-weight: 800; line-height: 1; }
+  .score-label { font-size: 11px; opacity: 0.9; }
+  .grade-text { font-size: 22px; font-weight: 700; }
+  .grade-desc { font-size: 14px; color: #666; margin-top: 4px; }
+  table { width: 100%; border-collapse: collapse; margin-bottom: 30px; }
+  th { background: #222; color: #fff; padding: 10px 14px; text-align: left; font-size: 12px; text-transform: uppercase; letter-spacing: 0.5px; }
+  .section-title { font-size: 18px; font-weight: 700; margin-bottom: 12px; color: #222; border-left: 4px solid #ff3e00; padding-left: 12px; }
+  .cta-box { background: linear-gradient(135deg, #ff3e00, #ff6633); color: #fff; border-radius: 12px; padding: 24px; margin-top: 30px; text-align: center; }
+  .cta-box h3 { font-size: 20px; margin-bottom: 8px; }
+  .cta-box p { font-size: 14px; opacity: 0.9; margin-bottom: 0; }
+  .footer { text-align: center; margin-top: 40px; padding-top: 20px; border-top: 1px solid #eee; font-size: 11px; color: #999; }
+</style>
+</head>
+<body>
+<div class="page">
+  <div class="header">
+    <div>
+      <div class="logo">ADVANCED MARKETING</div>
+      <div class="logo-sub">Website Analysis Report</div>
+    </div>
+    <div class="report-date">
+      Report Date: ${analyzedDate}<br>
+      Prepared for: ${lead.business_name || 'Business Owner'}
+    </div>
+  </div>
+
+  <div class="business-name">${lead.business_name || 'Unknown Business'}</div>
+  <div class="business-url">${lead.website || 'No website'}</div>
+
+  <div class="score-section">
+    <div class="score-circle" style="background:${gradeColor};">
+      <div class="score-number">${score}</div>
+      <div class="score-label">/ 100</div>
+    </div>
+    <div>
+      <div class="grade-text">Grade: ${grade}</div>
+      <div class="grade-desc">${gradeLabel}</div>
+    </div>
+  </div>
+
+  <div class="section-title">Detailed Analysis</div>
+  <table>
+    <thead>
+      <tr>
+        <th>Check</th>
+        <th style="text-align:center;width:60px;">Status</th>
+        <th>Details</th>
+        <th style="text-align:center;width:60px;">Weight</th>
+      </tr>
+    </thead>
+    <tbody>
+      ${checkRows}
+    </tbody>
+  </table>
+
+  ${failedChecks.length > 0 ? `
+  <div class="section-title">Recommendations</div>
+  <p style="font-size:13px;color:#666;margin-bottom:12px;">Based on our analysis, here are the areas that need improvement:</p>
+  <ul style="padding-left:20px;color:#333;">
+    ${recommendations}
+  </ul>
+  ` : '<p style="color:#00cc33;font-weight:600;">All checks passed! This website meets modern standards.</p>'}
+
+  <div class="cta-box">
+    <h3>Ready to Transform Your Online Presence?</h3>
+    <p>Advanced Marketing builds high-converting websites for local businesses.<br>
+    Most clients see a 200-300% increase in leads within the first month.</p>
+    <p style="margin-top:12px;font-size:16px;font-weight:700;">advancedmarketing.co</p>
+  </div>
+
+  <div class="footer">
+    © ${new Date().getFullYear()} Advanced Marketing | advancedmarketing.co | ben@advancedmarketing.co
+  </div>
+</div>
+</body>
+</html>`;
+
+      // Open in new window and trigger print (saves as PDF)
+      const printWindow = window.open('', '_blank');
+      printWindow.document.write(htmlContent);
+      printWindow.document.close();
+      // Auto-trigger print dialog after content loads
+      printWindow.onload = () => {
+        setTimeout(() => printWindow.print(), 500);
+      };
+
+      showToast('PDF report opened — use Print > Save as PDF', 'success');
     }
 
     // Get action button for a lead
@@ -5585,7 +5727,7 @@ Available merge tags: {{business_name}}, {{first_name}}, {{email}}, {{phone}}, {
                   </div>
                   <div class="detail-group">
                     <div class="detail-label">Website Score</div>
-                    <div class="detail-value">${lead.website_score != null ? `${getWebsiteScoreBadge(lead)} ${lead.website_grade} - ${lead.website_score}/100` : 'Not analyzed'}</div>
+                    <div class="detail-value">${lead.website_score != null ? `${getWebsiteScoreBadge(lead)} ${lead.website_grade} - ${lead.website_score}/100 <button class="btn-secondary" style="font-size:0.75rem;padding:2px 8px;margin-left:8px;" onclick="event.stopPropagation();generateWebsiteReport(${lead.id})">📄 Generate PDF Report</button>` : 'Not analyzed'}</div>
                   </div>
                   <div class="detail-group">
                     <div class="detail-label">GHL Status</div>
