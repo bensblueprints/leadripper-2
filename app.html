@@ -3850,21 +3850,27 @@ Available merge tags: {{business_name}}, {{first_name}}, {{email}}, {{phone}}, {
       document.getElementById('imap-modal').classList.remove('hidden');
     }
 
+    function connectEmailAccount(provider) {
+      if (provider === 'gmail') return connectGmail();
+      if (provider === 'outlook') return connectOutlook();
+      openImapModal();
+    }
+
     async function loadEmailAccounts() {
       try {
         const response = await fetch(`${API_BASE}/email-accounts`, {
           headers: { 'Authorization': `Bearer ${authToken}` }
         });
         const result = await response.json();
-        if (result.accounts && result.accounts.length > 0) {
-          const container = document.getElementById('connected-email-accounts');
-          container.innerHTML = result.accounts.map(acc => `
+
+        const accountHtml = (result.accounts && result.accounts.length > 0)
+          ? result.accounts.map(acc => `
             <div style="display: flex; align-items: center; justify-content: space-between; padding: 0.75rem; background: var(--surface); border: 1px solid var(--border); border-radius: 4px; margin-bottom: 0.5rem;">
               <div style="display: flex; align-items: center; gap: 0.75rem;">
                 <span style="font-size: 1.25rem;">${acc.provider === 'gmail' ? '📧' : acc.provider === 'outlook' ? '📬' : '✉️'}</span>
                 <div>
                   <div style="font-weight: 600;">${acc.email_address}</div>
-                  <div style="font-size: 0.75rem; color: var(--text-dim);">${acc.provider} ${acc.is_default ? '• Default' : ''}</div>
+                  <div style="font-size: 0.75rem; color: var(--text-dim);">${acc.provider}${acc.is_default ? ' • Default' : ''}</div>
                 </div>
               </div>
               <div style="display: flex; align-items: center; gap: 0.5rem;">
@@ -3872,8 +3878,15 @@ Available merge tags: {{business_name}}, {{first_name}}, {{email}}, {{phone}}, {
                 <button class="btn-mini" onclick="removeEmailAccount(${acc.id})">Remove</button>
               </div>
             </div>
-          `).join('');
-        }
+          `).join('')
+          : '<p style="color: var(--text-dim); text-align: center; padding: 2rem;">No email accounts connected yet. Add your first account above.</p>';
+
+        // Update both containers (settings page + email accounts page)
+        const containers = ['connected-email-accounts', 'email-accounts-list'];
+        containers.forEach(id => {
+          const el = document.getElementById(id);
+          if (el) el.innerHTML = accountHtml;
+        });
       } catch (error) {
         console.error('Failed to load email accounts:', error);
       }
@@ -5764,6 +5777,11 @@ Available merge tags: {{business_name}}, {{first_name}}, {{email}}, {{phone}}, {
     document.querySelector('[data-section="email-validation"]').addEventListener('click', () => {
       loadEmailValidationStats();
       loadEmailDiscoveryStats();
+    });
+
+    // Load email accounts when section is opened
+    document.querySelector('[data-section="email-accounts"]').addEventListener('click', () => {
+      loadEmailAccounts();
     });
 
     // ==========================================
