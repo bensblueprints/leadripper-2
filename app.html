@@ -6980,7 +6980,7 @@ I noticed {{business_name}} in {{city}} and wanted to reach out..."></textarea>
 
     // Render completed websites section
     function renderCompletedWebsites() {
-      const completedLeads = leadsData.filter(l => (l.rebuild_status === 'complete' && l.rebuild_phase === 'complete') || l.website_rebuilt_at);
+      const completedLeads = leadsData.filter(l => l.rebuild_status === 'complete' && l.rebuild_phase === 'complete');
       const card = document.getElementById('wr-completed-card');
       const container = document.getElementById('wr-completed-list');
       if (!card || !container) return;
