@@ -91,5 +91,35 @@ exports.handler = async (event, context) => {
     }
   }
 
+  // PUT - Update stage (name, color, position)
+  if (event.httpMethod === 'PUT') {
+    try {
+      const { id, name, color, position } = JSON.parse(event.body);
+      if (!id) return { statusCode: 400, headers, body: JSON.stringify({ error: 'Stage ID required' }) };
+
+      const updates = [];
+      const values = [];
+      let idx = 1;
+
+      if (name !== undefined) { updates.push(`name = $${idx++}`); values.push(name); }
+      if (color !== undefined) { updates.push(`color = $${idx++}`); values.push(color); }
+      if (position !== undefined) { updates.push(`position = $${idx++}`); values.push(position); }
+      updates.push('updated_at = NOW()');
+
+      values.push(id);
+      const result = await pool.query(
+        `UPDATE lr_crm_stages SET ${updates.join(', ')} WHERE id = $${idx} RETURNING *`,
+        values
+      );
+
+      if (result.rows.length === 0) return { statusCode: 404, headers, body: JSON.stringify({ error: 'Stage not found' }) };
+
+      return { statusCode: 200, headers, body: JSON.stringify({ success: true, stage: result.rows[0] }) };
+    } catch (error) {
+      console.error('Update stage error:', error);
+      return { statusCode: 500, headers, body: JSON.stringify({ error: error.message }) };
+    }
+  }
+
   return { statusCode: 405, headers, body: JSON.stringify({ error: 'Method not allowed' }) };
 };

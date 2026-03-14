@@ -4760,12 +4760,28 @@ I noticed {{business_name}} in {{city}} and wanted to reach out..."></textarea>
     function renderPipelineStagesEditor() {
       const container = document.getElementById('pipeline-stages-list');
       container.innerHTML = currentStages.map((stage, index) => `
-        <div class="form-row" style="display: flex; gap: 0.5rem; margin-bottom: 0.5rem; align-items: center;">
+        <div class="form-row" style="display: flex; gap: 0.5rem; margin-bottom: 0.5rem; align-items: center;" data-stage-index="${index}">
+          <div style="display:flex;flex-direction:column;gap:2px;">
+            <button class="btn-secondary" style="padding:1px 6px;font-size:0.7rem;line-height:1;" onclick="moveStage(${index},-1)" ${index === 0 ? 'disabled style="opacity:0.3;padding:1px 6px;font-size:0.7rem;line-height:1;"' : ''} title="Move Up">▲</button>
+            <button class="btn-secondary" style="padding:1px 6px;font-size:0.7rem;line-height:1;" onclick="moveStage(${index},1)" ${index === currentStages.length - 1 ? 'disabled style="opacity:0.3;padding:1px 6px;font-size:0.7rem;line-height:1;"' : ''} title="Move Down">▼</button>
+          </div>
+          <span style="color:var(--text-dim);font-size:0.7rem;min-width:20px;text-align:center;">${index + 1}</span>
           <input type="color" value="${stage.color || '#333'}" style="width: 40px; height: 38px; padding: 2px;" data-stage-id="${stage.id}" class="stage-color-input">
           <input type="text" class="form-input mono" value="${escapeHtml(stage.name)}" data-stage-id="${stage.id}" class="stage-name-input" style="flex: 1;">
           <button class="btn-secondary" style="padding: 0.5rem;" onclick="deleteStage(${stage.id})" title="Delete Stage">🗑️</button>
         </div>
       `).join('');
+    }
+
+    function moveStage(index, direction) {
+      const newIndex = index + direction;
+      if (newIndex < 0 || newIndex >= currentStages.length) return;
+      const temp = currentStages[index];
+      currentStages[index] = currentStages[newIndex];
+      currentStages[newIndex] = temp;
+      // Update positions
+      currentStages.forEach((s, i) => { s.position = i; });
+      renderPipelineStagesEditor();
     }
 
     function addPipelineStage() {
@@ -4801,6 +4817,42 @@ I noticed {{business_name}} in {{city}} and wanted to reach out..."></textarea>
           },
           body: JSON.stringify({ id: currentPipelineId, name, description, color })
         });
+
+        // Save stage positions and any name/color changes
+        const stageRows = document.querySelectorAll('#pipeline-stages-list .form-row');
+        for (let i = 0; i < currentStages.length; i++) {
+          const stage = currentStages[i];
+          const row = stageRows[i];
+          if (!row) continue;
+          const nameInput = row.querySelector('.stage-name-input');
+          const colorInput = row.querySelector('.stage-color-input');
+          const newName = nameInput?.value?.trim() || stage.name;
+          const newColor = colorInput?.value || stage.color;
+
+          if (stage.id && !String(stage.id).startsWith('new')) {
+            await fetch(`${API_BASE}/crm-stages`, {
+              method: 'PUT',
+              headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${authToken}` },
+              body: JSON.stringify({ id: stage.id, name: newName, color: newColor, position: i })
+            });
+          }
+        }
+
+        // Save any new stages
+        for (const row of stageRows) {
+          const stageId = row.querySelector('.stage-name-input')?.dataset?.stageId;
+          if (stageId && String(stageId).startsWith('new')) {
+            const name = row.querySelector('.stage-name-input')?.value?.trim();
+            const color = row.querySelector('.stage-color-input')?.value || '#333';
+            if (name) {
+              await fetch(`${API_BASE}/crm-stages`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${authToken}` },
+                body: JSON.stringify({ pipelineId: currentPipelineId, name, color, position: Array.from(stageRows).indexOf(row) })
+              });
+            }
+          }
+        }
 
         closePipelineModal();
         await loadPipelines();
