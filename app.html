@@ -1247,6 +1247,10 @@
           <span class="nav-icon">✉️</span>
           <span>Email Validation</span>
         </div>
+        <div class="nav-item" data-section="email-accounts">
+          <span class="nav-icon">📧</span>
+          <span>Email Accounts</span>
+        </div>
         <div class="nav-item" data-section="subscription">
           <span class="nav-icon">💳</span>
           <span>Subscription</span>
@@ -1838,6 +1842,94 @@
           </div>
         </div>
       </section>
+
+      <!-- Email Accounts Section -->
+      <section id="email-accounts-section" class="section">
+        <div class="header">
+          <div class="header-top">
+            <h1 class="page-title display">EMAIL ACCOUNTS</h1>
+          </div>
+          <p class="page-subtitle">Connect your email providers</p>
+        </div>
+
+        <div class="card">
+          <div style="display: flex; gap: 0.75rem; flex-wrap: wrap;">
+            <button class="btn-secondary" onclick="connectGmail()">+ Connect Gmail</button>
+            <button class="btn-secondary" onclick="connectOutlook()">+ Connect Outlook</button>
+            <button class="btn-secondary" onclick="openImapModal()">+ Add IMAP</button>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-header">
+            <h2 class="card-title display">Connected Accounts</h2>
+          </div>
+          <div id="connected-email-accounts">
+            <p style="color: var(--text-muted); font-style: italic;">No email accounts connected yet. Add your first account above.</p>
+          </div>
+        </div>
+      </section>
+
+      <!-- IMAP Connection Modal -->
+      <div id="imap-modal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.7); z-index:1000; align-items:center; justify-content:center;">
+        <div style="background: var(--surface, #1a1a2e); border: 1px solid var(--border, #333); border-radius: 8px; width: 90%; max-width: 500px; max-height: 90vh; overflow-y: auto;">
+          <div style="display:flex; justify-content:space-between; align-items:center; padding:1.25rem; border-bottom:1px solid var(--border, #333);">
+            <h2 id="imap-modal-title" style="margin:0; font-size:1.1rem;">Connect Email Account</h2>
+            <button onclick="closeImapModal()" style="background:none; border:none; color:var(--text-primary, #fff); font-size:1.5rem; cursor:pointer;">&times;</button>
+          </div>
+          <div style="padding: 1.25rem;">
+            <div id="imap-instructions" style="display:none; background: var(--accent-dim, #1a3a5c); border: 1px solid var(--accent, #4a9eff); border-radius: 4px; padding: 0.75rem; margin-bottom: 1rem; font-size: 0.85rem;">
+              <span id="imap-instructions-text"></span>
+              <a id="imap-instructions-link" href="#" target="_blank" style="color: var(--accent, #4a9eff); display: block; margin-top: 0.5rem;">Learn more</a>
+            </div>
+            <form onsubmit="event.preventDefault(); connectImapAccount();">
+              <div class="form-group">
+                <label class="form-label">Email Address *</label>
+                <input type="email" class="form-input" id="imap-email" required placeholder="you@example.com">
+              </div>
+              <div class="form-group">
+                <label class="form-label">Display Name</label>
+                <input type="text" class="form-input" id="imap-display-name" placeholder="Your Name">
+              </div>
+              <h3 style="margin-top: 1.5rem; margin-bottom: 1rem; font-size: 0.95rem; color: var(--text-secondary, #aaa);">IMAP Settings (Incoming)</h3>
+              <div style="display: grid; grid-template-columns: 2fr 1fr; gap: 0.5rem;">
+                <div class="form-group">
+                  <label class="form-label">IMAP Host *</label>
+                  <input type="text" class="form-input" id="imap-host" required placeholder="imap.example.com">
+                </div>
+                <div class="form-group">
+                  <label class="form-label">Port *</label>
+                  <input type="number" class="form-input" id="imap-port" value="993" required>
+                </div>
+              </div>
+              <h3 style="margin-top: 1.5rem; margin-bottom: 1rem; font-size: 0.95rem; color: var(--text-secondary, #aaa);">SMTP Settings (Outgoing)</h3>
+              <div style="display: grid; grid-template-columns: 2fr 1fr; gap: 0.5rem;">
+                <div class="form-group">
+                  <label class="form-label">SMTP Host *</label>
+                  <input type="text" class="form-input" id="smtp-host" required placeholder="smtp.example.com">
+                </div>
+                <div class="form-group">
+                  <label class="form-label">Port *</label>
+                  <input type="number" class="form-input" id="smtp-port" value="587" required>
+                </div>
+              </div>
+              <h3 style="margin-top: 1.5rem; margin-bottom: 1rem; font-size: 0.95rem; color: var(--text-secondary, #aaa);">Credentials</h3>
+              <div class="form-group">
+                <label class="form-label">Username *</label>
+                <input type="text" class="form-input" id="imap-username" required placeholder="you@example.com">
+              </div>
+              <div class="form-group">
+                <label class="form-label">Password *</label>
+                <input type="password" class="form-input" id="imap-password" required placeholder="App password or account password">
+              </div>
+            </form>
+          </div>
+          <div style="display:flex; justify-content:flex-end; gap:0.75rem; padding:1.25rem; border-top:1px solid var(--border, #333);">
+            <button class="btn-secondary" onclick="closeImapModal()">Cancel</button>
+            <button class="btn" id="imap-connect-btn" onclick="connectImapAccount()">Connect Account</button>
+          </div>
+        </div>
+      </div>
 
       <!-- Settings Section -->
       <section id="settings-section" class="section">
@@ -3530,6 +3622,215 @@
     document.querySelector('[data-section="settings"]').addEventListener('click', () => {
       loadGhlSettings();
       loadIndustryMappings();
+    });
+
+    // ============================================
+    // EMAIL ACCOUNTS FUNCTIONS
+    // ============================================
+
+    let imapProvider = 'imap'; // Track which provider is being connected
+
+    async function connectGmail() {
+      try {
+        const response = await fetch(`${API_BASE}/oauth-google`, {
+          headers: { 'Authorization': `Bearer ${authToken}` }
+        });
+        const result = await response.json();
+        if (result.useImap) {
+          openImapModalWithProvider(result);
+        } else if (result.authUrl) {
+          window.location.href = result.authUrl;
+        } else {
+          showToast(result.error || 'Failed to start Gmail connection', 'error');
+        }
+      } catch (error) {
+        showToast('Failed to connect Gmail', 'error');
+      }
+    }
+
+    async function connectOutlook() {
+      try {
+        const response = await fetch(`${API_BASE}/oauth-microsoft`, {
+          headers: { 'Authorization': `Bearer ${authToken}` }
+        });
+        const result = await response.json();
+        if (result.useImap) {
+          openImapModalWithProvider(result);
+        } else if (result.authUrl) {
+          window.location.href = result.authUrl;
+        } else {
+          showToast(result.error || 'Failed to start Outlook connection', 'error');
+        }
+      } catch (error) {
+        showToast('Failed to connect Outlook', 'error');
+      }
+    }
+
+    function openImapModalWithProvider(config) {
+      imapProvider = config.provider || 'imap';
+      document.getElementById('imap-modal-title').textContent = `Connect ${config.provider === 'gmail' ? 'Gmail' : config.provider === 'outlook' ? 'Outlook' : 'Email'} Account`;
+      document.getElementById('imap-host').value = config.imapHost || '';
+      document.getElementById('imap-port').value = config.imapPort || 993;
+      document.getElementById('smtp-host').value = config.smtpHost || '';
+      document.getElementById('smtp-port').value = config.smtpPort || 587;
+
+      const instrDiv = document.getElementById('imap-instructions');
+      if (config.instructions) {
+        document.getElementById('imap-instructions-text').textContent = config.instructions;
+        const link = document.getElementById('imap-instructions-link');
+        if (config.helpUrl) {
+          link.href = config.helpUrl;
+          link.style.display = 'block';
+        } else {
+          link.style.display = 'none';
+        }
+        instrDiv.style.display = 'block';
+      } else {
+        instrDiv.style.display = 'none';
+      }
+
+      document.getElementById('imap-modal').style.display = 'flex';
+    }
+
+    function openImapModal() {
+      imapProvider = 'imap';
+      document.getElementById('imap-modal-title').textContent = 'Connect IMAP Email Account';
+      document.getElementById('imap-email').value = '';
+      document.getElementById('imap-display-name').value = '';
+      document.getElementById('imap-host').value = '';
+      document.getElementById('imap-port').value = '993';
+      document.getElementById('smtp-host').value = '';
+      document.getElementById('smtp-port').value = '587';
+      document.getElementById('imap-username').value = '';
+      document.getElementById('imap-password').value = '';
+      document.getElementById('imap-instructions').style.display = 'none';
+      document.getElementById('imap-modal').style.display = 'flex';
+    }
+
+    function closeImapModal() {
+      document.getElementById('imap-modal').style.display = 'none';
+    }
+
+    async function connectImapAccount() {
+      const email = document.getElementById('imap-email').value.trim();
+      const displayName = document.getElementById('imap-display-name').value.trim();
+      const imapHost = document.getElementById('imap-host').value.trim();
+      const imapPort = document.getElementById('imap-port').value;
+      const smtpHost = document.getElementById('smtp-host').value.trim();
+      const smtpPort = document.getElementById('smtp-port').value;
+      const username = document.getElementById('imap-username').value.trim();
+      const password = document.getElementById('imap-password').value;
+
+      if (!email || !smtpHost || !username || !password) {
+        showToast('Please fill in all required fields', 'warning');
+        return;
+      }
+
+      const btn = document.getElementById('imap-connect-btn');
+      btn.disabled = true;
+      btn.textContent = 'Testing connection...';
+
+      try {
+        const response = await fetch(`${API_BASE}/email-accounts`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${authToken}`
+          },
+          body: JSON.stringify({
+            provider: imapProvider,
+            emailAddress: email,
+            displayName: displayName,
+            imapHost: imapHost,
+            imapPort: parseInt(imapPort),
+            smtpHost: smtpHost,
+            smtpPort: parseInt(smtpPort),
+            username: username,
+            password: password
+          })
+        });
+
+        const result = await response.json();
+
+        if (result.success) {
+          showToast(result.message || 'Email account connected!', 'success');
+          closeImapModal();
+          loadEmailAccounts();
+        } else {
+          let errorMsg = result.error || 'Connection failed';
+          if (result.details) errorMsg += ': ' + result.details;
+          if (result.hint) errorMsg += '\n\n' + result.hint;
+          showToast(errorMsg, 'error');
+        }
+      } catch (error) {
+        showToast('Failed to connect: ' + error.message, 'error');
+      } finally {
+        btn.disabled = false;
+        btn.textContent = 'Connect Account';
+      }
+    }
+
+    async function loadEmailAccounts() {
+      try {
+        const response = await fetch(`${API_BASE}/email-accounts`, {
+          headers: { 'Authorization': `Bearer ${authToken}` }
+        });
+        const result = await response.json();
+        const container = document.getElementById('connected-email-accounts');
+
+        if (result.accounts && result.accounts.length > 0) {
+          container.innerHTML = result.accounts.map(acc => `
+            <div style="display: flex; align-items: center; justify-content: space-between;
+                        padding: 0.75rem; background: var(--surface); border: 1px solid var(--border);
+                        border-radius: 4px; margin-bottom: 0.5rem;">
+              <div style="display: flex; align-items: center; gap: 0.75rem;">
+                <span style="font-size: 1.25rem;">
+                  ${acc.provider === 'gmail' ? '📧' : acc.provider === 'outlook' ? '📬' : '✉️'}
+                </span>
+                <div>
+                  <div style="font-weight: 600;">${escapeHtml(acc.email_address)}</div>
+                  <div style="font-size: 0.75rem; color: var(--text-dim);">
+                    ${escapeHtml(acc.provider)}${acc.is_default ? ' &bull; Default' : ''}
+                  </div>
+                </div>
+              </div>
+              <div style="display: flex; align-items: center; gap: 0.5rem;">
+                ${acc.is_active
+                  ? '<span style="background: #1a3a2a; color: #4ade80; padding: 2px 8px; border-radius: 4px; font-size: 0.75rem;">Active</span>'
+                  : '<span style="background: #3a2a1a; color: #fbbf24; padding: 2px 8px; border-radius: 4px; font-size: 0.75rem;">Inactive</span>'}
+                <button class="btn-secondary" style="font-size: 0.8rem; padding: 4px 10px;" onclick="removeEmailAccount(${acc.id})">Remove</button>
+              </div>
+            </div>
+          `).join('');
+        } else {
+          container.innerHTML = '<p style="color: var(--text-muted); font-style: italic;">No email accounts connected yet. Add your first account above.</p>';
+        }
+      } catch (error) {
+        console.error('Failed to load email accounts:', error);
+      }
+    }
+
+    async function removeEmailAccount(accountId) {
+      if (!confirm('Remove this email account?')) return;
+      try {
+        await fetch(`${API_BASE}/email-accounts`, {
+          method: 'DELETE',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${authToken}`
+          },
+          body: JSON.stringify({ id: accountId })
+        });
+        showToast('Email account removed', 'success');
+        loadEmailAccounts();
+      } catch (error) {
+        showToast('Failed to remove account', 'error');
+      }
+    }
+
+    // Load email accounts when section is opened
+    document.querySelector('[data-section="email-accounts"]').addEventListener('click', () => {
+      loadEmailAccounts();
     });
 
     // ============================================
