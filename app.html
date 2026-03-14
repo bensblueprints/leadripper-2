@@ -2385,6 +2385,7 @@
               <button class="btn-bulk scrape" id="scrape-all-btn" onclick="scrapeAllEmails()">🔍 Scrape All Emails</button>
               <button class="btn-bulk score-sites" id="score-sites-btn" onclick="scoreAllWebsites()">🌐 Score Websites</button>
               <button class="btn-bulk validate" id="validate-all-btn" onclick="validateAllEmails()">✓ Validate All</button>
+              <button class="btn-secondary" onclick="removeDuplicateLeads()" style="font-size:0.85rem;">🗑️ Remove Duplicates</button>
               <button class="btn-secondary" id="export-leads-btn">⬇ Export CSV</button>
             </div>
             <!-- Progress bar for bulk operations -->
@@ -3946,6 +3947,28 @@ I noticed {{business_name}} in {{city}} and wanted to reach out..."></textarea>
                 <tr><td colspan="5" style="text-align:center;color:var(--text-dim);padding:2rem;">Loading leads...</td></tr>
               </tbody>
             </table>
+          </div>
+        </div>
+
+        <!-- Websites Completed Section -->
+        <div class="card" id="wr-completed-card" style="display:none;">
+          <div class="card-header">
+            <h2 class="card-title display">Websites Completed</h2>
+          </div>
+          <div id="wr-completed-list"></div>
+        </div>
+
+        <!-- Website Preview -->
+        <div class="card" id="wr-preview-card" style="display:none;">
+          <div class="card-header" style="display:flex;justify-content:space-between;align-items:center;">
+            <h2 class="card-title display" id="wr-preview-title">Website Preview</h2>
+            <div style="display:flex;gap:0.5rem;">
+              <a id="wr-preview-link" href="#" target="_blank" class="btn-secondary" style="font-size:0.85rem;text-decoration:none;">Open in New Tab</a>
+              <button class="btn-secondary" onclick="closeWebRipperPreview()">Close Preview</button>
+            </div>
+          </div>
+          <div style="border:1px solid var(--border);border-radius:4px;overflow:hidden;background:#fff;">
+            <iframe id="wr-preview-iframe" style="width:100%;height:600px;border:none;" src="about:blank"></iframe>
           </div>
         </div>
       </section>
@@ -6838,7 +6861,7 @@ I noticed {{business_name}} in {{city}} and wanted to reach out..."></textarea>
         }
         // Preview button (only if rebuild complete)
         if (isComplete && previewUrl) {
-          actions += `<a href="${previewUrl}" target="_blank" class="btn-mini" style="text-decoration:none;display:inline-block;margin-right:4px;">Preview</a>`;
+          actions += `<button class="btn-mini" onclick="event.stopPropagation();showWebRipperPreview(${lead.id},'${escapeHtml(previewUrl)}','${escapeHtml(lead.business_name || '')}')" style="margin-right:4px;">Preview</button>`;
         }
         // Send button (only if rebuild complete and not yet sent)
         if (isComplete && !isSent) {
@@ -6854,6 +6877,65 @@ I noticed {{business_name}} in {{city}} and wanted to reach out..."></textarea>
             <td class="action-cell">${actions}</td>
           </tr>`;
       }).join('');
+
+      // Also render the completed section
+      renderCompletedWebsites();
+    }
+
+    // Render completed websites section
+    function renderCompletedWebsites() {
+      const completedLeads = leadsData.filter(l => (l.rebuild_status === 'complete' && l.rebuild_phase === 'complete') || l.website_rebuilt_at);
+      const card = document.getElementById('wr-completed-card');
+      const container = document.getElementById('wr-completed-list');
+      if (!card || !container) return;
+
+      if (completedLeads.length === 0) {
+        card.style.display = 'none';
+        return;
+      }
+
+      card.style.display = 'block';
+      container.innerHTML = completedLeads.map(lead => {
+        const previewUrl = lead.rebuild_preview_url || lead.rebuilt_website_url || '';
+        const isSent = lead.rebuild_sent_to_customer;
+        return `
+          <div style="display:flex;justify-content:space-between;align-items:center;padding:1rem;border-bottom:1px solid var(--border);">
+            <div style="flex:1;">
+              <div style="font-weight:600;">${escapeHtml(lead.business_name || 'Unknown')}</div>
+              <div style="font-size:0.8rem;color:var(--text-dim);">${escapeHtml(lead.website || '')}</div>
+              <div style="font-size:0.7rem;color:var(--text-dimmer);margin-top:2px;">
+                Rebuilt: ${lead.website_rebuilt_at ? new Date(lead.website_rebuilt_at).toLocaleDateString() : 'Unknown'}
+                ${isSent ? ' • <span style="color:var(--green);">Sent to Customer</span>' : ''}
+              </div>
+            </div>
+            <div style="display:flex;gap:0.5rem;align-items:center;">
+              ${previewUrl ? `<button class="btn-mini" onclick="showWebRipperPreview(${lead.id},'${escapeHtml(previewUrl)}','${escapeHtml(lead.business_name || '')}')">View Site</button>` : ''}
+              ${previewUrl ? `<a href="${previewUrl}" target="_blank" class="btn-mini" style="text-decoration:none;">Open Tab</a>` : ''}
+              ${!isSent ? `<button class="btn-mini" onclick="sendRebuiltToCustomer(${lead.id})" style="background:var(--green);color:#000;border-color:var(--green);">Send to Customer</button>` : ''}
+            </div>
+          </div>`;
+      }).join('');
+    }
+
+    function showWebRipperPreview(leadId, url, businessName) {
+      const card = document.getElementById('wr-preview-card');
+      const iframe = document.getElementById('wr-preview-iframe');
+      const title = document.getElementById('wr-preview-title');
+      const link = document.getElementById('wr-preview-link');
+      if (!card || !iframe) return;
+
+      card.style.display = 'block';
+      iframe.src = url;
+      if (title) title.textContent = 'Preview: ' + (businessName || 'Website');
+      if (link) link.href = url;
+      card.scrollIntoView({ behavior: 'smooth' });
+    }
+
+    function closeWebRipperPreview() {
+      const card = document.getElementById('wr-preview-card');
+      const iframe = document.getElementById('wr-preview-iframe');
+      if (card) card.style.display = 'none';
+      if (iframe) iframe.src = 'about:blank';
     }
 
     // Send rebuilt website to customer (email + AI call)
@@ -7352,6 +7434,35 @@ I noticed {{business_name}} in {{city}} and wanted to reach out..."></textarea>
     }
 
     // Score a single lead's website
+    // =====================================
+    // REMOVE DUPLICATE LEADS
+    // =====================================
+    async function removeDuplicateLeads() {
+      if (!confirm('This will scan all leads and remove duplicates with the same phone number (keeping the one with the most data). Continue?')) return;
+
+      showToast('Scanning for duplicates...', 'info');
+
+      try {
+        const resp = await fetch(`${API_BASE}/dedup-leads`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${authToken}` }
+        });
+        const data = await resp.json();
+        if (data.success) {
+          if (data.removed > 0) {
+            showToast(`Removed ${data.removed} duplicate leads`, 'success');
+            loadLeads(1);
+          } else {
+            showToast('No duplicates found!', 'success');
+          }
+        } else {
+          showToast(data.error || 'Failed to remove duplicates', 'error');
+        }
+      } catch (e) {
+        showToast('Dedup failed: ' + e.message, 'error');
+      }
+    }
+
     // =====================================
     // EDIT LEAD INLINE
     // =====================================
