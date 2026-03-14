@@ -1160,6 +1160,362 @@
     .mb-2 {
       margin-bottom: 2rem;
     }
+
+    /* CRM Pipeline Kanban Board */
+    .pipeline-controls {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 1.5rem;
+      flex-wrap: wrap;
+      gap: 1rem;
+    }
+
+    .pipeline-selector {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+    }
+
+    .pipeline-dropdown {
+      background: var(--surface-elevated);
+      border: 1px solid var(--border);
+      color: var(--text);
+      padding: 0.75rem 1rem;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.9rem;
+      min-width: 200px;
+      cursor: pointer;
+    }
+
+    .pipeline-dropdown:focus {
+      outline: none;
+      border-color: var(--accent);
+    }
+
+    .kanban-board {
+      display: flex;
+      gap: 1rem;
+      overflow-x: auto;
+      padding-bottom: 1rem;
+      min-height: 500px;
+    }
+
+    .kanban-column {
+      flex: 0 0 300px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .kanban-column-header {
+      padding: 1rem;
+      background: var(--surface-elevated);
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .kanban-column-title {
+      font-weight: 600;
+      font-size: 0.85rem;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .kanban-column-color {
+      width: 12px;
+      height: 12px;
+      border-radius: 2px;
+    }
+
+    .kanban-column-stats {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.75rem;
+      color: var(--text-dim);
+    }
+
+    .kanban-cards {
+      flex: 1;
+      overflow-y: auto;
+      padding: 0.75rem;
+      display: flex;
+      flex-direction: column;
+      gap: 0.75rem;
+      min-height: 200px;
+    }
+
+    .kanban-cards.drag-over {
+      background: rgba(255, 62, 0, 0.05);
+      border: 2px dashed var(--accent);
+    }
+
+    .kanban-card {
+      background: var(--surface-elevated);
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      padding: 1rem;
+      cursor: grab;
+      transition: all 0.2s;
+    }
+
+    .kanban-card:hover {
+      border-color: var(--accent);
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+    }
+
+    .kanban-card.dragging {
+      opacity: 0.5;
+      cursor: grabbing;
+    }
+
+    .kanban-card-title {
+      font-weight: 600;
+      margin-bottom: 0.5rem;
+      font-size: 0.9rem;
+    }
+
+    .kanban-card-company {
+      color: var(--text-dim);
+      font-size: 0.8rem;
+      margin-bottom: 0.5rem;
+    }
+
+    .kanban-card-value {
+      font-family: 'JetBrains Mono', monospace;
+      color: var(--green);
+      font-size: 0.85rem;
+      font-weight: 600;
+    }
+
+    .kanban-card-footer {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-top: 0.75rem;
+      padding-top: 0.75rem;
+      border-top: 1px solid var(--border);
+    }
+
+    .kanban-card-date {
+      font-size: 0.7rem;
+      color: var(--text-dimmer);
+      font-family: 'JetBrains Mono', monospace;
+    }
+
+    .kanban-add-deal {
+      width: 100%;
+      padding: 0.75rem;
+      background: transparent;
+      border: 1px dashed var(--border);
+      color: var(--text-dim);
+      cursor: pointer;
+      font-size: 0.8rem;
+      transition: all 0.2s;
+      margin-top: auto;
+    }
+
+    .kanban-add-deal:hover {
+      background: var(--surface-elevated);
+      border-color: var(--accent);
+      color: var(--accent);
+    }
+
+    /* Deal Modal */
+    .deal-modal {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(0, 0, 0, 0.8);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 1000;
+      padding: 2rem;
+    }
+
+    .deal-modal.hidden {
+      display: none;
+    }
+
+    .deal-modal-content {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      width: 100%;
+      max-width: 600px;
+      max-height: 90vh;
+      overflow-y: auto;
+    }
+
+    .deal-modal-header {
+      padding: 1.5rem;
+      background: var(--surface-elevated);
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .deal-modal-title {
+      font-size: 1.2rem;
+      font-weight: 600;
+    }
+
+    .deal-modal-close {
+      background: none;
+      border: none;
+      color: var(--text-dim);
+      font-size: 1.5rem;
+      cursor: pointer;
+      padding: 0;
+      line-height: 1;
+    }
+
+    .deal-modal-close:hover {
+      color: var(--accent);
+    }
+
+    .deal-modal-body {
+      padding: 1.5rem;
+    }
+
+    .deal-modal-footer {
+      padding: 1.5rem;
+      border-top: 1px solid var(--border);
+      display: flex;
+      gap: 1rem;
+      justify-content: flex-end;
+    }
+
+    /* Activity Timeline */
+    .activity-timeline {
+      margin-top: 1.5rem;
+    }
+
+    .activity-item {
+      display: flex;
+      gap: 1rem;
+      padding: 1rem 0;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .activity-icon {
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      background: var(--surface-elevated);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+    }
+
+    .activity-content {
+      flex: 1;
+    }
+
+    .activity-subject {
+      font-weight: 600;
+      font-size: 0.9rem;
+      margin-bottom: 0.25rem;
+    }
+
+    .activity-text {
+      color: var(--text-dim);
+      font-size: 0.85rem;
+    }
+
+    .activity-date {
+      font-size: 0.75rem;
+      color: var(--text-dimmer);
+      font-family: 'JetBrains Mono', monospace;
+      margin-top: 0.5rem;
+    }
+
+    /* CRM Mode Toggle in Settings */
+    .crm-mode-toggle {
+      display: flex;
+      gap: 0;
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      overflow: hidden;
+    }
+
+    .crm-mode-btn {
+      flex: 1;
+      padding: 1rem 1.5rem;
+      background: transparent;
+      border: none;
+      color: var(--text-dim);
+      cursor: pointer;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      transition: all 0.2s;
+    }
+
+    .crm-mode-btn.active {
+      background: var(--accent);
+      color: var(--text);
+    }
+
+    .crm-mode-btn:hover:not(.active) {
+      background: var(--surface-elevated);
+    }
+
+    /* Pipeline Stats */
+    .pipeline-stats-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 1rem;
+      margin-bottom: 1.5rem;
+    }
+
+    .pipeline-stat {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      padding: 1rem;
+      text-align: center;
+    }
+
+    .pipeline-stat-value {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 1.5rem;
+      font-weight: 700;
+      color: var(--accent);
+    }
+
+    .pipeline-stat-label {
+      font-size: 0.75rem;
+      color: var(--text-dim);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      margin-top: 0.25rem;
+    }
+
+    @media (max-width: 768px) {
+      .kanban-board {
+        flex-direction: column;
+      }
+
+      .kanban-column {
+        flex: none;
+        width: 100%;
+      }
+
+      .pipeline-stats-grid {
+        grid-template-columns: repeat(2, 1fr);
+      }
+    }
   </style>
 </head>
 <body>
@@ -1247,9 +1603,21 @@
           <span class="nav-icon">✉️</span>
           <span>Email Validation</span>
         </div>
+        <div class="nav-item" data-section="pipeline">
+          <span class="nav-icon">📈</span>
+          <span>Pipeline Board</span>
+        </div>
+        <div class="nav-item" data-section="email-outreach">
+          <span class="nav-icon">🚀</span>
+          <span>Email Outreach</span>
+        </div>
         <div class="nav-item" data-section="email-accounts">
           <span class="nav-icon">📧</span>
           <span>Email Accounts</span>
+        </div>
+        <div class="nav-item" data-section="ai-calling">
+          <span class="nav-icon">🤖</span>
+          <span>AI Calling</span>
         </div>
         <div class="nav-item" data-section="subscription">
           <span class="nav-icon">💳</span>
@@ -1843,94 +2211,6 @@
         </div>
       </section>
 
-      <!-- Email Accounts Section -->
-      <section id="email-accounts-section" class="section">
-        <div class="header">
-          <div class="header-top">
-            <h1 class="page-title display">EMAIL ACCOUNTS</h1>
-          </div>
-          <p class="page-subtitle">Connect your email providers</p>
-        </div>
-
-        <div class="card">
-          <div style="display: flex; gap: 0.75rem; flex-wrap: wrap;">
-            <button class="btn-secondary" onclick="connectGmail()">+ Connect Gmail</button>
-            <button class="btn-secondary" onclick="connectOutlook()">+ Connect Outlook</button>
-            <button class="btn-secondary" onclick="openImapModal()">+ Add IMAP</button>
-          </div>
-        </div>
-
-        <div class="card">
-          <div class="card-header">
-            <h2 class="card-title display">Connected Accounts</h2>
-          </div>
-          <div id="connected-email-accounts">
-            <p style="color: var(--text-muted); font-style: italic;">No email accounts connected yet. Add your first account above.</p>
-          </div>
-        </div>
-      </section>
-
-      <!-- IMAP Connection Modal -->
-      <div id="imap-modal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.7); z-index:1000; align-items:center; justify-content:center;">
-        <div style="background: var(--surface, #1a1a2e); border: 1px solid var(--border, #333); border-radius: 8px; width: 90%; max-width: 500px; max-height: 90vh; overflow-y: auto;">
-          <div style="display:flex; justify-content:space-between; align-items:center; padding:1.25rem; border-bottom:1px solid var(--border, #333);">
-            <h2 id="imap-modal-title" style="margin:0; font-size:1.1rem;">Connect Email Account</h2>
-            <button onclick="closeImapModal()" style="background:none; border:none; color:var(--text-primary, #fff); font-size:1.5rem; cursor:pointer;">&times;</button>
-          </div>
-          <div style="padding: 1.25rem;">
-            <div id="imap-instructions" style="display:none; background: var(--accent-dim, #1a3a5c); border: 1px solid var(--accent, #4a9eff); border-radius: 4px; padding: 0.75rem; margin-bottom: 1rem; font-size: 0.85rem;">
-              <span id="imap-instructions-text"></span>
-              <a id="imap-instructions-link" href="#" target="_blank" style="color: var(--accent, #4a9eff); display: block; margin-top: 0.5rem;">Learn more</a>
-            </div>
-            <form onsubmit="event.preventDefault(); connectImapAccount();">
-              <div class="form-group">
-                <label class="form-label">Email Address *</label>
-                <input type="email" class="form-input" id="imap-email" required placeholder="you@example.com">
-              </div>
-              <div class="form-group">
-                <label class="form-label">Display Name</label>
-                <input type="text" class="form-input" id="imap-display-name" placeholder="Your Name">
-              </div>
-              <h3 style="margin-top: 1.5rem; margin-bottom: 1rem; font-size: 0.95rem; color: var(--text-secondary, #aaa);">IMAP Settings (Incoming)</h3>
-              <div style="display: grid; grid-template-columns: 2fr 1fr; gap: 0.5rem;">
-                <div class="form-group">
-                  <label class="form-label">IMAP Host *</label>
-                  <input type="text" class="form-input" id="imap-host" required placeholder="imap.example.com">
-                </div>
-                <div class="form-group">
-                  <label class="form-label">Port *</label>
-                  <input type="number" class="form-input" id="imap-port" value="993" required>
-                </div>
-              </div>
-              <h3 style="margin-top: 1.5rem; margin-bottom: 1rem; font-size: 0.95rem; color: var(--text-secondary, #aaa);">SMTP Settings (Outgoing)</h3>
-              <div style="display: grid; grid-template-columns: 2fr 1fr; gap: 0.5rem;">
-                <div class="form-group">
-                  <label class="form-label">SMTP Host *</label>
-                  <input type="text" class="form-input" id="smtp-host" required placeholder="smtp.example.com">
-                </div>
-                <div class="form-group">
-                  <label class="form-label">Port *</label>
-                  <input type="number" class="form-input" id="smtp-port" value="587" required>
-                </div>
-              </div>
-              <h3 style="margin-top: 1.5rem; margin-bottom: 1rem; font-size: 0.95rem; color: var(--text-secondary, #aaa);">Credentials</h3>
-              <div class="form-group">
-                <label class="form-label">Username *</label>
-                <input type="text" class="form-input" id="imap-username" required placeholder="you@example.com">
-              </div>
-              <div class="form-group">
-                <label class="form-label">Password *</label>
-                <input type="password" class="form-input" id="imap-password" required placeholder="App password or account password">
-              </div>
-            </form>
-          </div>
-          <div style="display:flex; justify-content:flex-end; gap:0.75rem; padding:1.25rem; border-top:1px solid var(--border, #333);">
-            <button class="btn-secondary" onclick="closeImapModal()">Cancel</button>
-            <button class="btn" id="imap-connect-btn" onclick="connectImapAccount()">Connect Account</button>
-          </div>
-        </div>
-      </div>
-
       <!-- Settings Section -->
       <section id="settings-section" class="section">
         <div class="header">
@@ -1956,46 +2236,69 @@
           </div>
         </div>
 
+        <!-- CRM Mode Selection -->
         <div class="card">
           <div class="card-header">
-            <h2 class="card-title display">GoHighLevel Integration</h2>
+            <h2 class="card-title display">CRM Mode</h2>
           </div>
-          <div class="form-group">
-            <label class="form-label">GHL API Key</label>
-            <input type="password" class="form-input mono" id="ghl-api-key" placeholder="Enter your GHL API key">
+          <p style="color: var(--text-secondary); margin-bottom: 1rem;">
+            Choose how you want to manage your leads. Use GoHighLevel if you have an account, or use our Internal CRM with deal pipelines, email sequences, and AI calling.
+          </p>
+          <div class="crm-mode-toggle">
+            <button class="crm-mode-btn active" data-mode="ghl" onclick="setCrmMode('ghl')">
+              📊 GoHighLevel
+            </button>
+            <button class="crm-mode-btn" data-mode="internal" onclick="setCrmMode('internal')">
+              🏢 Internal CRM
+            </button>
           </div>
-          <div class="form-group">
-            <label class="form-label">GHL Location ID</label>
-            <input type="text" class="form-input mono" id="ghl-location-id" placeholder="Enter your GHL location ID">
-          </div>
-          <button class="btn-secondary" onclick="saveGhlSettings()">Save Integration</button>
-          <a href="/setup-guide" target="_blank" class="btn-secondary" style="margin-left: 0.5rem; display: inline-block;">View Setup Guide</a>
-
-          <!-- Default Pipeline & Stage selectors (shown after API key is saved) -->
-          <div id="ghl-pipeline-selectors" style="display: none; margin-top: 1.5rem; padding-top: 1.5rem; border-top: 1px solid var(--border);">
-            <h3 style="color: var(--text-primary); font-size: 1rem; margin-bottom: 1rem;">Default Pipeline & Stage</h3>
-            <p style="color: var(--text-secondary); font-size: 0.85rem; margin-bottom: 1rem;">
-              Select the default pipeline and stage for leads that don't have an industry-specific mapping.
-            </p>
-            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
-              <div class="form-group">
-                <label class="form-label">Pipeline</label>
-                <select class="form-input mono" id="ghl-default-pipeline" onchange="onDefaultPipelineChange()">
-                  <option value="">-- Select Pipeline --</option>
-                </select>
-              </div>
-              <div class="form-group">
-                <label class="form-label">Stage</label>
-                <select class="form-input mono" id="ghl-default-stage">
-                  <option value="">-- Select Stage --</option>
-                </select>
-              </div>
-            </div>
-            <button class="btn-secondary" onclick="saveDefaultPipelineStage()">Save Default Pipeline</button>
-          </div>
+          <p id="crm-mode-description" style="color: var(--text-dim); font-size: 0.85rem; margin-top: 1rem;">
+            Leads will sync directly to your GoHighLevel account.
+          </p>
         </div>
 
-        <!-- Slow-Drip Sync Settings -->
+        <!-- GHL Settings (shown when mode is 'ghl') -->
+        <div id="ghl-settings-container">
+          <div class="card">
+            <div class="card-header">
+              <h2 class="card-title display">GoHighLevel Integration</h2>
+            </div>
+            <div class="form-group">
+              <label class="form-label">GHL API Key</label>
+              <input type="password" class="form-input mono" id="ghl-api-key" placeholder="Enter your GHL API key">
+            </div>
+            <div class="form-group">
+              <label class="form-label">GHL Location ID</label>
+              <input type="text" class="form-input mono" id="ghl-location-id" placeholder="Enter your GHL location ID">
+            </div>
+            <button class="btn-secondary" onclick="saveGhlSettings()">Save Integration</button>
+            <a href="/setup-guide" target="_blank" class="btn-secondary" style="margin-left: 0.5rem; display: inline-block;">View Setup Guide</a>
+
+            <!-- Default Pipeline & Stage selectors -->
+            <div id="ghl-pipeline-selectors" style="display: none; margin-top: 1.5rem; padding-top: 1.5rem; border-top: 1px solid var(--border);">
+              <h3 style="color: var(--text-primary); font-size: 1rem; margin-bottom: 1rem;">Default Pipeline & Stage</h3>
+              <p style="color: var(--text-secondary); font-size: 0.85rem; margin-bottom: 1rem;">
+                Select the default pipeline and stage for leads that don't have an industry-specific mapping.
+              </p>
+              <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+                <div class="form-group">
+                  <label class="form-label">Pipeline</label>
+                  <select class="form-input mono" id="ghl-default-pipeline" onchange="onDefaultPipelineChange()">
+                    <option value="">-- Select Pipeline --</option>
+                  </select>
+                </div>
+                <div class="form-group">
+                  <label class="form-label">Stage</label>
+                  <select class="form-input mono" id="ghl-default-stage">
+                    <option value="">-- Select Stage --</option>
+                  </select>
+                </div>
+              </div>
+              <button class="btn-secondary" onclick="saveDefaultPipelineStage()">Save Default Pipeline</button>
+            </div>
+          </div>
+
+          <!-- Slow-Drip Sync Settings -->
         <div class="card">
           <div class="card-header">
             <h2 class="card-title display">Slow-Drip GHL Sync</h2>
@@ -2077,8 +2380,723 @@
           </div>
           <button class="btn-secondary" onclick="saveIndustryMappings()" style="margin-top: 1rem;">Save Industry Mappings</button>
         </div>
+        </div><!-- End GHL Settings Container -->
+
+        <!-- ElevenLabs AI Calling Card (available in all modes) -->
+        <div class="card">
+          <div class="card-header">
+            <h2 class="card-title display">🤖 ElevenLabs AI Calling</h2>
+          </div>
+          <p style="color: var(--text-secondary); margin-bottom: 1rem;">
+            Configure your ElevenLabs API for AI-powered outbound calling.
+          </p>
+          <div class="form-group">
+            <label class="form-label">ElevenLabs API Key</label>
+            <input type="password" class="form-input mono" id="elevenlabs-api-key" placeholder="Enter your ElevenLabs API key">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Default Voice</label>
+            <select class="form-input mono" id="elevenlabs-voice">
+              <option value="">-- Connect API to load voices --</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label class="form-label" style="display: flex; align-items: center; gap: 0.5rem; cursor: pointer;">
+              <input type="checkbox" id="ai-calling-enabled" style="width: auto; cursor: pointer;">
+              Enable AI Calling
+            </label>
+          </div>
+          <button class="btn-secondary" onclick="saveElevenlabsSettings()">Save AI Calling Settings</button>
+        </div>
+
+        <!-- Auto-Call Settings Card (available in all modes) -->
+        <div class="card">
+          <div class="card-header">
+            <h2 class="card-title display">📞 Auto-Call for Missing Emails</h2>
+          </div>
+          <p style="color: var(--text-secondary); margin-bottom: 1rem;">
+            Automatically call leads without email addresses during business hours to collect their email.
+          </p>
+          <div class="form-group">
+            <label class="form-label" style="display: flex; align-items: center; gap: 0.5rem; cursor: pointer;">
+              <input type="checkbox" id="auto-call-enabled" style="width: auto; cursor: pointer;">
+              Enable Auto-Call for leads without emails
+            </label>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Email Collection Agent</label>
+            <select class="form-input mono" id="auto-call-agent">
+              <option value="">-- Select an agent --</option>
+            </select>
+            <small style="color: var(--text-dim); display: block; margin-top: 0.25rem;">
+              This agent will call to collect email addresses
+            </small>
+          </div>
+          <div class="form-group">
+            <label class="form-label" style="display: flex; align-items: center; gap: 0.5rem; cursor: pointer;">
+              <input type="checkbox" id="auto-followup-enabled" style="width: auto; cursor: pointer;">
+              Auto-schedule follow-up call after email collected
+            </label>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Follow-up Agent (Decision Maker/Meeting)</label>
+            <select class="form-input mono" id="followup-agent">
+              <option value="">-- Select an agent --</option>
+            </select>
+            <small style="color: var(--text-dim); display: block; margin-top: 0.25rem;">
+              This agent will call back to reach decision-makers or schedule meetings
+            </small>
+          </div>
+          <button class="btn-secondary" onclick="saveAutoCallSettings()">Save Auto-Call Settings</button>
+        </div>
+
+        <!-- AI Agents Manager Card (available in all modes) -->
+        <div class="card">
+          <div class="card-header" style="display: flex; justify-content: space-between; align-items: center;">
+            <h2 class="card-title display">🎯 AI Agents</h2>
+            <button class="btn-mini" onclick="openAgentModal()">+ New Agent</button>
+          </div>
+          <p style="color: var(--text-secondary); margin-bottom: 1rem;">
+            Create and manage AI calling agents with custom personalities and goals.
+          </p>
+          <div id="agents-list" style="display: flex; flex-direction: column; gap: 0.75rem;">
+            <!-- Agents will be loaded here -->
+            <div style="text-align: center; padding: 2rem; color: var(--text-dim);">
+              Loading agents...
+            </div>
+          </div>
+        </div>
+
+        <!-- Internal CRM Settings (shown when mode is 'internal') -->
+        <div id="internal-crm-settings-container" style="display: none;">
+
+          <!-- Email Integrations Card -->
+          <div class="card">
+            <div class="card-header">
+              <h2 class="card-title display">📧 Email Integrations</h2>
+            </div>
+            <p style="color: var(--text-secondary); margin-bottom: 1.5rem;">
+              Connect your email accounts to send outreach directly from LeadRipper.
+            </p>
+
+            <div id="connected-email-accounts" style="margin-bottom: 1.5rem;">
+              <!-- Email accounts will be loaded here -->
+            </div>
+
+            <div style="display: flex; gap: 1rem; flex-wrap: wrap;">
+              <button class="btn-secondary" onclick="connectGmail()" style="display: flex; align-items: center; gap: 0.5rem;">
+                <svg width="18" height="18" viewBox="0 0 24 24"><path fill="#EA4335" d="M24 5.457v13.909c0 .904-.732 1.636-1.636 1.636h-3.819V11.73L12 16.64l-6.545-4.91v9.273H1.636A1.636 1.636 0 0 1 0 19.366V5.457c0-2.023 2.309-3.178 3.927-1.964L5.455 4.64 12 9.548l6.545-4.91 1.528-1.145C21.69 2.28 24 3.434 24 5.457z"/></svg>
+                Connect Gmail
+              </button>
+              <button class="btn-secondary" onclick="connectOutlook()" style="display: flex; align-items: center; gap: 0.5rem;">
+                <svg width="18" height="18" viewBox="0 0 24 24"><path fill="#0078D4" d="M24 7.387v10.478c0 .23-.08.424-.238.576-.149.152-.345.228-.576.228H9.273V6.547h13.913c.23 0 .427.08.576.238.158.158.238.365.238.602zM8.18 17.695V6.547L0 9.566v5.098l8.18 3.031zM24 5.455H9.273V1.636c0-.452.149-.846.457-1.179.308-.333.68-.457 1.12-.457h11.514c.452 0 .846.149 1.179.457.333.308.457.68.457 1.12V5.455zM24 18.545v3.819c0 .452-.149.846-.457 1.179-.333.308-.68.457-1.12.457H10.909c-.452 0-.846-.149-1.179-.457-.333-.308-.457-.68-.457-1.12v-3.878H24z"/></svg>
+                Connect Outlook
+              </button>
+            </div>
+          </div>
+
+          <div class="card">
+            <div class="card-header">
+              <h2 class="card-title display">Calendar Settings</h2>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Timezone</label>
+              <select class="form-input mono" id="calendar-timezone">
+                <option value="America/New_York">Eastern Time (ET)</option>
+                <option value="America/Chicago">Central Time (CT)</option>
+                <option value="America/Denver">Mountain Time (MT)</option>
+                <option value="America/Los_Angeles">Pacific Time (PT)</option>
+                <option value="America/Phoenix">Arizona (AZ)</option>
+                <option value="Europe/London">London (GMT)</option>
+                <option value="Europe/Paris">Paris (CET)</option>
+                <option value="Asia/Tokyo">Tokyo (JST)</option>
+                <option value="Australia/Sydney">Sydney (AEST)</option>
+              </select>
+            </div>
+            <div class="form-row" style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+              <div class="form-group">
+                <label class="form-label">Working Hours Start</label>
+                <input type="time" class="form-input mono" id="working-hours-start" value="09:00">
+              </div>
+              <div class="form-group">
+                <label class="form-label">Working Hours End</label>
+                <input type="time" class="form-input mono" id="working-hours-end" value="17:00">
+              </div>
+            </div>
+            <button class="btn-secondary" onclick="saveCalendarSettings()">Save Calendar Settings</button>
+          </div>
+
+          <div class="card">
+            <div class="card-header">
+              <h2 class="card-title display">Email Signature</h2>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Signature (appended to all outgoing emails)</label>
+              <textarea class="form-input mono" id="email-signature" rows="4" placeholder="Best regards,&#10;Your Name&#10;Company Name"></textarea>
+            </div>
+            <button class="btn-secondary" onclick="saveEmailSignature()">Save Signature</button>
+          </div>
+        </div><!-- End Internal CRM Settings Container -->
+      </section>
+
+      <!-- Pipeline Board Section (CRM Only) -->
+      <section id="pipeline-section" class="section">
+        <div class="header">
+          <div class="header-top">
+            <div>
+              <h1 class="page-title display">PIPELINE BOARD</h1>
+              <p class="page-subtitle mono">Manage your deals with drag-and-drop</p>
+            </div>
+            <div class="header-actions">
+              <button class="btn" onclick="openNewDealModal()">+ New Deal</button>
+              <button class="btn-secondary" onclick="openPipelineSettingsModal()">⚙️ Manage Pipelines</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="pipeline-controls">
+          <div class="pipeline-selector">
+            <label class="form-label" style="margin: 0;">Pipeline:</label>
+            <select class="pipeline-dropdown" id="pipeline-select" onchange="loadPipelineBoard()">
+              <option value="">-- Select Pipeline --</option>
+            </select>
+            <button class="btn-secondary" onclick="createNewPipeline()">+ New Pipeline</button>
+          </div>
+        </div>
+
+        <div class="pipeline-stats-grid" id="pipeline-stats">
+          <div class="pipeline-stat">
+            <div class="pipeline-stat-value" id="stat-total-deals">0</div>
+            <div class="pipeline-stat-label">Total Deals</div>
+          </div>
+          <div class="pipeline-stat">
+            <div class="pipeline-stat-value" id="stat-total-value">$0</div>
+            <div class="pipeline-stat-label">Pipeline Value</div>
+          </div>
+          <div class="pipeline-stat">
+            <div class="pipeline-stat-value" id="stat-won-deals">0</div>
+            <div class="pipeline-stat-label">Won This Month</div>
+          </div>
+          <div class="pipeline-stat">
+            <div class="pipeline-stat-value" id="stat-avg-deal">$0</div>
+            <div class="pipeline-stat-label">Avg Deal Size</div>
+          </div>
+        </div>
+
+        <div class="kanban-board" id="kanban-board">
+          <div style="text-align: center; padding: 3rem; color: var(--text-dim);">
+            <p>Select a pipeline above or create your first one to get started.</p>
+          </div>
+        </div>
+      </section>
+
+      <!-- Email Outreach Section -->
+      <section id="email-outreach-section" class="section">
+        <div class="header">
+          <div class="header-top">
+            <div>
+              <h1 class="page-title display">EMAIL OUTREACH</h1>
+              <p class="page-subtitle mono">Send cold emails to your leads</p>
+            </div>
+            <div class="header-actions">
+              <button class="btn" onclick="openNewTemplateModal()">+ New Template</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="stats-grid">
+          <div class="stat-card">
+            <div class="stat-value mono" id="stat-emails-sent">0</div>
+            <div class="stat-label">Emails Sent</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-value mono" id="stat-emails-opened">0</div>
+            <div class="stat-label">Opened</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-value mono" id="stat-open-rate">0%</div>
+            <div class="stat-label">Open Rate</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-value mono" id="stat-sent-today">0</div>
+            <div class="stat-label">Sent Today</div>
+          </div>
+        </div>
+
+        <!-- Compose Email Card -->
+        <div class="card">
+          <div class="card-header">
+            <h2 class="card-title display">Compose Campaign</h2>
+          </div>
+
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem;">
+            <!-- Left: Filters -->
+            <div>
+              <h3 style="margin-bottom: 1rem; color: var(--text-dim);">Select Recipients</h3>
+
+              <div class="form-group">
+                <label class="form-label">Filter by City</label>
+                <select id="outreach-filter-city" class="filter-select" onchange="updateOutreachCount()">
+                  <option value="">All Cities</option>
+                </select>
+              </div>
+
+              <div class="form-group">
+                <label class="form-label">Filter by Industry</label>
+                <select id="outreach-filter-industry" class="filter-select" onchange="updateOutreachCount()">
+                  <option value="">All Industries</option>
+                </select>
+              </div>
+
+              <div class="form-group">
+                <label class="form-label">
+                  <input type="checkbox" id="outreach-verified-only" checked onchange="updateOutreachCount()">
+                  Only Verified Emails
+                </label>
+              </div>
+
+              <div class="form-group">
+                <label class="form-label">
+                  <input type="checkbox" id="outreach-exclude-recent" checked onchange="updateOutreachCount()">
+                  Exclude Recently Emailed (7 days)
+                </label>
+              </div>
+
+              <div class="form-group">
+                <label class="form-label">Max Recipients</label>
+                <input type="number" id="outreach-limit" class="form-input" value="25" min="1" max="100" onchange="updateOutreachCount()">
+              </div>
+
+              <div style="background: var(--surface); border: 1px solid var(--border); border-radius: 8px; padding: 1rem; margin-top: 1rem;">
+                <div style="font-size: 2rem; font-weight: bold; color: var(--accent);" id="outreach-recipient-count">0</div>
+                <div style="color: var(--text-dim);">matching leads</div>
+              </div>
+            </div>
+
+            <!-- Right: Email Content -->
+            <div>
+              <div class="form-group">
+                <label class="form-label">From Account</label>
+                <select id="outreach-from-account" class="filter-select">
+                  <option value="">Select email account...</option>
+                </select>
+              </div>
+
+              <div class="form-group">
+                <label class="form-label">Template (optional)</label>
+                <select id="outreach-template" class="filter-select" onchange="loadTemplateContent()">
+                  <option value="">Write custom email...</option>
+                </select>
+              </div>
+
+              <div class="form-group">
+                <label class="form-label">Subject</label>
+                <input type="text" id="outreach-subject" class="form-input" placeholder="Hi {{first_name}}, quick question about {{business_name}}">
+              </div>
+
+              <div class="form-group">
+                <label class="form-label">Email Body</label>
+                <textarea id="outreach-body" class="form-textarea" rows="8" placeholder="Hi {{first_name}},
+
+I noticed {{business_name}} in {{city}} and wanted to reach out...
+
+Available merge tags: {{business_name}}, {{first_name}}, {{email}}, {{phone}}, {{website}}, {{city}}, {{industry}}, {{address}}"></textarea>
+              </div>
+
+              <div style="display: flex; gap: 1rem;">
+                <button class="btn" onclick="sendOutreachEmails()" style="flex: 1;">
+                  🚀 Send Emails
+                </button>
+                <button class="btn-secondary" onclick="previewOutreachEmail()">
+                  👁 Preview
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Email Templates -->
+        <div class="card">
+          <div class="card-header">
+            <h2 class="card-title display">Email Templates</h2>
+          </div>
+          <div id="email-templates-list">
+            <p style="color: var(--text-dim); text-align: center; padding: 2rem;">
+              No templates yet. Create your first template above.
+            </p>
+          </div>
+        </div>
+
+        <!-- Sent Emails History -->
+        <div class="card">
+          <div class="card-header">
+            <h2 class="card-title display">Sent Emails</h2>
+          </div>
+          <div class="table-container">
+            <table>
+              <thead>
+                <tr>
+                  <th>Recipient</th>
+                  <th>Subject</th>
+                  <th>Sent</th>
+                  <th>Opened</th>
+                  <th>Status</th>
+                </tr>
+              </thead>
+              <tbody id="sent-emails-body">
+                <tr>
+                  <td colspan="5" style="text-align: center; color: var(--text-dim);">No emails sent yet</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <!-- Email Accounts Section -->
+      <section id="email-accounts-section" class="section">
+        <div class="header">
+          <div class="header-top">
+            <div>
+              <h1 class="page-title display">EMAIL ACCOUNTS</h1>
+              <p class="page-subtitle mono">Connect your email providers</p>
+            </div>
+            <div class="header-actions">
+              <button class="btn" onclick="connectEmailAccount('gmail')">+ Connect Gmail</button>
+              <button class="btn-secondary" onclick="connectEmailAccount('outlook')">+ Connect Outlook</button>
+              <button class="btn-secondary" onclick="openImapModal()">+ Add IMAP</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-header">
+            <h2 class="card-title display">Connected Accounts</h2>
+          </div>
+          <div id="email-accounts-list">
+            <p style="color: var(--text-dim); text-align: center; padding: 2rem;">
+              No email accounts connected yet. Add your first account above.
+            </p>
+          </div>
+        </div>
+      </section>
+
+      <!-- AI Calling Section (CRM Only) -->
+      <section id="ai-calling-section" class="section">
+        <div class="header">
+          <div class="header-top">
+            <div>
+              <h1 class="page-title display">AI CALLING</h1>
+              <p class="page-subtitle mono">Configure AI agents for outbound calls</p>
+            </div>
+            <div class="header-actions">
+              <button class="btn" onclick="openNewAgentModal()">+ New Agent</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="stats-grid">
+          <div class="stat-card">
+            <div class="stat-value mono" id="stat-calls-today">0</div>
+            <div class="stat-label">Calls Today</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-value mono" id="stat-meetings-booked">0</div>
+            <div class="stat-label">Meetings Booked</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-value mono" id="stat-avg-duration">0:00</div>
+            <div class="stat-label">Avg Duration</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-value mono" id="stat-success-rate">0%</div>
+            <div class="stat-label">Success Rate</div>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-header">
+            <h2 class="card-title display">AI Agents</h2>
+          </div>
+          <div id="ai-agents-list">
+            <p style="color: var(--text-dim); text-align: center; padding: 2rem;">
+              No AI agents configured yet. Create your first agent above.
+            </p>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-header">
+            <h2 class="card-title display">Recent Calls</h2>
+          </div>
+          <div class="table-container">
+            <table>
+              <thead>
+                <tr>
+                  <th>Contact</th>
+                  <th>Agent</th>
+                  <th>Duration</th>
+                  <th>Outcome</th>
+                  <th>Date</th>
+                </tr>
+              </thead>
+              <tbody id="call-logs-body">
+                <tr>
+                  <td colspan="5" style="text-align: center; color: var(--text-dim);">No calls yet</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
       </section>
     </main>
+  </div>
+
+  <!-- Deal Modal -->
+  <div id="deal-modal" class="deal-modal hidden">
+    <div class="deal-modal-content">
+      <div class="deal-modal-header">
+        <h2 class="deal-modal-title" id="deal-modal-title">New Deal</h2>
+        <button class="deal-modal-close" onclick="closeDealModal()">&times;</button>
+      </div>
+      <div class="deal-modal-body">
+        <form id="deal-form">
+          <input type="hidden" id="deal-id">
+          <input type="hidden" id="deal-stage-id">
+          <div class="form-group">
+            <label class="form-label">Deal Title *</label>
+            <input type="text" class="form-input mono" id="deal-title" placeholder="e.g., Website Redesign Project" required>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Company</label>
+            <input type="text" class="form-input mono" id="deal-company" placeholder="Company name">
+          </div>
+          <div class="form-row" style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+            <div class="form-group">
+              <label class="form-label">Deal Value ($)</label>
+              <input type="number" class="form-input mono" id="deal-value" placeholder="0.00" step="0.01" min="0">
+            </div>
+            <div class="form-group">
+              <label class="form-label">Expected Close Date</label>
+              <input type="date" class="form-input mono" id="deal-close-date">
+            </div>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Contact Name</label>
+            <input type="text" class="form-input mono" id="deal-contact-name" placeholder="Contact name">
+          </div>
+          <div class="form-row" style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+            <div class="form-group">
+              <label class="form-label">Email</label>
+              <input type="email" class="form-input mono" id="deal-email" placeholder="contact@company.com">
+            </div>
+            <div class="form-group">
+              <label class="form-label">Phone</label>
+              <input type="tel" class="form-input mono" id="deal-phone" placeholder="+1 (555) 123-4567">
+            </div>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Notes</label>
+            <textarea class="form-input mono" id="deal-notes" rows="3" placeholder="Additional notes about this deal..."></textarea>
+          </div>
+          <div class="form-group" id="deal-lead-select-group" style="display: none;">
+            <label class="form-label">Link to Lead (Optional)</label>
+            <select class="form-input mono" id="deal-lead-id">
+              <option value="">-- No lead linked --</option>
+            </select>
+          </div>
+        </form>
+
+        <!-- Activity Timeline (shown when editing) -->
+        <div id="deal-activities-section" style="display: none;">
+          <h3 style="margin-top: 1.5rem; margin-bottom: 1rem; font-size: 1rem; text-transform: uppercase; letter-spacing: 0.05em;">Activity History</h3>
+          <div class="activity-timeline" id="deal-activities"></div>
+          <div style="margin-top: 1rem;">
+            <textarea class="form-input mono" id="new-activity-note" rows="2" placeholder="Add a note..."></textarea>
+            <button class="btn-secondary" style="margin-top: 0.5rem;" onclick="addDealActivity()">Add Note</button>
+          </div>
+        </div>
+      </div>
+      <div class="deal-modal-footer">
+        <button class="btn-secondary" onclick="closeDealModal()">Cancel</button>
+        <button class="btn" onclick="saveDeal()">Save Deal</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Pipeline Settings Modal -->
+  <div id="pipeline-modal" class="deal-modal hidden">
+    <div class="deal-modal-content">
+      <div class="deal-modal-header">
+        <h2 class="deal-modal-title">Pipeline Settings</h2>
+        <button class="deal-modal-close" onclick="closePipelineModal()">&times;</button>
+      </div>
+      <div class="deal-modal-body">
+        <div class="form-group">
+          <label class="form-label">Pipeline Name *</label>
+          <input type="text" class="form-input mono" id="pipeline-name" placeholder="e.g., Sales Pipeline">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Description</label>
+          <textarea class="form-input mono" id="pipeline-description" rows="2" placeholder="Optional description..."></textarea>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Pipeline Color</label>
+          <input type="color" class="form-input" id="pipeline-color" value="#ff3e00" style="height: 40px; padding: 4px;">
+        </div>
+
+        <h3 style="margin-top: 1.5rem; margin-bottom: 1rem; font-size: 1rem; text-transform: uppercase; letter-spacing: 0.05em;">Stages</h3>
+        <div id="pipeline-stages-list"></div>
+        <button class="btn-secondary" style="margin-top: 0.5rem;" onclick="addPipelineStage()">+ Add Stage</button>
+      </div>
+      <div class="deal-modal-footer">
+        <button class="btn-secondary" onclick="closePipelineModal()">Cancel</button>
+        <button class="btn" onclick="savePipeline()">Save Pipeline</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- New Pipeline Modal -->
+  <div id="new-pipeline-modal" class="deal-modal hidden">
+    <div class="deal-modal-content">
+      <div class="deal-modal-header">
+        <h2 class="deal-modal-title">Create New Pipeline</h2>
+        <button class="deal-modal-close" onclick="closeNewPipelineModal()">&times;</button>
+      </div>
+      <div class="deal-modal-body">
+        <div class="form-group">
+          <label class="form-label">Pipeline Name *</label>
+          <input type="text" class="form-input mono" id="new-pipeline-name" placeholder="e.g., Sales Pipeline" required>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Description</label>
+          <textarea class="form-input mono" id="new-pipeline-description" rows="2" placeholder="What is this pipeline for?"></textarea>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Pipeline Color</label>
+          <input type="color" class="form-input" id="new-pipeline-color" value="#ff3e00" style="height: 40px; padding: 4px;">
+        </div>
+        <p style="color: var(--text-dim); font-size: 0.85rem; margin-top: 1rem;">
+          Default stages (New Lead, Contacted, Qualified, Proposal Sent, Won) will be created. You can customize them later.
+        </p>
+      </div>
+      <div class="deal-modal-footer">
+        <button class="btn-secondary" onclick="closeNewPipelineModal()">Cancel</button>
+        <button class="btn" onclick="createPipeline()">Create Pipeline</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- IMAP Email Account Modal -->
+  <div id="imap-modal" class="deal-modal hidden">
+    <div class="deal-modal-content">
+      <div class="deal-modal-header">
+        <h2 class="deal-modal-title" id="imap-modal-title">Connect IMAP Email Account</h2>
+        <button class="deal-modal-close" onclick="closeImapModal()">&times;</button>
+      </div>
+      <div class="deal-modal-body">
+        <div id="imap-instructions" style="display:none; background: var(--accent-dim, #1a3a5c); border: 1px solid var(--accent, #4a9eff); border-radius: 4px; padding: 0.75rem; margin-bottom: 1rem; font-size: 0.85rem;">
+          <span id="imap-instructions-text"></span>
+          <a id="imap-instructions-link" href="#" target="_blank" style="color: var(--accent, #4a9eff); display: block; margin-top: 0.5rem;">Learn more</a>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Email Address *</label>
+          <input type="email" class="form-input mono" id="imap-email" placeholder="you@example.com" required>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Display Name</label>
+          <input type="text" class="form-input mono" id="imap-display-name" placeholder="Your Name">
+        </div>
+        <h3 style="margin-top: 1.5rem; margin-bottom: 1rem; font-size: 0.9rem; text-transform: uppercase;">IMAP Settings (Incoming)</h3>
+        <div class="form-row" style="display: grid; grid-template-columns: 2fr 1fr; gap: 1rem;">
+          <div class="form-group">
+            <label class="form-label">IMAP Host *</label>
+            <input type="text" class="form-input mono" id="imap-host" placeholder="imap.example.com" required>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Port *</label>
+            <input type="number" class="form-input mono" id="imap-port" value="993" required>
+          </div>
+        </div>
+        <h3 style="margin-top: 1rem; margin-bottom: 1rem; font-size: 0.9rem; text-transform: uppercase;">SMTP Settings (Outgoing)</h3>
+        <div class="form-row" style="display: grid; grid-template-columns: 2fr 1fr; gap: 1rem;">
+          <div class="form-group">
+            <label class="form-label">SMTP Host *</label>
+            <input type="text" class="form-input mono" id="smtp-host" placeholder="smtp.example.com" required>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Port *</label>
+            <input type="number" class="form-input mono" id="smtp-port" value="587" required>
+          </div>
+        </div>
+        <h3 style="margin-top: 1rem; margin-bottom: 1rem; font-size: 0.9rem; text-transform: uppercase;">Credentials</h3>
+        <div class="form-group">
+          <label class="form-label">Username *</label>
+          <input type="text" class="form-input mono" id="imap-username" placeholder="Usually your email address" required>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Password *</label>
+          <input type="password" class="form-input mono" id="imap-password" placeholder="Email password or app password" required>
+        </div>
+      </div>
+      <div class="deal-modal-footer">
+        <button class="btn-secondary" onclick="closeImapModal()">Cancel</button>
+        <button class="btn" id="imap-connect-btn" onclick="connectImapAccount()">Connect Account</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- AI Agent Modal -->
+  <div id="agent-modal" class="deal-modal hidden">
+    <div class="deal-modal-content">
+      <div class="deal-modal-header">
+        <h2 class="deal-modal-title" id="agent-modal-title">New AI Agent</h2>
+        <button class="deal-modal-close" onclick="closeAgentModal()">&times;</button>
+      </div>
+      <div class="deal-modal-body">
+        <input type="hidden" id="agent-id">
+        <div class="form-group">
+          <label class="form-label">Agent Name *</label>
+          <input type="text" class="form-input mono" id="agent-name" placeholder="e.g., Sales Agent" required>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Voice</label>
+          <select class="form-input mono" id="agent-voice">
+            <option value="">-- Select a voice --</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Agent Goal</label>
+          <select class="form-input mono" id="agent-goal">
+            <option value="schedule_meeting">Schedule a Meeting</option>
+            <option value="qualify_lead">Qualify the Lead</option>
+            <option value="collect_info">Collect Information</option>
+            <option value="collect_email">Collect Email Address</option>
+            <option value="reach_decision_maker">Reach Decision Maker</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Greeting Script *</label>
+          <textarea class="form-input mono" id="agent-greeting" rows="3" placeholder="Hi, this is {agent_name} from {company}. I'm calling to..." required></textarea>
+        </div>
+        <div class="form-group">
+          <label class="form-label">System Prompt</label>
+          <textarea class="form-input mono" id="agent-system-prompt" rows="4" placeholder="You are a friendly sales agent. Your goal is to..."></textarea>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Calendar Link (for meeting bookings)</label>
+          <input type="url" class="form-input mono" id="agent-calendar-link" placeholder="https://calendly.com/yourlink">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Max Call Duration (seconds)</label>
+          <input type="number" class="form-input mono" id="agent-max-duration" value="300" min="60" max="600">
+        </div>
+      </div>
+      <div class="deal-modal-footer">
+        <button class="btn-secondary" onclick="closeAgentModal()">Cancel</button>
+        <button class="btn" onclick="saveAgent()">Save Agent</button>
+      </div>
+    </div>
   </div>
 
   <script>
@@ -2088,6 +3106,1181 @@
     let selectedCities = [];
     let scrapedCities = [];
     const API_BASE = '/.netlify/functions';
+
+    // CRM State
+    let crmMode = 'ghl'; // 'ghl' or 'internal'
+    let currentPipelines = [];
+    let currentPipelineId = null;
+    let currentStages = [];
+    let currentDeals = [];
+    let editingDealId = null;
+    let draggedDealId = null;
+
+    // =====================================
+    // CRM MODE FUNCTIONS
+    // =====================================
+
+    function setCrmMode(mode) {
+      crmMode = mode;
+
+      // Update toggle UI
+      document.querySelectorAll('.crm-mode-btn').forEach(btn => {
+        btn.classList.toggle('active', btn.dataset.mode === mode);
+      });
+
+      // Update description
+      const descEl = document.getElementById('crm-mode-description');
+      if (mode === 'ghl') {
+        descEl.textContent = 'Leads will sync directly to your GoHighLevel account.';
+      } else {
+        descEl.textContent = 'Use our built-in CRM with pipelines, email sequences, and AI calling.';
+      }
+
+      // Show/hide settings containers
+      document.getElementById('ghl-settings-container').style.display = mode === 'ghl' ? 'block' : 'none';
+      document.getElementById('internal-crm-settings-container').style.display = mode === 'internal' ? 'block' : 'none';
+
+      // Show/hide CRM nav items
+      document.querySelectorAll('.nav-item.crm-only').forEach(item => {
+        item.style.display = mode === 'internal' ? 'flex' : 'none';
+      });
+
+      // Save to server
+      saveCrmMode(mode);
+    }
+
+    async function saveCrmMode(mode) {
+      try {
+        await fetch(`${API_BASE}/update-settings`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${authToken}`
+          },
+          body: JSON.stringify({ crmMode: mode })
+        });
+      } catch (error) {
+        console.error('Failed to save CRM mode:', error);
+      }
+    }
+
+    // =====================================
+    // PIPELINE BOARD FUNCTIONS
+    // =====================================
+
+    async function loadPipelines() {
+      try {
+        const response = await fetch(`${API_BASE}/crm-pipelines`, {
+          headers: { 'Authorization': `Bearer ${authToken}` }
+        });
+        const result = await response.json();
+
+        if (result.success) {
+          currentPipelines = result.pipelines || [];
+          renderPipelineDropdown();
+
+          // Auto-select first pipeline if none selected
+          if (currentPipelines.length > 0 && !currentPipelineId) {
+            currentPipelineId = currentPipelines[0].id;
+            document.getElementById('pipeline-select').value = currentPipelineId;
+            loadPipelineBoard();
+          }
+        }
+      } catch (error) {
+        console.error('Failed to load pipelines:', error);
+      }
+    }
+
+    function renderPipelineDropdown() {
+      const select = document.getElementById('pipeline-select');
+      if (!select) return;
+
+      select.innerHTML = '<option value="">-- Select Pipeline --</option>' +
+        currentPipelines.map(p => `<option value="${p.id}">${p.name}</option>`).join('');
+
+      if (currentPipelineId) {
+        select.value = currentPipelineId;
+      }
+    }
+
+    async function loadPipelineBoard() {
+      const select = document.getElementById('pipeline-select');
+      currentPipelineId = select.value;
+
+      if (!currentPipelineId) {
+        document.getElementById('kanban-board').innerHTML = `
+          <div style="text-align: center; padding: 3rem; color: var(--text-dim);">
+            <p>Select a pipeline above or create your first one to get started.</p>
+          </div>
+        `;
+        return;
+      }
+
+      try {
+        // Load stages
+        const stagesResponse = await fetch(`${API_BASE}/crm-stages?pipelineId=${currentPipelineId}`, {
+          headers: { 'Authorization': `Bearer ${authToken}` }
+        });
+        const stagesResult = await stagesResponse.json();
+        currentStages = stagesResult.stages || [];
+
+        // Load deals for this pipeline
+        const dealsResponse = await fetch(`${API_BASE}/crm-deals?pipelineId=${currentPipelineId}`, {
+          headers: { 'Authorization': `Bearer ${authToken}` }
+        });
+        const dealsResult = await dealsResponse.json();
+        currentDeals = dealsResult.deals || [];
+
+        renderKanbanBoard();
+        updatePipelineStats();
+      } catch (error) {
+        console.error('Failed to load pipeline board:', error);
+        showToast('Failed to load pipeline', 'error');
+      }
+    }
+
+    function renderKanbanBoard() {
+      const board = document.getElementById('kanban-board');
+      if (!board) return;
+
+      if (currentStages.length === 0) {
+        board.innerHTML = `
+          <div style="text-align: center; padding: 3rem; color: var(--text-dim);">
+            <p>This pipeline has no stages. Add stages in pipeline settings.</p>
+          </div>
+        `;
+        return;
+      }
+
+      board.innerHTML = currentStages.map(stage => {
+        const stageDeals = currentDeals.filter(d => d.stage_id == stage.id && d.status === 'open');
+        const stageValue = stageDeals.reduce((sum, d) => sum + parseFloat(d.value || 0), 0);
+
+        return `
+          <div class="kanban-column" data-stage-id="${stage.id}">
+            <div class="kanban-column-header">
+              <div class="kanban-column-title">
+                <span class="kanban-column-color" style="background: ${stage.color || '#333'}"></span>
+                ${stage.name}
+              </div>
+              <div class="kanban-column-stats">
+                ${stageDeals.length} deals • $${formatNumber(stageValue)}
+              </div>
+            </div>
+            <div class="kanban-cards" data-stage-id="${stage.id}"
+              ondrop="handleDrop(event)" ondragover="handleDragOver(event)" ondragleave="handleDragLeave(event)">
+              ${stageDeals.map(deal => renderDealCard(deal)).join('')}
+            </div>
+            <button class="kanban-add-deal" onclick="openNewDealModal(${stage.id})">+ Add Deal</button>
+          </div>
+        `;
+      }).join('');
+    }
+
+    function renderDealCard(deal) {
+      const daysOld = Math.floor((Date.now() - new Date(deal.created_at).getTime()) / (1000 * 60 * 60 * 24));
+      return `
+        <div class="kanban-card" draggable="true" data-deal-id="${deal.id}"
+          ondragstart="handleDragStart(event)" ondragend="handleDragEnd(event)"
+          onclick="openDealModal(${deal.id})">
+          <div class="kanban-card-title">${escapeHtml(deal.title || 'Untitled Deal')}</div>
+          ${deal.contact_name ? `<div class="kanban-card-company">${escapeHtml(deal.contact_name)}</div>` : ''}
+          <div class="kanban-card-value">$${formatNumber(deal.value || 0)}</div>
+          <div class="kanban-card-footer">
+            <span class="kanban-card-date">${daysOld}d ago</span>
+            ${deal.expected_close_date ? `<span class="kanban-card-date">Close: ${new Date(deal.expected_close_date).toLocaleDateString()}</span>` : ''}
+          </div>
+        </div>
+      `;
+    }
+
+    function updatePipelineStats() {
+      const openDeals = currentDeals.filter(d => d.status === 'open');
+      const wonDeals = currentDeals.filter(d => d.status === 'won');
+      const totalValue = openDeals.reduce((sum, d) => sum + parseFloat(d.value || 0), 0);
+      const avgDeal = openDeals.length > 0 ? totalValue / openDeals.length : 0;
+
+      document.getElementById('stat-total-deals').textContent = openDeals.length;
+      document.getElementById('stat-total-value').textContent = '$' + formatNumber(totalValue);
+      document.getElementById('stat-won-deals').textContent = wonDeals.length;
+      document.getElementById('stat-avg-deal').textContent = '$' + formatNumber(avgDeal);
+    }
+
+    // Drag and Drop
+    function handleDragStart(e) {
+      draggedDealId = e.target.dataset.dealId;
+      e.target.classList.add('dragging');
+      e.dataTransfer.effectAllowed = 'move';
+    }
+
+    function handleDragEnd(e) {
+      e.target.classList.remove('dragging');
+      draggedDealId = null;
+    }
+
+    function handleDragOver(e) {
+      e.preventDefault();
+      e.currentTarget.classList.add('drag-over');
+    }
+
+    function handleDragLeave(e) {
+      e.currentTarget.classList.remove('drag-over');
+    }
+
+    async function handleDrop(e) {
+      e.preventDefault();
+      e.currentTarget.classList.remove('drag-over');
+
+      const newStageId = e.currentTarget.dataset.stageId;
+
+      if (draggedDealId && newStageId) {
+        try {
+          const response = await fetch(`${API_BASE}/crm-deals`, {
+            method: 'PUT',
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': `Bearer ${authToken}`
+            },
+            body: JSON.stringify({
+              id: parseInt(draggedDealId),
+              stageId: parseInt(newStageId)
+            })
+          });
+
+          const result = await response.json();
+
+          if (result.success) {
+            loadPipelineBoard();
+            showToast('Deal moved successfully', 'success');
+          } else {
+            showToast(result.error || 'Failed to move deal', 'error');
+          }
+        } catch (error) {
+          console.error('Failed to move deal:', error);
+          showToast('Failed to move deal', 'error');
+        }
+      }
+    }
+
+    // =====================================
+    // DEAL MODAL FUNCTIONS
+    // =====================================
+
+    function openNewDealModal(stageId) {
+      editingDealId = null;
+      document.getElementById('deal-modal-title').textContent = 'New Deal';
+      document.getElementById('deal-form').reset();
+      document.getElementById('deal-id').value = '';
+      document.getElementById('deal-stage-id').value = stageId || '';
+      document.getElementById('deal-activities-section').style.display = 'none';
+      document.getElementById('deal-modal').classList.remove('hidden');
+    }
+
+    async function openDealModal(dealId) {
+      editingDealId = dealId;
+      document.getElementById('deal-modal-title').textContent = 'Edit Deal';
+
+      try {
+        const response = await fetch(`${API_BASE}/crm-deals?id=${dealId}`, {
+          headers: { 'Authorization': `Bearer ${authToken}` }
+        });
+        const result = await response.json();
+
+        if (result.success && result.deal) {
+          const deal = result.deal;
+          document.getElementById('deal-id').value = deal.id;
+          document.getElementById('deal-stage-id').value = deal.stage_id || '';
+          document.getElementById('deal-title').value = deal.title || '';
+          document.getElementById('deal-company').value = deal.contact_company || '';
+          document.getElementById('deal-value').value = deal.value || '';
+          document.getElementById('deal-close-date').value = deal.expected_close_date ? deal.expected_close_date.split('T')[0] : '';
+          document.getElementById('deal-contact-name').value = deal.contact_name || '';
+          document.getElementById('deal-email').value = deal.contact_email || '';
+          document.getElementById('deal-phone').value = deal.contact_phone || '';
+          document.getElementById('deal-notes').value = deal.notes || '';
+
+          // Show activities section
+          document.getElementById('deal-activities-section').style.display = 'block';
+          loadDealActivities(dealId);
+        }
+      } catch (error) {
+        console.error('Failed to load deal:', error);
+        showToast('Failed to load deal details', 'error');
+      }
+
+      document.getElementById('deal-modal').classList.remove('hidden');
+    }
+
+    function closeDealModal() {
+      document.getElementById('deal-modal').classList.add('hidden');
+      editingDealId = null;
+    }
+
+    async function saveDeal() {
+      const dealData = {
+        title: document.getElementById('deal-title').value,
+        contactName: document.getElementById('deal-contact-name').value,
+        contactEmail: document.getElementById('deal-email').value,
+        contactPhone: document.getElementById('deal-phone').value,
+        contactCompany: document.getElementById('deal-company').value,
+        value: parseFloat(document.getElementById('deal-value').value) || 0,
+        expectedCloseDate: document.getElementById('deal-close-date').value || null,
+        notes: document.getElementById('deal-notes').value
+      };
+
+      if (!dealData.title) {
+        showToast('Deal title is required', 'error');
+        return;
+      }
+
+      try {
+        let response;
+
+        if (editingDealId) {
+          // Update existing deal
+          response = await fetch(`${API_BASE}/crm-deals`, {
+            method: 'PUT',
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': `Bearer ${authToken}`
+            },
+            body: JSON.stringify({ id: editingDealId, ...dealData })
+          });
+        } else {
+          // Create new deal
+          const stageId = document.getElementById('deal-stage-id').value;
+          response = await fetch(`${API_BASE}/crm-deals`, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': `Bearer ${authToken}`
+            },
+            body: JSON.stringify({
+              pipelineId: currentPipelineId,
+              stageId: stageId || null,
+              ...dealData
+            })
+          });
+        }
+
+        const result = await response.json();
+
+        if (result.success) {
+          closeDealModal();
+          loadPipelineBoard();
+          showToast(editingDealId ? 'Deal updated' : 'Deal created', 'success');
+        } else {
+          showToast(result.error || 'Failed to save deal', 'error');
+        }
+      } catch (error) {
+        console.error('Failed to save deal:', error);
+        showToast('Failed to save deal', 'error');
+      }
+    }
+
+    async function loadDealActivities(dealId) {
+      try {
+        const response = await fetch(`${API_BASE}/crm-activities?dealId=${dealId}`, {
+          headers: { 'Authorization': `Bearer ${authToken}` }
+        });
+        const result = await response.json();
+
+        const container = document.getElementById('deal-activities');
+        if (result.success && result.activities && result.activities.length > 0) {
+          container.innerHTML = result.activities.map(activity => `
+            <div class="activity-item">
+              <div class="activity-icon">${getActivityIcon(activity.activity_type)}</div>
+              <div class="activity-content">
+                <div class="activity-subject">${escapeHtml(activity.subject || activity.activity_type)}</div>
+                ${activity.content ? `<div class="activity-text">${escapeHtml(activity.content)}</div>` : ''}
+                <div class="activity-date">${new Date(activity.created_at).toLocaleString()}</div>
+              </div>
+            </div>
+          `).join('');
+        } else {
+          container.innerHTML = '<p style="color: var(--text-dim); text-align: center; padding: 1rem;">No activity yet</p>';
+        }
+      } catch (error) {
+        console.error('Failed to load activities:', error);
+      }
+    }
+
+    function getActivityIcon(type) {
+      const icons = {
+        note: '📝',
+        email: '✉️',
+        call: '📞',
+        meeting: '📅',
+        stage_change: '📊',
+        deal_won: '🏆',
+        deal_lost: '❌'
+      };
+      return icons[type] || '📋';
+    }
+
+    async function addDealActivity() {
+      const noteContent = document.getElementById('new-activity-note').value.trim();
+      if (!noteContent || !editingDealId) return;
+
+      try {
+        const response = await fetch(`${API_BASE}/crm-activities`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${authToken}`
+          },
+          body: JSON.stringify({
+            dealId: editingDealId,
+            activityType: 'note',
+            subject: 'Note',
+            content: noteContent
+          })
+        });
+
+        const result = await response.json();
+
+        if (result.success) {
+          document.getElementById('new-activity-note').value = '';
+          loadDealActivities(editingDealId);
+          showToast('Note added', 'success');
+        }
+      } catch (error) {
+        console.error('Failed to add note:', error);
+        showToast('Failed to add note', 'error');
+      }
+    }
+
+    // =====================================
+    // PIPELINE MANAGEMENT FUNCTIONS
+    // =====================================
+
+    function createNewPipeline() {
+      document.getElementById('new-pipeline-name').value = '';
+      document.getElementById('new-pipeline-description').value = '';
+      document.getElementById('new-pipeline-color').value = '#ff3e00';
+      document.getElementById('new-pipeline-modal').classList.remove('hidden');
+    }
+
+    function closeNewPipelineModal() {
+      document.getElementById('new-pipeline-modal').classList.add('hidden');
+    }
+
+    async function createPipeline() {
+      const name = document.getElementById('new-pipeline-name').value.trim();
+      const description = document.getElementById('new-pipeline-description').value.trim();
+      const color = document.getElementById('new-pipeline-color').value;
+
+      if (!name) {
+        showToast('Pipeline name is required', 'error');
+        return;
+      }
+
+      try {
+        const response = await fetch(`${API_BASE}/crm-pipelines`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${authToken}`
+          },
+          body: JSON.stringify({ name, description, color })
+        });
+
+        const result = await response.json();
+
+        if (result.success) {
+          closeNewPipelineModal();
+          currentPipelineId = result.pipeline.id;
+          await loadPipelines();
+          loadPipelineBoard();
+          showToast('Pipeline created', 'success');
+        } else {
+          showToast(result.error || 'Failed to create pipeline', 'error');
+        }
+      } catch (error) {
+        console.error('Failed to create pipeline:', error);
+        showToast('Failed to create pipeline', 'error');
+      }
+    }
+
+    function openPipelineSettingsModal() {
+      if (!currentPipelineId) {
+        showToast('Select a pipeline first', 'error');
+        return;
+      }
+
+      const pipeline = currentPipelines.find(p => p.id == currentPipelineId);
+      if (pipeline) {
+        document.getElementById('pipeline-name').value = pipeline.name || '';
+        document.getElementById('pipeline-description').value = pipeline.description || '';
+        document.getElementById('pipeline-color').value = pipeline.color || '#ff3e00';
+        renderPipelineStagesEditor();
+      }
+
+      document.getElementById('pipeline-modal').classList.remove('hidden');
+    }
+
+    function closePipelineModal() {
+      document.getElementById('pipeline-modal').classList.add('hidden');
+    }
+
+    function renderPipelineStagesEditor() {
+      const container = document.getElementById('pipeline-stages-list');
+      container.innerHTML = currentStages.map((stage, index) => `
+        <div class="form-row" style="display: flex; gap: 0.5rem; margin-bottom: 0.5rem; align-items: center;">
+          <input type="color" value="${stage.color || '#333'}" style="width: 40px; height: 38px; padding: 2px;" data-stage-id="${stage.id}" class="stage-color-input">
+          <input type="text" class="form-input mono" value="${escapeHtml(stage.name)}" data-stage-id="${stage.id}" class="stage-name-input" style="flex: 1;">
+          <button class="btn-secondary" style="padding: 0.5rem;" onclick="deleteStage(${stage.id})" title="Delete Stage">🗑️</button>
+        </div>
+      `).join('');
+    }
+
+    function addPipelineStage() {
+      const container = document.getElementById('pipeline-stages-list');
+      const newIndex = container.querySelectorAll('.form-row').length;
+      const newStageHtml = `
+        <div class="form-row" style="display: flex; gap: 0.5rem; margin-bottom: 0.5rem; align-items: center;">
+          <input type="color" value="#333333" style="width: 40px; height: 38px; padding: 2px;" data-stage-id="new-${newIndex}" class="stage-color-input">
+          <input type="text" class="form-input mono" placeholder="Stage Name" data-stage-id="new-${newIndex}" class="stage-name-input" style="flex: 1;">
+          <button class="btn-secondary" style="padding: 0.5rem;" onclick="this.parentElement.remove()" title="Remove">🗑️</button>
+        </div>
+      `;
+      container.insertAdjacentHTML('beforeend', newStageHtml);
+    }
+
+    async function savePipeline() {
+      const name = document.getElementById('pipeline-name').value.trim();
+      const description = document.getElementById('pipeline-description').value.trim();
+      const color = document.getElementById('pipeline-color').value;
+
+      if (!name) {
+        showToast('Pipeline name is required', 'error');
+        return;
+      }
+
+      try {
+        // Update pipeline
+        await fetch(`${API_BASE}/crm-pipelines`, {
+          method: 'PUT',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${authToken}`
+          },
+          body: JSON.stringify({ id: currentPipelineId, name, description, color })
+        });
+
+        closePipelineModal();
+        await loadPipelines();
+        loadPipelineBoard();
+        showToast('Pipeline updated', 'success');
+      } catch (error) {
+        console.error('Failed to save pipeline:', error);
+        showToast('Failed to save pipeline', 'error');
+      }
+    }
+
+    // =====================================
+    // CRM SETTINGS FUNCTIONS
+    // =====================================
+
+    async function saveElevenlabsSettings() {
+      const apiKey = document.getElementById('elevenlabs-api-key').value;
+      const voice = document.getElementById('elevenlabs-voice').value;
+      const enabled = document.getElementById('ai-calling-enabled').checked;
+
+      console.log('[ElevenLabs Save] Starting save:', {
+        hasApiKey: !!apiKey,
+        apiKeyLength: apiKey?.length,
+        apiKeyPreview: apiKey ? apiKey.substring(0, 8) + '...' : 'empty',
+        voice: voice,
+        enabled: enabled
+      });
+
+      try {
+        const response = await fetch(`${API_BASE}/update-settings`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${authToken}`
+          },
+          body: JSON.stringify({
+            elevenlabsApiKey: apiKey,
+            elevenlabsDefaultVoice: voice,
+            aiCallingEnabled: enabled
+          })
+        });
+
+        console.log('[ElevenLabs Save] Response status:', response.status);
+        const result = await response.json();
+        console.log('[ElevenLabs Save] Response body:', result);
+
+        if (result.success) {
+          showToast('AI Calling settings saved', 'success');
+        } else {
+          console.error('[ElevenLabs Save] Error from server:', result);
+          showToast(result.error || 'Failed to save settings', 'error');
+        }
+      } catch (error) {
+        console.error('[ElevenLabs Save] Exception:', error);
+        showToast('Failed to save settings', 'error');
+      }
+    }
+
+    async function saveCalendarSettings() {
+      const timezone = document.getElementById('calendar-timezone').value;
+      const start = document.getElementById('working-hours-start').value;
+      const end = document.getElementById('working-hours-end').value;
+
+      try {
+        const response = await fetch(`${API_BASE}/update-settings`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${authToken}`
+          },
+          body: JSON.stringify({
+            calendarTimezone: timezone,
+            calendarWorkingHours: { start, end, days: [1, 2, 3, 4, 5] }
+          })
+        });
+
+        const result = await response.json();
+        if (result.success) {
+          showToast('Calendar settings saved', 'success');
+        } else {
+          showToast(result.error || 'Failed to save settings', 'error');
+        }
+      } catch (error) {
+        showToast('Failed to save settings', 'error');
+      }
+    }
+
+    async function saveEmailSignature() {
+      const signature = document.getElementById('email-signature').value;
+
+      try {
+        const response = await fetch(`${API_BASE}/update-settings`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${authToken}`
+          },
+          body: JSON.stringify({ emailSignature: signature })
+        });
+
+        const result = await response.json();
+        if (result.success) {
+          showToast('Email signature saved', 'success');
+        } else {
+          showToast(result.error || 'Failed to save signature', 'error');
+        }
+      } catch (error) {
+        showToast('Failed to save signature', 'error');
+      }
+    }
+
+    // =====================================
+    // EMAIL ACCOUNTS FUNCTIONS
+    // =====================================
+
+    let imapProvider = 'imap';
+
+    async function connectGmail() {
+      try {
+        const response = await fetch(`${API_BASE}/oauth-google`, {
+          headers: { 'Authorization': `Bearer ${authToken}` }
+        });
+        const result = await response.json();
+        if (result.useImap) {
+          openImapModalWithProvider(result);
+        } else if (result.authUrl) {
+          window.location.href = result.authUrl;
+        } else {
+          showToast(result.error || 'Failed to start Gmail connection', 'error');
+        }
+      } catch (error) {
+        showToast('Failed to connect Gmail', 'error');
+      }
+    }
+
+    async function connectOutlook() {
+      try {
+        const response = await fetch(`${API_BASE}/oauth-microsoft`, {
+          headers: { 'Authorization': `Bearer ${authToken}` }
+        });
+        const result = await response.json();
+        if (result.useImap) {
+          openImapModalWithProvider(result);
+        } else if (result.authUrl) {
+          window.location.href = result.authUrl;
+        } else {
+          showToast(result.error || 'Failed to start Outlook connection', 'error');
+        }
+      } catch (error) {
+        showToast('Failed to connect Outlook', 'error');
+      }
+    }
+
+    function openImapModalWithProvider(config) {
+      imapProvider = config.provider || 'imap';
+      document.getElementById('imap-modal-title').textContent = `Connect ${config.provider === 'gmail' ? 'Gmail' : config.provider === 'outlook' ? 'Outlook' : 'Email'} Account`;
+      document.getElementById('imap-host').value = config.imapHost || '';
+      document.getElementById('imap-port').value = config.imapPort || 993;
+      document.getElementById('smtp-host').value = config.smtpHost || '';
+      document.getElementById('smtp-port').value = config.smtpPort || 587;
+      document.getElementById('imap-email').value = '';
+      document.getElementById('imap-display-name').value = '';
+      document.getElementById('imap-username').value = '';
+      document.getElementById('imap-password').value = '';
+
+      const instrDiv = document.getElementById('imap-instructions');
+      if (config.instructions) {
+        document.getElementById('imap-instructions-text').textContent = config.instructions;
+        const link = document.getElementById('imap-instructions-link');
+        if (config.helpUrl) {
+          link.href = config.helpUrl;
+          link.style.display = 'block';
+        } else {
+          link.style.display = 'none';
+        }
+        instrDiv.style.display = 'block';
+      } else {
+        instrDiv.style.display = 'none';
+      }
+
+      document.getElementById('imap-modal').classList.remove('hidden');
+    }
+
+    async function loadEmailAccounts() {
+      try {
+        const response = await fetch(`${API_BASE}/email-accounts`, {
+          headers: { 'Authorization': `Bearer ${authToken}` }
+        });
+        const result = await response.json();
+        if (result.accounts && result.accounts.length > 0) {
+          const container = document.getElementById('connected-email-accounts');
+          container.innerHTML = result.accounts.map(acc => `
+            <div style="display: flex; align-items: center; justify-content: space-between; padding: 0.75rem; background: var(--surface); border: 1px solid var(--border); border-radius: 4px; margin-bottom: 0.5rem;">
+              <div style="display: flex; align-items: center; gap: 0.75rem;">
+                <span style="font-size: 1.25rem;">${acc.provider === 'gmail' ? '📧' : acc.provider === 'outlook' ? '📬' : '✉️'}</span>
+                <div>
+                  <div style="font-weight: 600;">${acc.email_address}</div>
+                  <div style="font-size: 0.75rem; color: var(--text-dim);">${acc.provider} ${acc.is_default ? '• Default' : ''}</div>
+                </div>
+              </div>
+              <div style="display: flex; align-items: center; gap: 0.5rem;">
+                ${acc.is_active ? '<span class="status-badge synced">Active</span>' : '<span class="status-badge pending">Inactive</span>'}
+                <button class="btn-mini" onclick="removeEmailAccount(${acc.id})">Remove</button>
+              </div>
+            </div>
+          `).join('');
+        }
+      } catch (error) {
+        console.error('Failed to load email accounts:', error);
+      }
+    }
+
+    async function removeEmailAccount(accountId) {
+      if (!confirm('Remove this email account?')) return;
+      try {
+        await fetch(`${API_BASE}/email-accounts`, {
+          method: 'DELETE',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${authToken}`
+          },
+          body: JSON.stringify({ id: accountId })
+        });
+        showToast('Email account removed', 'success');
+        loadEmailAccounts();
+      } catch (error) {
+        showToast('Failed to remove account', 'error');
+      }
+    }
+
+    // =====================================
+    // AUTO-CALL SETTINGS FUNCTIONS
+    // =====================================
+
+    async function saveAutoCallSettings() {
+      const autoCallEnabled = document.getElementById('auto-call-enabled').checked;
+      const autoCallAgentId = document.getElementById('auto-call-agent').value || null;
+      const autoFollowupEnabled = document.getElementById('auto-followup-enabled').checked;
+      const followupAgentId = document.getElementById('followup-agent').value || null;
+
+      try {
+        const response = await fetch(`${API_BASE}/update-settings`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${authToken}`
+          },
+          body: JSON.stringify({
+            autoCallEnabled,
+            autoCallAgentId,
+            autoFollowupEnabled,
+            followupAgentId
+          })
+        });
+
+        const result = await response.json();
+        if (result.success) {
+          showToast('Auto-call settings saved', 'success');
+        } else {
+          showToast(result.error || 'Failed to save settings', 'error');
+        }
+      } catch (error) {
+        showToast('Failed to save settings', 'error');
+      }
+    }
+
+    // =====================================
+    // AI AGENTS FUNCTIONS
+    // =====================================
+
+    async function loadAgents() {
+      console.log('[Agents] Loading agents...');
+      try {
+        const response = await fetch(`${API_BASE}/ai-agents`, {
+          headers: { 'Authorization': `Bearer ${authToken}` }
+        });
+        console.log('[Agents] Response status:', response.status);
+        const result = await response.json();
+        console.log('[Agents] Result:', result);
+
+        // Settings page has 'agents-list', AI Calling section has 'ai-agents-list'
+        const settingsContainer = document.getElementById('agents-list');
+        const aiCallingContainer = document.getElementById('ai-agents-list');
+        console.log('[Agents] Settings container found:', !!settingsContainer);
+        console.log('[Agents] AI Calling container found:', !!aiCallingContainer);
+        const autoCallSelect = document.getElementById('auto-call-agent');
+        const followupSelect = document.getElementById('followup-agent');
+
+        const agentListHtml = result.agents && result.agents.length > 0
+          ? result.agents.map(agent => `
+            <div style="display: flex; align-items: center; justify-content: space-between; padding: 1rem; background: var(--surface); border: 1px solid var(--border); border-radius: 4px;">
+              <div>
+                <div style="font-weight: 600; display: flex; align-items: center; gap: 0.5rem;">
+                  ${agent.name}
+                  ${agent.is_active ? '<span class="status-badge synced">Active</span>' : '<span class="status-badge pending">Inactive</span>'}
+                </div>
+                <div style="font-size: 0.75rem; color: var(--text-dim); margin-top: 0.25rem;">
+                  Goal: ${agent.goal || 'Not set'} • ${agent.stats?.totalCalls || 0} calls
+                </div>
+              </div>
+              <div style="display: flex; gap: 0.5rem;">
+                <button class="btn-mini" onclick="editAgent(${agent.id})">Edit</button>
+                <button class="btn-mini" onclick="deleteAgent(${agent.id})">Delete</button>
+              </div>
+            </div>
+          `).join('')
+          : '<div style="text-align: center; padding: 2rem; color: var(--text-dim);">No agents yet. Create one to get started!</div>';
+
+        // Populate both containers
+        if (settingsContainer) settingsContainer.innerHTML = agentListHtml;
+        if (aiCallingContainer) aiCallingContainer.innerHTML = agentListHtml;
+
+        // Populate agent selects
+        if (result.agents && result.agents.length > 0) {
+          const options = result.agents.filter(a => a.is_active).map(agent =>
+            `<option value="${agent.id}">${agent.name} (${agent.goal})</option>`
+          ).join('');
+
+          if (autoCallSelect) autoCallSelect.innerHTML = '<option value="">-- Select an agent --</option>' + options;
+          if (followupSelect) followupSelect.innerHTML = '<option value="">-- Select an agent --</option>' + options;
+        }
+      } catch (error) {
+        console.error('Failed to load agents:', error);
+      }
+    }
+
+    async function openAgentModal(agentId = null) {
+      // Reset form
+      document.getElementById('agent-id').value = '';
+      document.getElementById('agent-name').value = '';
+      document.getElementById('agent-voice').value = '';
+      document.getElementById('agent-goal').value = 'schedule_meeting';
+      document.getElementById('agent-greeting').value = '';
+      document.getElementById('agent-system-prompt').value = '';
+      document.getElementById('agent-calendar-link').value = '';
+      document.getElementById('agent-max-duration').value = '300';
+      document.getElementById('agent-modal-title').textContent = 'New AI Agent';
+
+      if (agentId) {
+        // Load existing agent data
+        try {
+          const response = await fetch(`${API_BASE}/ai-agents?id=${agentId}`, {
+            headers: { 'Authorization': `Bearer ${authToken}` }
+          });
+          const data = await response.json();
+          if (data.success && data.agent) {
+            const agent = data.agent;
+            document.getElementById('agent-modal-title').textContent = 'Edit AI Agent';
+            document.getElementById('agent-id').value = agent.id;
+            document.getElementById('agent-name').value = agent.name || '';
+            document.getElementById('agent-voice').value = agent.voice_id || '';
+            document.getElementById('agent-goal').value = agent.goal || 'schedule_meeting';
+            document.getElementById('agent-greeting').value = agent.greeting_script || '';
+            document.getElementById('agent-system-prompt').value = agent.system_prompt || '';
+            document.getElementById('agent-calendar-link').value = agent.calendar_link || '';
+            document.getElementById('agent-max-duration').value = agent.max_call_duration || 300;
+          }
+        } catch (error) {
+          console.error('Failed to load agent:', error);
+          showToast('Failed to load agent', 'error');
+        }
+      }
+
+      document.getElementById('agent-modal').classList.remove('hidden');
+    }
+
+    function editAgent(agentId) {
+      openAgentModal(agentId);
+    }
+
+    async function deleteAgent(agentId) {
+      if (!confirm('Delete this AI agent?')) return;
+      try {
+        await fetch(`${API_BASE}/ai-agents`, {
+          method: 'DELETE',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${authToken}`
+          },
+          body: JSON.stringify({ id: agentId })
+        });
+        showToast('Agent deleted', 'success');
+        loadAgents();
+        populateAgentDropdowns();
+      } catch (error) {
+        showToast('Failed to delete agent', 'error');
+      }
+    }
+
+    // Check for OAuth callback results
+    function checkOAuthCallback() {
+      const params = new URLSearchParams(window.location.search);
+      if (params.get('oauth_success')) {
+        const provider = params.get('oauth_success');
+        const email = params.get('email');
+        showToast(`${provider} account connected: ${email}`, 'success');
+        loadEmailAccounts();
+        // Clean up URL
+        window.history.replaceState({}, document.title, window.location.pathname);
+      } else if (params.get('oauth_error')) {
+        showToast(`OAuth error: ${params.get('oauth_error')}`, 'error');
+        window.history.replaceState({}, document.title, window.location.pathname);
+      }
+    }
+
+    function openImapModal() {
+      imapProvider = 'imap';
+      document.getElementById('imap-modal-title').textContent = 'Connect IMAP Email Account';
+      document.getElementById('imap-email').value = '';
+      document.getElementById('imap-display-name').value = '';
+      document.getElementById('imap-host').value = '';
+      document.getElementById('imap-port').value = '993';
+      document.getElementById('smtp-host').value = '';
+      document.getElementById('smtp-port').value = '587';
+      document.getElementById('imap-username').value = '';
+      document.getElementById('imap-password').value = '';
+      document.getElementById('imap-instructions').style.display = 'none';
+      document.getElementById('imap-modal').classList.remove('hidden');
+    }
+
+    function closeImapModal() {
+      document.getElementById('imap-modal').classList.add('hidden');
+    }
+
+    async function connectImapAccount() {
+      const email = document.getElementById('imap-email').value.trim();
+      const displayName = document.getElementById('imap-display-name').value.trim();
+      const imapHost = document.getElementById('imap-host').value.trim();
+      const imapPort = document.getElementById('imap-port').value;
+      const smtpHost = document.getElementById('smtp-host').value.trim();
+      const smtpPort = document.getElementById('smtp-port').value;
+      const username = document.getElementById('imap-username').value.trim();
+      const password = document.getElementById('imap-password').value;
+
+      if (!email || !smtpHost || !username || !password) {
+        showToast('Please fill in all required fields', 'warning');
+        return;
+      }
+
+      const btn = document.getElementById('imap-connect-btn');
+      btn.disabled = true;
+      btn.textContent = 'Testing connection...';
+
+      try {
+        const response = await fetch(`${API_BASE}/email-accounts`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${authToken}`
+          },
+          body: JSON.stringify({
+            provider: imapProvider,
+            emailAddress: email,
+            displayName: displayName,
+            imapHost: imapHost,
+            imapPort: parseInt(imapPort),
+            smtpHost: smtpHost,
+            smtpPort: parseInt(smtpPort),
+            username: username,
+            password: password
+          })
+        });
+
+        const result = await response.json();
+
+        if (result.success) {
+          showToast(result.message || 'Email account connected!', 'success');
+          closeImapModal();
+          loadEmailAccounts();
+        } else {
+          let errorMsg = result.error || 'Connection failed';
+          if (result.details) errorMsg += ': ' + result.details;
+          if (result.hint) showToast(result.hint, 'warning');
+          showToast(errorMsg, 'error');
+        }
+      } catch (error) {
+        showToast('Failed to connect: ' + error.message, 'error');
+      } finally {
+        btn.disabled = false;
+        btn.textContent = 'Connect Account';
+      }
+    }
+
+    // =====================================
+    // AI AGENT FUNCTIONS (PLACEHOLDER)
+    // =====================================
+
+    function openNewAgentModal() {
+      openAgentModal(null);
+    }
+
+    function closeAgentModal() {
+      document.getElementById('agent-modal').classList.add('hidden');
+    }
+
+    async function saveAgent() {
+      const agentId = document.getElementById('agent-id').value;
+      const name = document.getElementById('agent-name').value.trim();
+      const voiceId = document.getElementById('agent-voice').value;
+      const goal = document.getElementById('agent-goal').value;
+      const greetingScript = document.getElementById('agent-greeting').value.trim();
+      const systemPrompt = document.getElementById('agent-system-prompt').value.trim();
+      const calendarLink = document.getElementById('agent-calendar-link').value.trim();
+      const maxCallDuration = parseInt(document.getElementById('agent-max-duration').value) || 300;
+
+      if (!name) {
+        showToast('Agent name is required', 'error');
+        return;
+      }
+
+      const payload = {
+        name,
+        voiceId: voiceId || null,
+        goal,
+        greetingScript,
+        systemPrompt,
+        calendarLink: calendarLink || null,
+        maxCallDuration
+      };
+
+      try {
+        const isUpdate = !!agentId;
+        if (isUpdate) {
+          payload.id = agentId;
+        }
+
+        const response = await fetch(`${API_BASE}/ai-agents`, {
+          method: isUpdate ? 'PUT' : 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${authToken}`
+          },
+          body: JSON.stringify(payload)
+        });
+
+        const data = await response.json();
+        if (data.success) {
+          showToast(isUpdate ? 'Agent updated successfully' : 'Agent created successfully', 'success');
+          closeAgentModal();
+          loadAgents();
+          populateAgentDropdowns();
+        } else {
+          showToast(data.error || 'Failed to save agent', 'error');
+        }
+      } catch (error) {
+        console.error('Save agent error:', error);
+        showToast('Failed to save agent', 'error');
+      }
+    }
+
+    // Populate agent dropdowns in auto-call settings
+    async function populateAgentDropdowns() {
+      try {
+        const response = await fetch(`${API_BASE}/ai-agents`, {
+          headers: { 'Authorization': `Bearer ${authToken}` }
+        });
+        const data = await response.json();
+        if (data.success && data.agents) {
+          const autoCallSelect = document.getElementById('auto-call-agent');
+          const followupSelect = document.getElementById('followup-agent');
+
+          // Preserve current values
+          const autoCallValue = autoCallSelect?.value;
+          const followupValue = followupSelect?.value;
+
+          const optionsHtml = data.agents.map(agent =>
+            `<option value="${agent.id}">${escapeHtml(agent.name)} (${agent.goal || 'general'})</option>`
+          ).join('');
+
+          if (autoCallSelect) {
+            autoCallSelect.innerHTML = '<option value="">-- Select an agent --</option>' + optionsHtml;
+            if (autoCallValue) autoCallSelect.value = autoCallValue;
+          }
+          if (followupSelect) {
+            followupSelect.innerHTML = '<option value="">-- Select an agent --</option>' + optionsHtml;
+            if (followupValue) followupSelect.value = followupValue;
+          }
+        }
+      } catch (error) {
+        console.error('Failed to populate agent dropdowns:', error);
+      }
+    }
+
+    // =====================================
+    // UTILITY FUNCTIONS
+    // =====================================
+
+    function formatNumber(num) {
+      return new Intl.NumberFormat('en-US', { maximumFractionDigits: 0 }).format(num);
+    }
+
+    function escapeHtml(str) {
+      if (!str) return '';
+      const div = document.createElement('div');
+      div.textContent = str;
+      return div.innerHTML;
+    }
+
+    function showToast(message, type = 'info') {
+      // Remove existing toast
+      const existing = document.querySelector('.toast');
+      if (existing) existing.remove();
+
+      const toast = document.createElement('div');
+      toast.className = `toast toast-${type}`;
+      toast.textContent = message;
+      document.body.appendChild(toast);
+
+      setTimeout(() => toast.classList.add('show'), 10);
+      setTimeout(() => {
+        toast.classList.remove('show');
+        setTimeout(() => toast.remove(), 300);
+      }, 3000);
+    }
 
     // Check for existing session
     window.addEventListener('DOMContentLoaded', () => {
@@ -2099,6 +4292,9 @@
         currentUser = JSON.parse(user);
         showApp();
       }
+
+      // Check for OAuth callback results
+      checkOAuthCallback();
     });
 
     // Auth Tab Switching
@@ -2201,6 +4397,91 @@
       updateDashboard();
       loadGhlSettings();
       loadLeads();
+
+      // Load CRM settings
+      loadCrmSettings();
+    }
+
+    // Load CRM Settings
+    async function loadCrmSettings() {
+      try {
+        const response = await fetch(`${API_BASE}/get-settings`, {
+          headers: { 'Authorization': `Bearer ${authToken}` }
+        });
+        const settings = await response.json();
+
+        // Set CRM mode
+        const mode = settings.crmMode || 'ghl';
+        crmMode = mode;
+
+        // Update UI
+        document.querySelectorAll('.crm-mode-btn').forEach(btn => {
+          btn.classList.toggle('active', btn.dataset.mode === mode);
+        });
+
+        const descEl = document.getElementById('crm-mode-description');
+        if (mode === 'ghl') {
+          descEl.textContent = 'Leads will sync directly to your GoHighLevel account.';
+        } else {
+          descEl.textContent = 'Use our built-in CRM with pipelines, email sequences, and AI calling.';
+        }
+
+        // Show/hide containers
+        document.getElementById('ghl-settings-container').style.display = mode === 'ghl' ? 'block' : 'none';
+        document.getElementById('internal-crm-settings-container').style.display = mode === 'internal' ? 'block' : 'none';
+
+        // Show/hide CRM nav items
+        document.querySelectorAll('.nav-item.crm-only').forEach(item => {
+          item.style.display = mode === 'internal' ? 'flex' : 'none';
+        });
+
+        // Load ElevenLabs and AI Calling settings (available in ALL modes)
+        if (settings.elevenlabsApiKey) {
+          document.getElementById('elevenlabs-api-key').value = settings.elevenlabsApiKey;
+        }
+        if (settings.elevenlabsDefaultVoice) {
+          document.getElementById('elevenlabs-voice').value = settings.elevenlabsDefaultVoice;
+        }
+        document.getElementById('ai-calling-enabled').checked = settings.aiCallingEnabled || false;
+
+        // Load auto-call settings (available in ALL modes)
+        document.getElementById('auto-call-enabled').checked = settings.autoCallEnabled || false;
+        document.getElementById('auto-followup-enabled').checked = settings.autoFollowupEnabled || false;
+
+        // Load agents and populate dropdowns (available in ALL modes)
+        loadAgents();
+        populateAgentDropdowns().then(() => {
+          // Set the selected agents after dropdowns are populated
+          if (settings.autoCallAgentId) {
+            document.getElementById('auto-call-agent').value = settings.autoCallAgentId;
+          }
+          if (settings.followupAgentId) {
+            document.getElementById('followup-agent').value = settings.followupAgentId;
+          }
+        });
+
+        // Load internal CRM-specific settings if applicable
+        if (mode === 'internal') {
+          if (settings.calendarTimezone) {
+            document.getElementById('calendar-timezone').value = settings.calendarTimezone;
+          }
+          if (settings.calendarWorkingHours) {
+            document.getElementById('working-hours-start').value = settings.calendarWorkingHours.start || '09:00';
+            document.getElementById('working-hours-end').value = settings.calendarWorkingHours.end || '17:00';
+          }
+          if (settings.emailSignature) {
+            document.getElementById('email-signature').value = settings.emailSignature;
+          }
+
+          // Load email accounts (CRM-specific)
+          loadEmailAccounts();
+
+          // Load pipelines for the board
+          loadPipelines();
+        }
+      } catch (error) {
+        console.error('Failed to load CRM settings:', error);
+      }
     }
 
     // Update Dashboard
@@ -2962,6 +5243,19 @@
       document.querySelectorAll('.section').forEach(sec => {
         sec.classList.toggle('active', sec.id === `${section}-section`);
       });
+
+      // Load section-specific data
+      if (section === 'email-outreach') {
+        loadEmailOutreachData();
+      } else if (section === 'settings') {
+        // Load AI agents (available in all modes)
+        loadAgents();
+        populateAgentDropdowns();
+        // Load email accounts only for internal CRM mode
+        if (crmMode === 'internal') {
+          loadEmailAccounts();
+        }
+      }
     }
 
     // Checkout
@@ -3538,11 +5832,9 @@
 
         const data = await response.json();
         if (data.success) {
-          alert('GHL integration settings saved! Loading pipelines...');
+          alert('GHL integration settings saved!');
           document.getElementById('ghl-api-key').value = '';
           document.getElementById('ghl-api-key').placeholder = '••••••••••••••••';
-          // Fetch pipelines after saving API key
-          await fetchGhlPipelines();
         } else {
           alert('Failed to save settings: ' + (data.error || 'Unknown error'));
         }
@@ -3625,215 +5917,6 @@
     });
 
     // ============================================
-    // EMAIL ACCOUNTS FUNCTIONS
-    // ============================================
-
-    let imapProvider = 'imap'; // Track which provider is being connected
-
-    async function connectGmail() {
-      try {
-        const response = await fetch(`${API_BASE}/oauth-google`, {
-          headers: { 'Authorization': `Bearer ${authToken}` }
-        });
-        const result = await response.json();
-        if (result.useImap) {
-          openImapModalWithProvider(result);
-        } else if (result.authUrl) {
-          window.location.href = result.authUrl;
-        } else {
-          showToast(result.error || 'Failed to start Gmail connection', 'error');
-        }
-      } catch (error) {
-        showToast('Failed to connect Gmail', 'error');
-      }
-    }
-
-    async function connectOutlook() {
-      try {
-        const response = await fetch(`${API_BASE}/oauth-microsoft`, {
-          headers: { 'Authorization': `Bearer ${authToken}` }
-        });
-        const result = await response.json();
-        if (result.useImap) {
-          openImapModalWithProvider(result);
-        } else if (result.authUrl) {
-          window.location.href = result.authUrl;
-        } else {
-          showToast(result.error || 'Failed to start Outlook connection', 'error');
-        }
-      } catch (error) {
-        showToast('Failed to connect Outlook', 'error');
-      }
-    }
-
-    function openImapModalWithProvider(config) {
-      imapProvider = config.provider || 'imap';
-      document.getElementById('imap-modal-title').textContent = `Connect ${config.provider === 'gmail' ? 'Gmail' : config.provider === 'outlook' ? 'Outlook' : 'Email'} Account`;
-      document.getElementById('imap-host').value = config.imapHost || '';
-      document.getElementById('imap-port').value = config.imapPort || 993;
-      document.getElementById('smtp-host').value = config.smtpHost || '';
-      document.getElementById('smtp-port').value = config.smtpPort || 587;
-
-      const instrDiv = document.getElementById('imap-instructions');
-      if (config.instructions) {
-        document.getElementById('imap-instructions-text').textContent = config.instructions;
-        const link = document.getElementById('imap-instructions-link');
-        if (config.helpUrl) {
-          link.href = config.helpUrl;
-          link.style.display = 'block';
-        } else {
-          link.style.display = 'none';
-        }
-        instrDiv.style.display = 'block';
-      } else {
-        instrDiv.style.display = 'none';
-      }
-
-      document.getElementById('imap-modal').style.display = 'flex';
-    }
-
-    function openImapModal() {
-      imapProvider = 'imap';
-      document.getElementById('imap-modal-title').textContent = 'Connect IMAP Email Account';
-      document.getElementById('imap-email').value = '';
-      document.getElementById('imap-display-name').value = '';
-      document.getElementById('imap-host').value = '';
-      document.getElementById('imap-port').value = '993';
-      document.getElementById('smtp-host').value = '';
-      document.getElementById('smtp-port').value = '587';
-      document.getElementById('imap-username').value = '';
-      document.getElementById('imap-password').value = '';
-      document.getElementById('imap-instructions').style.display = 'none';
-      document.getElementById('imap-modal').style.display = 'flex';
-    }
-
-    function closeImapModal() {
-      document.getElementById('imap-modal').style.display = 'none';
-    }
-
-    async function connectImapAccount() {
-      const email = document.getElementById('imap-email').value.trim();
-      const displayName = document.getElementById('imap-display-name').value.trim();
-      const imapHost = document.getElementById('imap-host').value.trim();
-      const imapPort = document.getElementById('imap-port').value;
-      const smtpHost = document.getElementById('smtp-host').value.trim();
-      const smtpPort = document.getElementById('smtp-port').value;
-      const username = document.getElementById('imap-username').value.trim();
-      const password = document.getElementById('imap-password').value;
-
-      if (!email || !smtpHost || !username || !password) {
-        showToast('Please fill in all required fields', 'warning');
-        return;
-      }
-
-      const btn = document.getElementById('imap-connect-btn');
-      btn.disabled = true;
-      btn.textContent = 'Testing connection...';
-
-      try {
-        const response = await fetch(`${API_BASE}/email-accounts`, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${authToken}`
-          },
-          body: JSON.stringify({
-            provider: imapProvider,
-            emailAddress: email,
-            displayName: displayName,
-            imapHost: imapHost,
-            imapPort: parseInt(imapPort),
-            smtpHost: smtpHost,
-            smtpPort: parseInt(smtpPort),
-            username: username,
-            password: password
-          })
-        });
-
-        const result = await response.json();
-
-        if (result.success) {
-          showToast(result.message || 'Email account connected!', 'success');
-          closeImapModal();
-          loadEmailAccounts();
-        } else {
-          let errorMsg = result.error || 'Connection failed';
-          if (result.details) errorMsg += ': ' + result.details;
-          if (result.hint) errorMsg += '\n\n' + result.hint;
-          showToast(errorMsg, 'error');
-        }
-      } catch (error) {
-        showToast('Failed to connect: ' + error.message, 'error');
-      } finally {
-        btn.disabled = false;
-        btn.textContent = 'Connect Account';
-      }
-    }
-
-    async function loadEmailAccounts() {
-      try {
-        const response = await fetch(`${API_BASE}/email-accounts`, {
-          headers: { 'Authorization': `Bearer ${authToken}` }
-        });
-        const result = await response.json();
-        const container = document.getElementById('connected-email-accounts');
-
-        if (result.accounts && result.accounts.length > 0) {
-          container.innerHTML = result.accounts.map(acc => `
-            <div style="display: flex; align-items: center; justify-content: space-between;
-                        padding: 0.75rem; background: var(--surface); border: 1px solid var(--border);
-                        border-radius: 4px; margin-bottom: 0.5rem;">
-              <div style="display: flex; align-items: center; gap: 0.75rem;">
-                <span style="font-size: 1.25rem;">
-                  ${acc.provider === 'gmail' ? '📧' : acc.provider === 'outlook' ? '📬' : '✉️'}
-                </span>
-                <div>
-                  <div style="font-weight: 600;">${escapeHtml(acc.email_address)}</div>
-                  <div style="font-size: 0.75rem; color: var(--text-dim);">
-                    ${escapeHtml(acc.provider)}${acc.is_default ? ' &bull; Default' : ''}
-                  </div>
-                </div>
-              </div>
-              <div style="display: flex; align-items: center; gap: 0.5rem;">
-                ${acc.is_active
-                  ? '<span style="background: #1a3a2a; color: #4ade80; padding: 2px 8px; border-radius: 4px; font-size: 0.75rem;">Active</span>'
-                  : '<span style="background: #3a2a1a; color: #fbbf24; padding: 2px 8px; border-radius: 4px; font-size: 0.75rem;">Inactive</span>'}
-                <button class="btn-secondary" style="font-size: 0.8rem; padding: 4px 10px;" onclick="removeEmailAccount(${acc.id})">Remove</button>
-              </div>
-            </div>
-          `).join('');
-        } else {
-          container.innerHTML = '<p style="color: var(--text-muted); font-style: italic;">No email accounts connected yet. Add your first account above.</p>';
-        }
-      } catch (error) {
-        console.error('Failed to load email accounts:', error);
-      }
-    }
-
-    async function removeEmailAccount(accountId) {
-      if (!confirm('Remove this email account?')) return;
-      try {
-        await fetch(`${API_BASE}/email-accounts`, {
-          method: 'DELETE',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${authToken}`
-          },
-          body: JSON.stringify({ id: accountId })
-        });
-        showToast('Email account removed', 'success');
-        loadEmailAccounts();
-      } catch (error) {
-        showToast('Failed to remove account', 'error');
-      }
-    }
-
-    // Load email accounts when section is opened
-    document.querySelector('[data-section="email-accounts"]').addEventListener('click', () => {
-      loadEmailAccounts();
-    });
-
-    // ============================================
     // INDUSTRY PIPELINE MAPPING FUNCTIONS
     // ============================================
 
@@ -3869,9 +5952,7 @@
         const data = await response.json();
         if (data.success && data.pipelines) {
           knownPipelines = data.pipelines;
-          // Populate default pipeline/stage selectors
           populateDefaultPipelineDropdown();
-          // Re-render industry mappings with dropdown data
           renderIndustryMappings();
         }
       } catch (error) {
@@ -3886,8 +5967,6 @@
       if (!pipelineSelect || knownPipelines.length === 0) return;
 
       container.style.display = 'block';
-
-      // Build pipeline options
       let pipelineHtml = '<option value="">-- Select Pipeline --</option>';
       knownPipelines.forEach(p => {
         const selected = ghlConfig.pipelineId === p.id ? ' selected' : '';
@@ -3895,7 +5974,6 @@
       });
       pipelineSelect.innerHTML = pipelineHtml;
 
-      // If a pipeline is already selected, populate its stages
       if (ghlConfig.pipelineId) {
         populateStageDropdown(stageSelect, ghlConfig.pipelineId, ghlConfig.stageId);
       }
@@ -3922,14 +6000,10 @@
     async function saveDefaultPipelineStage() {
       const pipelineId = document.getElementById('ghl-default-pipeline').value;
       const stageId = document.getElementById('ghl-default-stage').value;
-
       try {
         const response = await fetch(`${API_BASE}/update-settings`, {
           method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${authToken}`
-          },
+          headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${authToken}` },
           body: JSON.stringify({ ghlPipelineId: pipelineId, ghlStageId: stageId })
         });
         const data = await response.json();
@@ -3941,8 +6015,16 @@
           showToast('Failed to save: ' + (data.error || 'Unknown error'), 'error');
         }
       } catch (error) {
-        console.error('Save default pipeline error:', error);
         showToast('Failed to save default pipeline', 'error');
+      }
+    }
+
+    function onIndustryPipelineChange(industry, pipelineId) {
+      updateIndustryMapping(industry, 'pipelineId', pipelineId);
+      updateIndustryMapping(industry, 'stageId', '');
+      const stageSelect = document.getElementById('industry-stage-' + industry);
+      if (stageSelect) {
+        populateStageDropdown(stageSelect, pipelineId, '');
       }
     }
 
@@ -3956,28 +6038,21 @@
       }
 
       const hasPipelines = knownPipelines.length > 0;
-
       let html = '<div style="display: flex; flex-direction: column; gap: 1rem;">';
 
       for (const industry of industries) {
         const mapping = industryMappings[industry] || {};
         const safeIndustry = escapeHtml(industry);
-
-        // Build pipeline selector
         let pipelineField, stageField;
 
         if (hasPipelines) {
-          // Dropdown mode — populate from GHL data
           let pipelineOptions = '<option value="">-- Select Pipeline --</option>';
           knownPipelines.forEach(p => {
             const selected = mapping.pipelineId === p.id ? ' selected' : '';
             pipelineOptions += `<option value="${escapeHtml(p.id)}"${selected}>${escapeHtml(p.name)}</option>`;
           });
-          pipelineField = `<select class="form-input mono"
-            onchange="onIndustryPipelineChange('${safeIndustry}', this.value)"
-            style="font-size: 0.85rem; padding: 0.5rem;">${pipelineOptions}</select>`;
+          pipelineField = `<select class="form-input mono" onchange="onIndustryPipelineChange('${safeIndustry}', this.value)" style="font-size: 0.85rem; padding: 0.5rem;">${pipelineOptions}</select>`;
 
-          // Build stage selector for the currently selected pipeline
           let stageOptions = '<option value="">-- Select Stage --</option>';
           if (mapping.pipelineId) {
             const pipeline = knownPipelines.find(p => p.id === mapping.pipelineId);
@@ -3988,22 +6063,10 @@
               });
             }
           }
-          stageField = `<select class="form-input mono"
-            id="industry-stage-${safeIndustry}"
-            onchange="updateIndustryMapping('${safeIndustry}', 'stageId', this.value)"
-            style="font-size: 0.85rem; padding: 0.5rem;">${stageOptions}</select>`;
+          stageField = `<select class="form-input mono" id="industry-stage-${safeIndustry}" onchange="updateIndustryMapping('${safeIndustry}', 'stageId', this.value)" style="font-size: 0.85rem; padding: 0.5rem;">${stageOptions}</select>`;
         } else {
-          // Fallback to text inputs if pipelines haven't loaded yet
-          pipelineField = `<input type="text" class="form-input mono"
-            value="${escapeHtml(mapping.pipelineId || '')}"
-            placeholder="Pipeline ID"
-            onchange="updateIndustryMapping('${safeIndustry}', 'pipelineId', this.value)"
-            style="font-size: 0.85rem; padding: 0.5rem;">`;
-          stageField = `<input type="text" class="form-input mono"
-            value="${escapeHtml(mapping.stageId || '')}"
-            placeholder="Stage ID"
-            onchange="updateIndustryMapping('${safeIndustry}', 'stageId', this.value)"
-            style="font-size: 0.85rem; padding: 0.5rem;">`;
+          pipelineField = `<input type="text" class="form-input mono" value="${escapeHtml(mapping.pipelineId || '')}" placeholder="Pipeline ID" onchange="updateIndustryMapping('${safeIndustry}', 'pipelineId', this.value)" style="font-size: 0.85rem; padding: 0.5rem;">`;
+          stageField = `<input type="text" class="form-input mono" value="${escapeHtml(mapping.stageId || '')}" placeholder="Stage ID" onchange="updateIndustryMapping('${safeIndustry}', 'stageId', this.value)" style="font-size: 0.85rem; padding: 0.5rem;">`;
         }
 
         html += `
@@ -4031,17 +6094,6 @@
 
       // Update suggestions after rendering
       populateIndustrySuggestions();
-    }
-
-    function onIndustryPipelineChange(industry, pipelineId) {
-      updateIndustryMapping(industry, 'pipelineId', pipelineId);
-      // Clear old stage since pipeline changed
-      updateIndustryMapping(industry, 'stageId', '');
-      // Populate stages for the new pipeline
-      const stageSelect = document.getElementById('industry-stage-' + industry);
-      if (stageSelect) {
-        populateStageDropdown(stageSelect, pipelineId, '');
-      }
     }
 
     function escapeHtml(text) {
@@ -4198,55 +6250,382 @@
     }
 
     // ============================================
-    // EXPORT CSV
+    // EMAIL OUTREACH FUNCTIONS
     // ============================================
-    document.getElementById('export-leads-btn').addEventListener('click', async () => {
-      const btn = document.getElementById('export-leads-btn');
-      btn.disabled = true;
-      btn.textContent = 'Exporting...';
 
+    let emailTemplates = [];
+    let emailAccounts = [];
+    let sentEmails = [];
+    let outreachStats = { totalSent: 0, totalOpened: 0, openRate: 0, sentToday: 0 };
+
+    // Load email outreach data when section is shown
+    async function loadEmailOutreachData() {
+      await Promise.all([
+        loadOutreachFilters(),
+        loadEmailTemplates(),
+        loadEmailAccountsForOutreach(),
+        loadSentEmails(),
+        updateOutreachCount()
+      ]);
+    }
+
+    // Load available filter options
+    async function loadOutreachFilters() {
       try {
-        // Fetch all leads (up to 10000)
-        const response = await fetch(`${API_BASE}/get-leads?limit=10000&offset=0`, {
+        const response = await fetch(`${API_BASE}/get-leads?limit=1`, {
           headers: { 'Authorization': `Bearer ${authToken}` }
         });
+        if (response.ok) {
+          const data = await response.json();
 
-        if (!response.ok) throw new Error('Failed to fetch leads');
-        const data = await response.json();
-        const leads = data.leads || [];
+          // Populate city filter
+          const citySelect = document.getElementById('outreach-filter-city');
+          if (citySelect && data.availableCities) {
+            citySelect.innerHTML = '<option value="">All Cities</option>' +
+              data.availableCities.map(c => `<option value="${escapeHtml(c)}">${escapeHtml(c)}</option>`).join('');
+          }
 
-        if (leads.length === 0) {
-          alert('No leads to export. Scrape some leads first!');
-          return;
+          // Populate industry filter
+          const industrySelect = document.getElementById('outreach-filter-industry');
+          if (industrySelect && data.availableIndustries) {
+            industrySelect.innerHTML = '<option value="">All Industries</option>' +
+              data.availableIndustries.map(i => `<option value="${escapeHtml(i)}">${escapeHtml(i)}</option>`).join('');
+          }
         }
+      } catch (error) {
+        console.error('Failed to load outreach filters:', error);
+      }
+    }
 
-        const headers = ['Business Name', 'Phone', 'Email', 'Address', 'City', 'State', 'Industry', 'Website', 'Rating', 'Reviews', 'GHL Synced'];
-        const csvRows = [headers.join(',')];
+    // Load email templates
+    async function loadEmailTemplates() {
+      try {
+        const response = await fetch(`${API_BASE}/email-templates`, {
+          headers: { 'Authorization': `Bearer ${authToken}` }
+        });
+        if (response.ok) {
+          const data = await response.json();
+          emailTemplates = data.templates || [];
 
-        leads.forEach(lead => {
-          const row = [
-            lead.business_name, lead.phone, lead.email, lead.address,
-            lead.city, lead.state, lead.industry, lead.website,
-            lead.rating, lead.reviews, lead.ghl_synced ? 'Yes' : 'No'
-          ].map(val => `"${(val || '').toString().replace(/"/g, '""')}"`);
-          csvRows.push(row.join(','));
+          // Populate template dropdown
+          const templateSelect = document.getElementById('outreach-template');
+          if (templateSelect) {
+            templateSelect.innerHTML = '<option value="">Write custom email...</option>' +
+              emailTemplates.map(t => `<option value="${t.id}">${escapeHtml(t.name)}</option>`).join('');
+          }
+
+          // Render templates list
+          renderEmailTemplates();
+        }
+      } catch (error) {
+        console.error('Failed to load email templates:', error);
+      }
+    }
+
+    // Load email accounts for outreach dropdown
+    async function loadEmailAccountsForOutreach() {
+      try {
+        const response = await fetch(`${API_BASE}/email-accounts`, {
+          headers: { 'Authorization': `Bearer ${authToken}` }
+        });
+        if (response.ok) {
+          const data = await response.json();
+          emailAccounts = data.accounts || [];
+
+          // Populate account dropdown
+          const accountSelect = document.getElementById('outreach-from-account');
+          if (accountSelect) {
+            accountSelect.innerHTML = '<option value="">Select email account...</option>' +
+              emailAccounts.map(a => `<option value="${a.id}" ${a.is_default ? 'selected' : ''}>${escapeHtml(a.email_address)} (${a.sends_today}/${a.daily_send_limit} today)</option>`).join('');
+          }
+        }
+      } catch (error) {
+        console.error('Failed to load email accounts:', error);
+      }
+    }
+
+    // Load sent emails history
+    async function loadSentEmails() {
+      try {
+        const response = await fetch(`${API_BASE}/send-email?limit=50`, {
+          headers: { 'Authorization': `Bearer ${authToken}` }
+        });
+        if (response.ok) {
+          const data = await response.json();
+          sentEmails = data.emails || [];
+          outreachStats = data.stats || { totalSent: 0, totalOpened: 0, openRate: 0, sentToday: 0 };
+
+          // Update stats
+          document.getElementById('stat-emails-sent').textContent = outreachStats.totalSent;
+          document.getElementById('stat-emails-opened').textContent = outreachStats.totalOpened;
+          document.getElementById('stat-open-rate').textContent = outreachStats.openRate + '%';
+          document.getElementById('stat-sent-today').textContent = outreachStats.sentToday;
+
+          // Render sent emails table
+          renderSentEmails();
+        }
+      } catch (error) {
+        console.error('Failed to load sent emails:', error);
+      }
+    }
+
+    // Update recipient count based on filters
+    async function updateOutreachCount() {
+      const city = document.getElementById('outreach-filter-city')?.value || '';
+      const industry = document.getElementById('outreach-filter-industry')?.value || '';
+      const verifiedOnly = document.getElementById('outreach-verified-only')?.checked;
+      const excludeRecent = document.getElementById('outreach-exclude-recent')?.checked;
+      const limit = parseInt(document.getElementById('outreach-limit')?.value) || 25;
+
+      try {
+        let query = `limit=${limit}`;
+        if (city) query += `&city=${encodeURIComponent(city)}`;
+        if (industry) query += `&industry=${encodeURIComponent(industry)}`;
+        if (verifiedOnly) query += `&emailVerified=true`;
+
+        const response = await fetch(`${API_BASE}/get-leads?${query}`, {
+          headers: { 'Authorization': `Bearer ${authToken}` }
+        });
+        if (response.ok) {
+          const data = await response.json();
+          const count = Math.min(data.total || 0, limit);
+          document.getElementById('outreach-recipient-count').textContent = count;
+        }
+      } catch (error) {
+        console.error('Failed to update recipient count:', error);
+      }
+    }
+
+    // Load template content when selected
+    function loadTemplateContent() {
+      const templateId = document.getElementById('outreach-template').value;
+      if (!templateId) return;
+
+      const template = emailTemplates.find(t => t.id == templateId);
+      if (template) {
+        document.getElementById('outreach-subject').value = template.subject || '';
+        document.getElementById('outreach-body').value = template.body || '';
+      }
+    }
+
+    // Send outreach emails
+    async function sendOutreachEmails() {
+      const accountId = document.getElementById('outreach-from-account').value;
+      const subject = document.getElementById('outreach-subject').value;
+      const body = document.getElementById('outreach-body').value;
+
+      if (!accountId) {
+        showToast('Please select an email account', 'error');
+        return;
+      }
+      if (!subject || !body) {
+        showToast('Please enter subject and body', 'error');
+        return;
+      }
+
+      const city = document.getElementById('outreach-filter-city').value;
+      const industry = document.getElementById('outreach-filter-industry').value;
+      const verifiedOnly = document.getElementById('outreach-verified-only').checked;
+      const excludeRecent = document.getElementById('outreach-exclude-recent').checked;
+      const limit = parseInt(document.getElementById('outreach-limit').value) || 25;
+
+      const count = parseInt(document.getElementById('outreach-recipient-count').textContent);
+      if (count === 0) {
+        showToast('No recipients match your filters', 'error');
+        return;
+      }
+
+      if (!confirm(`Send emails to ${count} recipients?`)) return;
+
+      try {
+        showToast('Sending emails...', 'info');
+
+        const response = await fetch(`${API_BASE}/send-email`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${authToken}`
+          },
+          body: JSON.stringify({
+            emailAccountId: accountId,
+            subject,
+            body,
+            filters: {
+              city: city || undefined,
+              industry: industry || undefined,
+              emailVerified: verifiedOnly,
+              excludeRecent,
+              limit
+            }
+          })
         });
 
-        const blob = new Blob([csvRows.join('\n')], { type: 'text/csv' });
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = `leadripper-export-${new Date().toISOString().slice(0, 10)}.csv`;
-        a.click();
-        URL.revokeObjectURL(url);
+        const data = await response.json();
+
+        if (response.ok && data.success) {
+          showToast(data.message, 'success');
+          await loadSentEmails();
+          await loadEmailAccountsForOutreach();
+        } else {
+          showToast(data.error || 'Failed to send emails', 'error');
+        }
       } catch (error) {
-        console.error('Export error:', error);
-        alert('Failed to export leads: ' + error.message);
-      } finally {
-        btn.disabled = false;
-        btn.textContent = '⬇ Export CSV';
+        console.error('Send emails error:', error);
+        showToast('Failed to send emails', 'error');
       }
-    });
+    }
+
+    // Preview email with sample data
+    function previewOutreachEmail() {
+      const subject = document.getElementById('outreach-subject').value;
+      const body = document.getElementById('outreach-body').value;
+
+      // Sample lead data for preview
+      const sampleLead = {
+        business_name: 'Acme Corporation',
+        first_name: 'John',
+        email: 'john@acme.com',
+        phone: '(555) 123-4567',
+        website: 'www.acme.com',
+        city: 'New York',
+        industry: 'Technology',
+        address: '123 Main St'
+      };
+
+      const previewSubject = subject
+        .replace(/{{business_name}}/gi, sampleLead.business_name)
+        .replace(/{{first_name}}/gi, sampleLead.first_name)
+        .replace(/{{city}}/gi, sampleLead.city);
+
+      const previewBody = body
+        .replace(/{{business_name}}/gi, sampleLead.business_name)
+        .replace(/{{first_name}}/gi, sampleLead.first_name)
+        .replace(/{{email}}/gi, sampleLead.email)
+        .replace(/{{phone}}/gi, sampleLead.phone)
+        .replace(/{{website}}/gi, sampleLead.website)
+        .replace(/{{city}}/gi, sampleLead.city)
+        .replace(/{{industry}}/gi, sampleLead.industry)
+        .replace(/{{address}}/gi, sampleLead.address);
+
+      alert(`Subject: ${previewSubject}\n\n${previewBody}`);
+    }
+
+    // Render email templates list
+    function renderEmailTemplates() {
+      const container = document.getElementById('email-templates-list');
+      if (!container) return;
+
+      if (emailTemplates.length === 0) {
+        container.innerHTML = '<p style="color: var(--text-dim); text-align: center; padding: 2rem;">No templates yet. Create your first template above.</p>';
+        return;
+      }
+
+      container.innerHTML = emailTemplates.map(t => `
+        <div style="display: flex; justify-content: space-between; align-items: center; padding: 1rem; border-bottom: 1px solid var(--border);">
+          <div>
+            <strong>${escapeHtml(t.name)}</strong>
+            <div style="color: var(--text-dim); font-size: 0.85rem;">${escapeHtml(t.subject || '')}</div>
+          </div>
+          <div style="display: flex; gap: 0.5rem;">
+            <button class="btn-mini" onclick="editTemplate(${t.id})">Edit</button>
+            <button class="btn-mini" style="color: var(--red);" onclick="deleteTemplate(${t.id})">Delete</button>
+          </div>
+        </div>
+      `).join('');
+    }
+
+    // Render sent emails table
+    function renderSentEmails() {
+      const tbody = document.getElementById('sent-emails-body');
+      if (!tbody) return;
+
+      if (sentEmails.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="5" style="text-align: center; color: var(--text-dim);">No emails sent yet</td></tr>';
+        return;
+      }
+
+      tbody.innerHTML = sentEmails.map(e => `
+        <tr>
+          <td>${escapeHtml(e.to_email || e.lead_email || '')}</td>
+          <td>${escapeHtml(e.subject || '').substring(0, 40)}${(e.subject?.length > 40 ? '...' : '')}</td>
+          <td>${new Date(e.sent_at).toLocaleDateString()}</td>
+          <td>${e.opened_at ? '✅ ' + new Date(e.opened_at).toLocaleDateString() : '—'}</td>
+          <td><span class="status-badge ${e.opened_at ? 'active' : 'pending'}">${e.opened_at ? 'Opened' : 'Sent'}</span></td>
+        </tr>
+      `).join('');
+    }
+
+    // Open new template modal
+    function openNewTemplateModal() {
+      const name = prompt('Template Name:');
+      if (!name) return;
+
+      const subject = prompt('Email Subject (use {{business_name}}, {{first_name}}, etc.):');
+      if (subject === null) return;
+
+      const body = prompt('Email Body:');
+      if (body === null) return;
+
+      createEmailTemplate(name, subject, body);
+    }
+
+    // Create email template
+    async function createEmailTemplate(name, subject, body) {
+      try {
+        const response = await fetch(`${API_BASE}/email-templates`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${authToken}`
+          },
+          body: JSON.stringify({ name, subject, body })
+        });
+
+        if (response.ok) {
+          showToast('Template created', 'success');
+          await loadEmailTemplates();
+        } else {
+          const data = await response.json();
+          showToast(data.error || 'Failed to create template', 'error');
+        }
+      } catch (error) {
+        showToast('Failed to create template', 'error');
+      }
+    }
+
+    // Delete email template
+    async function deleteTemplate(id) {
+      if (!confirm('Delete this template?')) return;
+
+      try {
+        const response = await fetch(`${API_BASE}/email-templates`, {
+          method: 'DELETE',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${authToken}`
+          },
+          body: JSON.stringify({ id })
+        });
+
+        if (response.ok) {
+          showToast('Template deleted', 'success');
+          await loadEmailTemplates();
+        }
+      } catch (error) {
+        showToast('Failed to delete template', 'error');
+      }
+    }
+
+    // Edit template
+    function editTemplate(id) {
+      const template = emailTemplates.find(t => t.id == id);
+      if (!template) return;
+
+      document.getElementById('outreach-template').value = id;
+      document.getElementById('outreach-subject').value = template.subject || '';
+      document.getElementById('outreach-body').value = template.body || '';
+      showToast('Template loaded for editing', 'info');
+    }
   </script>
 </body>
 </html>
