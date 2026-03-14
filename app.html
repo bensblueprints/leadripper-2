@@ -7408,8 +7408,15 @@ Available merge tags: {{business_name}}, {{first_name}}, {{email}}, {{phone}}, {
       await startCallingList(listId);
     }
 
+    let callingActive = false;
+    let callingRefreshInterval = null;
+
     async function startCallingList(listId) {
       showToast('Starting outbound calls...', 'info');
+
+      // Navigate to AI Calling section so user can watch
+      const aiCallingNav = document.querySelector('[data-section="ai-calling"]');
+      if (aiCallingNav) aiCallingNav.click();
 
       try {
         // Get leads in list
@@ -7424,10 +7431,24 @@ Available merge tags: {{business_name}}, {{first_name}}, {{email}}, {{phone}}, {
           return;
         }
 
+        callingActive = true;
         let initiated = 0;
         let failed = 0;
+        const errors = [];
 
-        for (const lead of leads) {
+        // Start auto-refresh of call recordings every 5 seconds
+        callingRefreshInterval = setInterval(() => {
+          loadCallRecordings();
+          // Update stats
+          document.getElementById('stat-calls-today').textContent = initiated + failed;
+          document.getElementById('stat-success-rate').textContent = (initiated + failed) > 0
+            ? Math.round(initiated / (initiated + failed) * 100) + '%' : '0%';
+        }, 5000);
+
+        for (let i = 0; i < leads.length; i++) {
+          const lead = leads[i];
+          showToast(`Calling ${i + 1}/${leads.length}: ${lead.business_name || lead.phone}...`, 'info');
+
           try {
             const callResp = await fetch(`${API_BASE}/initiate-call`, {
               method: 'POST',
@@ -7445,18 +7466,39 @@ Available merge tags: {{business_name}}, {{first_name}}, {{email}}, {{phone}}, {
               initiated++;
             } else {
               failed++;
-              console.error('Call failed for', lead.phone, callResult.error);
+              errors.push({ phone: lead.phone, name: lead.business_name, error: callResult.error || callResult.details || 'Unknown error', phoneUsed: callResult.phoneUsed });
+              console.error('Call failed for', lead.phone, callResult);
             }
           } catch (e) {
             failed++;
+            errors.push({ phone: lead.phone, name: lead.business_name, error: e.message });
           }
+
+          // Refresh call list after each call
+          loadCallRecordings();
+
           // Small delay between calls
-          await new Promise(r => setTimeout(r, 2000));
+          await new Promise(r => setTimeout(r, 3000));
         }
 
-        showToast(`Initiated ${initiated} calls (${failed} failed)`, initiated > 0 ? 'success' : 'error');
+        callingActive = false;
+        clearInterval(callingRefreshInterval);
+
+        showToast(`Done! ${initiated} initiated, ${failed} failed out of ${leads.length}`, initiated > 0 ? 'success' : 'error');
+
+        // Show error summary if any failed
+        if (errors.length > 0) {
+          console.error('Call errors:', errors);
+          const errorSummary = errors.slice(0, 5).map(e => `${e.name || e.phone}: ${typeof e.error === 'object' ? JSON.stringify(e.error) : e.error}`).join('\n');
+          alert(`${failed} calls failed:\n\n${errorSummary}${errors.length > 5 ? `\n\n...and ${errors.length - 5} more` : ''}`);
+        }
+
+        // Final refresh
         loadCallRecordings();
+        syncPendingCalls();
       } catch (error) {
+        callingActive = false;
+        clearInterval(callingRefreshInterval);
         showToast('Failed to start calls: ' + error.message, 'error');
       }
     }
@@ -7500,6 +7542,7 @@ Available merge tags: {{business_name}}, {{first_name}}, {{email}}, {{phone}}, {
               </div>
               ${call.email_collected ? `<div style="font-size: 0.85rem; color: #4ade80; margin-bottom: 0.5rem;">Email collected: ${call.email_collected}</div>` : ''}
               ${call.outcome ? `<div style="font-size: 0.8rem; color: var(--text-secondary); margin-bottom: 0.5rem;">Outcome: ${call.outcome}</div>` : ''}
+              ${call.error_message ? `<details style="margin-bottom: 0.5rem;"><summary style="cursor:pointer;font-size:0.8rem;color:#f87171;">Error Details</summary><pre style="font-size:0.7rem;color:#f87171;white-space:pre-wrap;margin-top:0.25rem;max-height:100px;overflow-y:auto;background:rgba(248,113,113,0.05);padding:8px;border-radius:4px;">${call.error_message}</pre></details>` : ''}
               ${call.recording_url ? `
                 <div style="margin-top: 0.5rem;">
                   <audio controls preload="none" style="width: 100%; height: 32px;">

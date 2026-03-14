@@ -62,10 +62,28 @@ exports.handler = async (event, context) => {
 
     const elevenlabsApiKey = settingsResult.rows[0].elevenlabs_api_key;
 
+    // Ensure error_message column exists
+    await pool.query('ALTER TABLE lr_call_logs ADD COLUMN IF NOT EXISTS error_message TEXT').catch(() => {});
+
+    // Normalize phone to E.164 format (+1XXXXXXXXXX)
+    let normalizedPhone = phoneNumber.replace(/[^0-9+]/g, '');
+    if (!normalizedPhone.startsWith('+')) {
+      // Strip leading 1 if 11 digits, then add +1
+      if (normalizedPhone.length === 11 && normalizedPhone.startsWith('1')) {
+        normalizedPhone = '+' + normalizedPhone;
+      } else if (normalizedPhone.length === 10) {
+        normalizedPhone = '+1' + normalizedPhone;
+      } else {
+        normalizedPhone = '+' + normalizedPhone;
+      }
+    }
+
+    console.log(`[Call] ${contactName} | Raw: ${phoneNumber} → Normalized: ${normalizedPhone} | Agent: ${agentId}`);
+
     // Try the primary outbound call endpoint
     const callPayload = {
       agent_id: agentId,
-      customer_phone_number: phoneNumber,
+      customer_phone_number: normalizedPhone,
       customer_name: contactName || 'Unknown'
     };
 
@@ -85,7 +103,10 @@ exports.handler = async (event, context) => {
 
       callResponse = await res.json();
 
+      console.log(`[Call] ElevenLabs response: ${res.status}`, JSON.stringify(callResponse).slice(0, 500));
+
       if (!res.ok) {
+        console.log(`[Call] Primary failed: ${res.status}`, JSON.stringify(callResponse));
         // Try fallback endpoint
         const fallbackRes = await fetch('https://api.elevenlabs.io/v1/convai/twilio/outbound-call', {
           method: 'POST',
@@ -99,12 +120,24 @@ exports.handler = async (event, context) => {
         callResponse = await fallbackRes.json();
 
         if (!fallbackRes.ok) {
+          console.log(`[Call] Fallback also failed: ${fallbackRes.status}`, JSON.stringify(callResponse));
+
+          // Log the failed call
+          await pool.query(
+            `INSERT INTO lr_call_logs
+              (user_id, lead_id, list_id, agent_id, phone_number, contact_name, status, error_message, created_at, updated_at)
+             VALUES ($1, $2, $3, $4, $5, $6, 'failed', $7, NOW(), NOW())`,
+            [userId, leadId || null, listId || null, agentId, normalizedPhone, contactName || null,
+             JSON.stringify(callResponse).slice(0, 500)]
+          ).catch(() => {});
+
           return {
             statusCode: 502,
             headers,
             body: JSON.stringify({
               error: 'Failed to initiate call via ElevenLabs',
-              details: callResponse
+              details: callResponse,
+              phoneUsed: normalizedPhone
             })
           };
         }

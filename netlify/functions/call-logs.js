@@ -46,7 +46,7 @@ exports.handler = async (event, context) => {
       let query = `
         SELECT id, user_id, lead_id, list_id, agent_id, elevenlabs_conversation_id,
                phone_number, contact_name, status, duration, recording_url, transcript,
-               outcome, email_collected, notes, created_at, updated_at
+               outcome, email_collected, notes, error_message, created_at, updated_at
         FROM lr_call_logs WHERE user_id = $1
       `;
       const values = [userId];
