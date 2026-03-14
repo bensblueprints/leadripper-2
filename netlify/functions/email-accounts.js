@@ -56,7 +56,7 @@ exports.handler = async (event, context) => {
     try {
       const result = await pool.query(
         `SELECT id, provider, email_address, display_name, imap_host, imap_port,
-                smtp_host, smtp_port, username, is_active, is_default, last_tested_at, test_error, created_at
+                smtp_host, smtp_port, username, is_active, is_default, created_at
          FROM lr_email_accounts WHERE user_id = $1 ORDER BY created_at DESC`,
         [userId]
       );
@@ -96,7 +96,7 @@ exports.handler = async (event, context) => {
             error: 'SMTP connection failed',
             details: smtpError.message,
             hint: provider === 'gmail'
-              ? 'For Gmail, use an App Password (Google Account → Security → App Passwords). Regular passwords won\'t work.'
+              ? 'For Gmail, use an App Password (Google Account > Security > App Passwords). Regular passwords won\'t work.'
               : provider === 'outlook'
               ? 'For Outlook, make sure IMAP/SMTP is enabled in your Outlook settings and use your account password.'
               : 'Check your SMTP host, port, username, and password.'
@@ -115,8 +115,8 @@ exports.handler = async (event, context) => {
         await pool.query(
           `UPDATE lr_email_accounts SET
             provider = $1, display_name = $2, imap_host = $3, imap_port = $4,
-            smtp_host = $5, smtp_port = $6, username = $7, password = $8,
-            is_active = true, last_tested_at = NOW(), test_error = NULL, updated_at = NOW()
+            smtp_host = $5, smtp_port = $6, username = $7, password_encrypted = $8,
+            is_active = true, updated_at = NOW()
           WHERE id = $9`,
           [provider || 'imap', displayName, imapHost, imapPort || 993, smtpHost, smtpPort || 587, username, password, existing.rows[0].id]
         );
@@ -137,8 +137,8 @@ exports.handler = async (event, context) => {
 
       await pool.query(
         `INSERT INTO lr_email_accounts
-          (user_id, provider, email_address, display_name, imap_host, imap_port, smtp_host, smtp_port, username, password, is_active, is_default, last_tested_at)
-        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, true, $11, NOW())`,
+          (user_id, provider, email_address, display_name, imap_host, imap_port, smtp_host, smtp_port, username, password_encrypted, is_active, is_default)
+        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, true, $11)`,
         [userId, provider || 'imap', emailAddress, displayName, imapHost, imapPort || 993, smtpHost, smtpPort || 587, username, password, isDefault]
       );
 

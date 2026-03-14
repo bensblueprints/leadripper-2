@@ -84,7 +84,7 @@ exports.handler = async (event, context) => {
 
       // Look up email account credentials
       const accountResult = await pool.query(
-        `SELECT id, email_address, display_name, smtp_host, smtp_port, username, password
+        `SELECT id, email_address, display_name, smtp_host, smtp_port, username, password_encrypted
          FROM lr_email_accounts WHERE id = $1 AND user_id = $2 AND is_active = true`,
         [accountId, userId]
       );
@@ -119,7 +119,7 @@ exports.handler = async (event, context) => {
         secure: parseInt(account.smtp_port) === 465,
         auth: {
           user: account.username,
-          pass: account.password
+          pass: account.password_encrypted
         },
         connectionTimeout: 15000,
         socketTimeout: 15000
