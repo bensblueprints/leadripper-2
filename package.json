@@ -12,8 +12,10 @@
   "dependencies": {
     "@supabase/supabase-js": "^2.95.3",
     "bcryptjs": "^3.0.3",
+    "imap": "^0.8.19",
     "jsonwebtoken": "^9.0.3",
     "node-fetch": "^2.7.0",
+    "nodemailer": "^8.0.2",
     "pg": "^8.18.0",
     "playwright": "^1.58.2",
     "resend": "^6.9.1",
