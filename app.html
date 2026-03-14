@@ -1878,6 +1878,29 @@
           </div>
           <button class="btn-secondary" onclick="saveGhlSettings()">Save Integration</button>
           <a href="/setup-guide" target="_blank" class="btn-secondary" style="margin-left: 0.5rem; display: inline-block;">View Setup Guide</a>
+
+          <!-- Default Pipeline & Stage selectors (shown after API key is saved) -->
+          <div id="ghl-pipeline-selectors" style="display: none; margin-top: 1.5rem; padding-top: 1.5rem; border-top: 1px solid var(--border);">
+            <h3 style="color: var(--text-primary); font-size: 1rem; margin-bottom: 1rem;">Default Pipeline & Stage</h3>
+            <p style="color: var(--text-secondary); font-size: 0.85rem; margin-bottom: 1rem;">
+              Select the default pipeline and stage for leads that don't have an industry-specific mapping.
+            </p>
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+              <div class="form-group">
+                <label class="form-label">Pipeline</label>
+                <select class="form-input mono" id="ghl-default-pipeline" onchange="onDefaultPipelineChange()">
+                  <option value="">-- Select Pipeline --</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label class="form-label">Stage</label>
+                <select class="form-input mono" id="ghl-default-stage">
+                  <option value="">-- Select Stage --</option>
+                </select>
+              </div>
+            </div>
+            <button class="btn-secondary" onclick="saveDefaultPipelineStage()">Save Default Pipeline</button>
+          </div>
         </div>
 
         <!-- Slow-Drip Sync Settings -->
@@ -3378,6 +3401,11 @@
           document.getElementById('ghl-api-key').placeholder = '••••••••••••••••';
         }
 
+        // Store default pipeline/stage IDs for dropdown population
+        ghlConfig.pipelineId = settings.ghl_pipeline_id || '';
+        ghlConfig.stageId = settings.ghl_stage_id || '';
+        ghlConfig.hasApiKey = settings.hasGhlKey || false;
+
         // Populate drip settings
         document.getElementById('ghl-drip-enabled').checked = settings.ghl_drip_enabled || false;
         document.getElementById('ghl-drip-interval').value = settings.ghl_drip_interval || 15;
@@ -3540,11 +3568,80 @@
         const data = await response.json();
         if (data.success && data.pipelines) {
           knownPipelines = data.pipelines;
-          // Re-render with pipeline data
+          // Populate default pipeline/stage selectors
+          populateDefaultPipelineDropdown();
+          // Re-render industry mappings with dropdown data
           renderIndustryMappings();
         }
       } catch (error) {
         console.error('Failed to fetch GHL pipelines:', error);
+      }
+    }
+
+    function populateDefaultPipelineDropdown() {
+      const container = document.getElementById('ghl-pipeline-selectors');
+      const pipelineSelect = document.getElementById('ghl-default-pipeline');
+      const stageSelect = document.getElementById('ghl-default-stage');
+      if (!pipelineSelect || knownPipelines.length === 0) return;
+
+      container.style.display = 'block';
+
+      // Build pipeline options
+      let pipelineHtml = '<option value="">-- Select Pipeline --</option>';
+      knownPipelines.forEach(p => {
+        const selected = ghlConfig.pipelineId === p.id ? ' selected' : '';
+        pipelineHtml += `<option value="${escapeHtml(p.id)}"${selected}>${escapeHtml(p.name)}</option>`;
+      });
+      pipelineSelect.innerHTML = pipelineHtml;
+
+      // If a pipeline is already selected, populate its stages
+      if (ghlConfig.pipelineId) {
+        populateStageDropdown(stageSelect, ghlConfig.pipelineId, ghlConfig.stageId);
+      }
+    }
+
+    function populateStageDropdown(selectEl, pipelineId, selectedStageId) {
+      const pipeline = knownPipelines.find(p => p.id === pipelineId);
+      let html = '<option value="">-- Select Stage --</option>';
+      if (pipeline && pipeline.stages) {
+        pipeline.stages.forEach(s => {
+          const selected = selectedStageId === s.id ? ' selected' : '';
+          html += `<option value="${escapeHtml(s.id)}"${selected}>${escapeHtml(s.name)}</option>`;
+        });
+      }
+      selectEl.innerHTML = html;
+    }
+
+    function onDefaultPipelineChange() {
+      const pipelineId = document.getElementById('ghl-default-pipeline').value;
+      const stageSelect = document.getElementById('ghl-default-stage');
+      populateStageDropdown(stageSelect, pipelineId, '');
+    }
+
+    async function saveDefaultPipelineStage() {
+      const pipelineId = document.getElementById('ghl-default-pipeline').value;
+      const stageId = document.getElementById('ghl-default-stage').value;
+
+      try {
+        const response = await fetch(`${API_BASE}/update-settings`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${authToken}`
+          },
+          body: JSON.stringify({ ghlPipelineId: pipelineId, ghlStageId: stageId })
+        });
+        const data = await response.json();
+        if (data.success) {
+          ghlConfig.pipelineId = pipelineId;
+          ghlConfig.stageId = stageId;
+          showToast('Default pipeline & stage saved!', 'success');
+        } else {
+          showToast('Failed to save: ' + (data.error || 'Unknown error'), 'error');
+        }
+      } catch (error) {
+        console.error('Save default pipeline error:', error);
+        showToast('Failed to save default pipeline', 'error');
       }
     }
 
@@ -3557,32 +3654,71 @@
         return;
       }
 
+      const hasPipelines = knownPipelines.length > 0;
+
       let html = '<div style="display: flex; flex-direction: column; gap: 1rem;">';
 
       for (const industry of industries) {
         const mapping = industryMappings[industry] || {};
+        const safeIndustry = escapeHtml(industry);
+
+        // Build pipeline selector
+        let pipelineField, stageField;
+
+        if (hasPipelines) {
+          // Dropdown mode — populate from GHL data
+          let pipelineOptions = '<option value="">-- Select Pipeline --</option>';
+          knownPipelines.forEach(p => {
+            const selected = mapping.pipelineId === p.id ? ' selected' : '';
+            pipelineOptions += `<option value="${escapeHtml(p.id)}"${selected}>${escapeHtml(p.name)}</option>`;
+          });
+          pipelineField = `<select class="form-input mono"
+            onchange="onIndustryPipelineChange('${safeIndustry}', this.value)"
+            style="font-size: 0.85rem; padding: 0.5rem;">${pipelineOptions}</select>`;
+
+          // Build stage selector for the currently selected pipeline
+          let stageOptions = '<option value="">-- Select Stage --</option>';
+          if (mapping.pipelineId) {
+            const pipeline = knownPipelines.find(p => p.id === mapping.pipelineId);
+            if (pipeline && pipeline.stages) {
+              pipeline.stages.forEach(s => {
+                const selected = mapping.stageId === s.id ? ' selected' : '';
+                stageOptions += `<option value="${escapeHtml(s.id)}"${selected}>${escapeHtml(s.name)}</option>`;
+              });
+            }
+          }
+          stageField = `<select class="form-input mono"
+            id="industry-stage-${safeIndustry}"
+            onchange="updateIndustryMapping('${safeIndustry}', 'stageId', this.value)"
+            style="font-size: 0.85rem; padding: 0.5rem;">${stageOptions}</select>`;
+        } else {
+          // Fallback to text inputs if pipelines haven't loaded yet
+          pipelineField = `<input type="text" class="form-input mono"
+            value="${escapeHtml(mapping.pipelineId || '')}"
+            placeholder="Pipeline ID"
+            onchange="updateIndustryMapping('${safeIndustry}', 'pipelineId', this.value)"
+            style="font-size: 0.85rem; padding: 0.5rem;">`;
+          stageField = `<input type="text" class="form-input mono"
+            value="${escapeHtml(mapping.stageId || '')}"
+            placeholder="Stage ID"
+            onchange="updateIndustryMapping('${safeIndustry}', 'stageId', this.value)"
+            style="font-size: 0.85rem; padding: 0.5rem;">`;
+        }
+
         html += `
           <div class="industry-mapping-row" style="background: var(--surface); padding: 1rem; border: 1px solid var(--border); border-radius: 4px;">
             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.75rem;">
-              <span class="mono" style="color: var(--accent); font-weight: 600; text-transform: uppercase;">${escapeHtml(industry)}</span>
-              <button onclick="removeIndustryMapping('${escapeHtml(industry)}')" style="background: transparent; border: none; color: var(--red); cursor: pointer; font-size: 0.8rem;">Remove</button>
+              <span class="mono" style="color: var(--accent); font-weight: 600; text-transform: uppercase;">${safeIndustry}</span>
+              <button onclick="removeIndustryMapping('${safeIndustry}')" style="background: transparent; border: none; color: var(--red); cursor: pointer; font-size: 0.8rem;">Remove</button>
             </div>
             <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.5rem;">
               <div>
-                <label class="form-label" style="font-size: 0.7rem;">Pipeline ID</label>
-                <input type="text" class="form-input mono"
-                  value="${escapeHtml(mapping.pipelineId || '')}"
-                  placeholder="Pipeline ID"
-                  onchange="updateIndustryMapping('${escapeHtml(industry)}', 'pipelineId', this.value)"
-                  style="font-size: 0.85rem; padding: 0.5rem;">
+                <label class="form-label" style="font-size: 0.7rem;">Pipeline</label>
+                ${pipelineField}
               </div>
               <div>
-                <label class="form-label" style="font-size: 0.7rem;">Stage ID</label>
-                <input type="text" class="form-input mono"
-                  value="${escapeHtml(mapping.stageId || '')}"
-                  placeholder="Stage ID"
-                  onchange="updateIndustryMapping('${escapeHtml(industry)}', 'stageId', this.value)"
-                  style="font-size: 0.85rem; padding: 0.5rem;">
+                <label class="form-label" style="font-size: 0.7rem;">Stage</label>
+                ${stageField}
               </div>
             </div>
           </div>
@@ -3594,6 +3730,17 @@
 
       // Update suggestions after rendering
       populateIndustrySuggestions();
+    }
+
+    function onIndustryPipelineChange(industry, pipelineId) {
+      updateIndustryMapping(industry, 'pipelineId', pipelineId);
+      // Clear old stage since pipeline changed
+      updateIndustryMapping(industry, 'stageId', '');
+      // Populate stages for the new pipeline
+      const stageSelect = document.getElementById('industry-stage-' + industry);
+      if (stageSelect) {
+        populateStageDropdown(stageSelect, pipelineId, '');
+      }
     }
 
     function escapeHtml(text) {
