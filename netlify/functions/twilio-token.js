@@ -130,13 +130,29 @@ exports.handler = async (event, context) => {
     });
     accessToken.addGrant(voiceGrant);
 
+    // Fetch all phone numbers from the Twilio account for the "call from" dropdown
+    let phoneNumbers = [{ phoneNumber, friendlyName: phoneNumber }];
+    try {
+      const incomingNumbers = await client.incomingPhoneNumbers.list({ limit: 20 });
+      if (incomingNumbers.length > 0) {
+        phoneNumbers = incomingNumbers.map(n => ({
+          phoneNumber: n.phoneNumber,
+          friendlyName: n.friendlyName || n.phoneNumber,
+          sid: n.sid
+        }));
+      }
+    } catch (e) {
+      console.log('Could not list Twilio numbers:', e.message);
+    }
+
     return {
       statusCode: 200,
       headers,
       body: JSON.stringify({
         token: accessToken.toJwt(),
         identity: identity,
-        phoneNumber: phoneNumber
+        phoneNumber: phoneNumber,
+        phoneNumbers: phoneNumbers
       })
     };
 

@@ -8497,6 +8497,9 @@ Available merge tags: {{business_name}}, {{first_name}}, {{email}}, {{phone}}, {
         </div>
       </div>
 
+      <select id="sp-from-number" class="sp-number-input" style="margin-bottom:4px;font-size:0.75rem;padding:6px 8px;color:var(--text-dim);">
+        <option value="">Calling from: (set in Settings)</option>
+      </select>
       <input type="text" class="sp-number-input" id="sp-number" placeholder="+1 (555) 123-4567" onkeydown="if(event.key==='Enter')spCall();">
 
       <div class="sp-dialpad">
@@ -8572,34 +8575,80 @@ Available merge tags: {{business_name}}, {{first_name}}, {{email}}, {{phone}}, {
           return;
         }
 
-        // Initialize Twilio Device (v1.x API)
-        Twilio.Device.setup(data.token, {
-          closeProtection: true,
-          enableRingingState: true
-        });
-        spDevice = Twilio.Device;
+        // Populate caller ID dropdown from Twilio numbers
+        if (data.phoneNumbers && data.phoneNumbers.length > 0) {
+          const fromSelect = document.getElementById('sp-from-number');
+          if (fromSelect) {
+            fromSelect.innerHTML = data.phoneNumbers.map(p =>
+              `<option value="${p.phoneNumber}">${p.friendlyName || p.phoneNumber}</option>`
+            ).join('');
+          }
+        }
 
-        // Register event handlers
-        Twilio.Device.ready(function(device) {
-          spSetStatus('Ready', 'connected');
-          document.getElementById('sp-call-btn').disabled = false;
-          spInitialized = true;
-          document.querySelector('.sp-toggle-btn').classList.add('active');
-        });
+        // Initialize Twilio Device - handle both v1 and v2 SDK
+        if (Twilio.Device && typeof Twilio.Device === 'function') {
+          // v2.x SDK
+          spDevice = new Twilio.Device(data.token, {
+            closeProtection: true,
+            enableRingingState: true,
+            logLevel: 'warn'
+          });
 
-        Twilio.Device.error(function(error) {
-          console.error('Twilio Device error:', error);
-          spSetStatus('Error: ' + (error.message || 'Unknown'), '');
-        });
+          spDevice.on('registered', () => {
+            spSetStatus('Ready', 'connected');
+            document.getElementById('sp-call-btn').disabled = false;
+            spInitialized = true;
+            document.querySelector('.sp-toggle-btn')?.classList.add('active');
+          });
 
-        Twilio.Device.connect(function(conn) {
+          spDevice.on('error', (error) => {
+            console.error('Twilio Device error:', error);
+            spSetStatus('Error: ' + (error.message || 'Unknown'), '');
+          });
+
+          spDevice.on('incoming', (call) => {
+            spConnection = call;
+            spSetStatus('Incoming: ' + (call.parameters?.From || 'Unknown'), 'ringing');
+            document.getElementById('sp-incoming')?.classList.remove('hidden');
+          });
+
+          spDevice.register();
+        } else {
+          // v1.x SDK fallback
+          Twilio.Device.setup(data.token, {
+            closeProtection: true,
+            enableRingingState: true
+          });
+          spDevice = Twilio.Device;
+
+          Twilio.Device.ready(function() {
+            spSetStatus('Ready', 'connected');
+            document.getElementById('sp-call-btn').disabled = false;
+            spInitialized = true;
+            document.querySelector('.sp-toggle-btn')?.classList.add('active');
+          });
+
+          Twilio.Device.error(function(error) {
+            console.error('Twilio Device error:', error);
+            spSetStatus('Error: ' + (error.message || 'Unknown'), '');
+          });
+
+          Twilio.Device.incoming(function(conn) {
+            spConnection = conn;
+            spSetStatus('Incoming: ' + (conn.parameters?.From || 'Unknown'), 'ringing');
+            document.getElementById('sp-incoming')?.classList.remove('hidden');
+          });
+        }
+
+        // Shared connect/disconnect handlers work for both versions
+        const onConnect = (conn) => {
           spConnection = conn;
           spSetStatus('On Call', 'on-call');
           document.getElementById('sp-call-btn').disabled = true;
           document.getElementById('sp-hangup-btn').disabled = false;
           document.getElementById('sp-mute-btn').disabled = false;
           startCallTimer();
-        });
+        };
 
         Twilio.Device.disconnect(function() {
           spConnection = null;
@@ -8656,10 +8705,18 @@ Available merge tags: {{business_name}}, {{first_name}}, {{email}}, {{phone}}, {
 
     function loadTwilioSDK() {
       return new Promise((resolve, reject) => {
+        // Try Twilio Voice SDK 2.x first, fallback to 1.x
         const script = document.createElement('script');
-        script.src = 'https://sdk.twilio.com/js/client/releases/1.14/twilio.min.js';
+        script.src = 'https://sdk.twilio.com/js/client/v2.1/twilio.min.js';
         script.onload = resolve;
-        script.onerror = () => reject(new Error('Failed to load Twilio SDK'));
+        script.onerror = () => {
+          // Fallback to older hosted version
+          const script2 = document.createElement('script');
+          script2.src = 'https://media.twiliocdn.com/sdk/js/client/releases/1.14.0/twilio.min.js';
+          script2.onload = resolve;
+          script2.onerror = () => reject(new Error('Failed to load Twilio SDK'));
+          document.head.appendChild(script2);
+        };
         document.head.appendChild(script);
       });
     }
@@ -8705,11 +8762,42 @@ Available merge tags: {{business_name}}, {{first_name}}, {{email}}, {{phone}}, {
         }
       }
 
-      Twilio.Device.connect({ To: number });
+      const fromNumber = document.getElementById('sp-from-number')?.value || '';
+      const params = { To: number };
+      if (fromNumber) params.CallerId = fromNumber;
+
+      // Handle v2 vs v1 SDK
+      if (spDevice && typeof spDevice.connect === 'function') {
+        const call = spDevice.connect({ params });
+        call.then(conn => {
+          spConnection = conn;
+          spSetStatus('On Call', 'on-call');
+          document.getElementById('sp-call-btn').disabled = true;
+          document.getElementById('sp-hangup-btn').disabled = false;
+          document.getElementById('sp-mute-btn').disabled = false;
+          startCallTimer();
+          conn.on('disconnect', () => {
+            spConnection = null;
+            spSetStatus('Ready', 'connected');
+            document.getElementById('sp-call-btn').disabled = false;
+            document.getElementById('sp-hangup-btn').disabled = true;
+            document.getElementById('sp-mute-btn').disabled = true;
+            stopCallTimer();
+          });
+        }).catch(err => {
+          showToast('Call failed: ' + err.message, 'error');
+        });
+      } else {
+        Twilio.Device.connect(params);
+      }
     }
 
     function spHangup() {
-      Twilio.Device.disconnectAll();
+      if (spDevice && typeof spDevice.disconnectAll === 'function') {
+        spDevice.disconnectAll();
+      } else {
+        Twilio.Device.disconnectAll();
+      }
     }
 
     function spMute() {
