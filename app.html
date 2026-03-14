@@ -2817,11 +2817,20 @@ Available merge tags: {{business_name}}, {{first_name}}, {{email}}, {{phone}}, {
 
         <div class="card">
           <div class="card-header">
-            <h2 class="card-title display">AI Agents</h2>
+            <h2 class="card-title display">ElevenLabs Agents</h2>
+          </div>
+          <div id="elevenlabs-agents-list">
+            <p style="color: var(--text-dim); text-align: center; padding: 1rem;">Loading ElevenLabs agents...</p>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-header">
+            <h2 class="card-title display">Custom AI Agents</h2>
           </div>
           <div id="ai-agents-list">
             <p style="color: var(--text-dim); text-align: center; padding: 2rem;">
-              No AI agents configured yet. Create your first agent above.
+              No custom agents yet. Create one to get started!
             </p>
           </div>
         </div>
@@ -4066,6 +4075,99 @@ Available merge tags: {{business_name}}, {{first_name}}, {{email}}, {{phone}}, {
       }
     }
 
+    async function populateAgentVoiceDropdown(selectedVoiceId) {
+      const select = document.getElementById('agent-voice');
+      if (!select) return;
+
+      // Try to get API key from the settings input or from cached voices
+      const apiKeyEl = document.getElementById('elevenlabs-api-key');
+      const apiKey = apiKeyEl ? apiKeyEl.value.trim() : '';
+
+      if (!apiKey || apiKey.startsWith('••')) {
+        // Try to load from settings
+        try {
+          const resp = await fetch(`${API_BASE}/get-settings`, {
+            headers: { 'Authorization': `Bearer ${authToken}` }
+          });
+          const settings = await resp.json();
+          if (settings.elevenlabsApiKey && !settings.elevenlabsApiKey.startsWith('••')) {
+            return await fetchAndPopulateVoices(select, settings.elevenlabsApiKey, selectedVoiceId);
+          }
+        } catch (e) {}
+        return;
+      }
+
+      await fetchAndPopulateVoices(select, apiKey, selectedVoiceId);
+    }
+
+    async function fetchAndPopulateVoices(select, apiKey, selectedVoiceId) {
+      try {
+        const response = await fetch('https://api.elevenlabs.io/v1/voices', {
+          headers: { 'xi-api-key': apiKey }
+        });
+        if (!response.ok) return;
+        const data = await response.json();
+        const voices = data.voices || [];
+        let html = '<option value="">-- Select a voice --</option>';
+        voices.forEach(v => {
+          const selected = v.voice_id === selectedVoiceId ? ' selected' : '';
+          const label = v.labels ? Object.values(v.labels).filter(Boolean).join(', ') : '';
+          html += `<option value="${v.voice_id}"${selected}>${v.name}${label ? ' (' + label + ')' : ''}</option>`;
+        });
+        select.innerHTML = html;
+      } catch (e) {
+        console.error('Failed to populate agent voices:', e);
+      }
+    }
+
+    async function loadElevenLabsAgents() {
+      const apiKeyEl = document.getElementById('elevenlabs-api-key');
+      let apiKey = apiKeyEl ? apiKeyEl.value.trim() : '';
+
+      if (!apiKey || apiKey.startsWith('••')) {
+        try {
+          const resp = await fetch(`${API_BASE}/get-settings`, {
+            headers: { 'Authorization': `Bearer ${authToken}` }
+          });
+          const settings = await resp.json();
+          apiKey = settings.elevenlabsApiKey || '';
+        } catch (e) { return; }
+      }
+
+      if (!apiKey || apiKey.startsWith('••')) return;
+
+      try {
+        const response = await fetch('https://api.elevenlabs.io/v1/convai/agents', {
+          headers: { 'xi-api-key': apiKey }
+        });
+        if (!response.ok) return;
+        const data = await response.json();
+        const agents = data.agents || [];
+
+        if (agents.length === 0) return;
+
+        const container = document.getElementById('elevenlabs-agents-list');
+        if (!container) return;
+
+        container.innerHTML = agents.map(agent => {
+          const name = agent.name || 'Unnamed Agent';
+          const agentId = agent.agent_id;
+          const voice = agent.conversation_config?.agent?.prompt?.voice_id || 'Default';
+          return `
+            <div style="display: flex; align-items: center; justify-content: space-between; padding: 0.75rem; background: var(--surface); border: 1px solid var(--border); border-radius: 4px; margin-bottom: 0.5rem;">
+              <div>
+                <div style="font-weight: 600;">${name}</div>
+                <div style="font-size: 0.75rem; color: var(--text-dim);">ID: ${agentId}</div>
+              </div>
+              <span class="status-badge synced">ElevenLabs</span>
+            </div>
+          `;
+        }).join('');
+      } catch (e) {
+        console.error('Failed to load ElevenLabs agents:', e);
+      }
+    }
+
     async function openAgentModal(agentId = null) {
       // Reset form
       document.getElementById('agent-id').value = '';
@@ -4077,6 +4179,9 @@ Available merge tags: {{business_name}}, {{first_name}}, {{email}}, {{phone}}, {
       document.getElementById('agent-calendar-link').value = '';
       document.getElementById('agent-max-duration').value = '300';
       document.getElementById('agent-modal-title').textContent = 'New AI Agent';
+
+      // Populate voice dropdown from ElevenLabs
+      await populateAgentVoiceDropdown('');
 
       if (agentId) {
         // Load existing agent data
@@ -4090,12 +4195,13 @@ Available merge tags: {{business_name}}, {{first_name}}, {{email}}, {{phone}}, {
             document.getElementById('agent-modal-title').textContent = 'Edit AI Agent';
             document.getElementById('agent-id').value = agent.id;
             document.getElementById('agent-name').value = agent.name || '';
-            document.getElementById('agent-voice').value = agent.voice_id || '';
             document.getElementById('agent-goal').value = agent.goal || 'schedule_meeting';
             document.getElementById('agent-greeting').value = agent.greeting_script || '';
             document.getElementById('agent-system-prompt').value = agent.system_prompt || '';
             document.getElementById('agent-calendar-link').value = agent.calendar_link || '';
             document.getElementById('agent-max-duration').value = agent.max_call_duration || 300;
+            // Re-populate voices with the agent's voice selected
+            await populateAgentVoiceDropdown(agent.voice_id || '');
           }
         } catch (error) {
           console.error('Failed to load agent:', error);
@@ -5845,6 +5951,15 @@ Available merge tags: {{business_name}}, {{first_name}}, {{email}}, {{phone}}, {
     document.querySelector('[data-section="email-accounts"]').addEventListener('click', () => {
       loadEmailAccounts();
     });
+
+    // Load ElevenLabs agents when AI Calling section is opened
+    const aiCallingNav = document.querySelector('[data-section="ai-calling"]');
+    if (aiCallingNav) {
+      aiCallingNav.addEventListener('click', () => {
+        loadElevenLabsAgents();
+        loadAgents();
+      });
+    }
 
     // ==========================================
     // GHL Drip Settings Functions
