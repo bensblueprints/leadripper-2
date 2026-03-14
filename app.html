@@ -1760,6 +1760,7 @@
               <p class="page-subtitle mono">Extracted business data</p>
             </div>
             <div class="header-actions">
+              <button class="btn" onclick="addNoEmailToCallList()" style="background: var(--accent); font-size: 0.85rem;">📞 Add No-Email Leads to Call List</button>
               <button class="btn-bulk scrape" id="scrape-all-btn" onclick="scrapeAllEmails()">🔍 Scrape All Emails</button>
               <button class="btn-bulk validate" id="validate-all-btn" onclick="validateAllEmails()">✓ Validate All</button>
               <button class="btn-secondary" id="export-leads-btn">⬇ Export CSV</button>
@@ -7003,7 +7004,48 @@ Available merge tags: {{business_name}}, {{first_name}}, {{email}}, {{phone}}, {
     // CALLING FROM LISTS
     // =====================================
 
-    const EMAIL_COLLECTION_AGENT_ID = 'agent_8001kkng9m9yfqr96f3qkgxtkp4b';
+    const EMAIL_COLLECTION_AGENT_ID = 'agent_7501kknstm2vfw3tm82242mt8kgp';
+
+    async function addNoEmailToCallList() {
+      const noEmailLeads = leadsData.filter(l => !l.email && l.phone);
+      if (noEmailLeads.length === 0) {
+        showToast('All leads already have emails!', 'success');
+        return;
+      }
+
+      const listName = 'Outbound Call List - ' + new Date().toLocaleDateString();
+
+      try {
+        // Create the list
+        const createResp = await fetch(`${API_BASE}/lead-lists`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${authToken}` },
+          body: JSON.stringify({ name: listName })
+        });
+        const createResult = await createResp.json();
+        if (!createResult.list) throw new Error(createResult.error || 'Failed to create list');
+
+        const listId = createResult.list.id;
+
+        // Add all no-email leads to the list
+        const addResp = await fetch(`${API_BASE}/lead-list-items`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${authToken}` },
+          body: JSON.stringify({ listId, leadIds: noEmailLeads.map(l => l.id) })
+        });
+        const addResult = await addResp.json();
+
+        showToast(`Added ${noEmailLeads.length} leads without email to "${listName}"`, 'success');
+        loadLeadLists();
+
+        // Ask if they want to start calling now
+        if (confirm(`${noEmailLeads.length} leads added to call list. Start calling them now?`)) {
+          await startCallingList(listId);
+        }
+      } catch (error) {
+        showToast('Failed: ' + error.message, 'error');
+      }
+    }
 
     async function callSelectedLeads() {
       if (selectedLeadIds.size === 0) { showToast('No leads selected', 'warning'); return; }
