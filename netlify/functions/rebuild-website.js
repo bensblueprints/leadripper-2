@@ -10,7 +10,7 @@ const pool = new Pool({
 const JWT_SECRET = process.env.JWT_SECRET || 'leadripper-secret-key-2026';
 
 // OpenClaw gateway config — set these as Netlify env vars in production
-const OPENCLAW_GATEWAY_URL = process.env.OPENCLAW_GATEWAY_URL || 'http://127.0.0.1:18789';
+const OPENCLAW_GATEWAY_URL = process.env.OPENCLAW_GATEWAY_URL || 'https://gateway.advancedmarketing.co';
 const OPENCLAW_HOOKS_TOKEN = process.env.OPENCLAW_HOOKS_TOKEN || '9a8aafe469e95d688c472caef11acc76bc288e15f8ccdaf7';
 
 function verifyToken(authHeader) {
