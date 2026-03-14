@@ -7080,7 +7080,7 @@ Available merge tags: {{business_name}}, {{first_name}}, {{email}}, {{phone}}, {
               <div style="display: flex; align-items: center; justify-content: space-between; padding: 0.75rem; background: var(--surface); border: 1px solid var(--border); border-radius: 4px; margin-bottom: 0.5rem;">
                 <div>
                   <div style="font-weight: 600;">${list.name}</div>
-                  <div style="font-size: 0.75rem; color: var(--text-dim);">${list.lead_count || 0} leads${list.description ? ' • ' + list.description : ''}</div>
+                  <div style="font-size: 0.75rem; color: var(--text-dim);">${list.item_count || 0} leads${list.description ? ' • ' + list.description : ''}</div>
                 </div>
                 <div style="display: flex; gap: 0.5rem;">
                   <button class="btn" onclick="callList(${list.id}, '${list.name}')" style="font-size: 0.8rem; padding: 4px 10px;">Call</button>
@@ -7096,7 +7096,7 @@ Available merge tags: {{business_name}}, {{first_name}}, {{email}}, {{phone}}, {
         const select = document.getElementById('add-to-list-select');
         if (select) {
           select.innerHTML = '<option value="">-- Add to List --</option>' +
-            lists.map(l => `<option value="${l.id}">${l.name} (${l.lead_count || 0})</option>`).join('');
+            lists.map(l => `<option value="${l.id}">${l.name} (${l.item_count || 0})</option>`).join('');
         }
       } catch (error) {
         console.error('Failed to load lists:', error);
@@ -7187,7 +7187,7 @@ Available merge tags: {{business_name}}, {{first_name}}, {{email}}, {{phone}}, {
         });
         const result = await response.json();
         if (result.success && result.list) {
-          const leads = result.list.leads || [];
+          const leads = result.leads || [];
           alert(`List: ${result.list.name}\n${leads.length} leads:\n\n${leads.map(l => `${l.business_name || 'Unknown'} - ${l.phone || 'No phone'} - ${l.email || 'No email'}`).join('\n')}`);
         }
       } catch (error) {
@@ -7275,7 +7275,7 @@ Available merge tags: {{business_name}}, {{first_name}}, {{email}}, {{phone}}, {
           headers: { 'Authorization': `Bearer ${authToken}` }
         });
         const result = await response.json();
-        const leads = (result.list?.leads || []).filter(l => l.phone);
+        const leads = (result.leads || []).filter(l => l.phone);
 
         if (leads.length === 0) {
           showToast('No leads with phone numbers in this list', 'warning');

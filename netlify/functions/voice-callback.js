@@ -30,7 +30,7 @@ exports.handler = async (event) => {
 
   try {
     // Ensure contact_name column exists (safe migration)
-    await pool.query(`ALTER TABLE lf_leads ADD COLUMN IF NOT EXISTS contact_name VARCHAR(255)`).catch(() => {});
+    await pool.query(`ALTER TABLE lr_leads ADD COLUMN IF NOT EXISTS contact_name VARCHAR(255)`).catch(() => {});
 
     const { phone, owner_email, owner_name, business_name, after_hours_info, notes } = JSON.parse(event.body);
 
@@ -45,7 +45,7 @@ exports.handler = async (event) => {
     // Find the lead by phone number (fuzzy match on last 10 digits)
     const findResult = await pool.query(
       `SELECT id, user_id, business_name, email, phone
-       FROM lf_leads
+       FROM lr_leads
        WHERE REPLACE(REPLACE(REPLACE(REPLACE(phone, '-', ''), ' ', ''), '(', ''), ')', '') LIKE $1
        ORDER BY created_at DESC
        LIMIT 1`,
@@ -55,7 +55,7 @@ exports.handler = async (event) => {
     if (findResult.rows.length === 0) {
       // No existing lead — create a new one under user 1 (admin)
       const insertResult = await pool.query(
-        `INSERT INTO lf_leads (user_id, business_name, email, phone, contact_name, industry, created_at, updated_at)
+        `INSERT INTO lr_leads (user_id, business_name, email, phone, contact_name, industry, created_at, updated_at)
          VALUES (1, $1, $2, $3, $4, 'unknown', NOW(), NOW())
          RETURNING id`,
         [business_name || 'Unknown Business', owner_email || null, phone, owner_name || null]
@@ -97,7 +97,7 @@ exports.handler = async (event) => {
     if (updates.length > 1) {
       values.push(lead.id);
       await pool.query(
-        `UPDATE lf_leads SET ${updates.join(', ')} WHERE id = $${paramIdx}`,
+        `UPDATE lr_leads SET ${updates.join(', ')} WHERE id = $${paramIdx}`,
         values
       );
     }
