@@ -53,11 +53,11 @@ exports.handler = async (event) => {
       website_analysis
     } = body;
 
-    if (!leadId || !url || !contact_email) {
+    if (!leadId || !url) {
       return {
         statusCode: 400,
         headers,
-        body: JSON.stringify({ error: 'Missing required fields: leadId, url, contact_email' })
+        body: JSON.stringify({ error: 'Missing required fields: leadId, url' })
       };
     }
 
