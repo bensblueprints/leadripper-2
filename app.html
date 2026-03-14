@@ -3231,13 +3231,70 @@ I noticed {{business_name}} in {{city}} and wanted to reach out...
 Available merge tags: {{business_name}}, {{first_name}}, {{email}}, {{phone}}, {{website}}, {{city}}, {{industry}}, {{address}}"></textarea>
               </div>
 
-              <div style="display: flex; gap: 1rem;">
+              <!-- Spam Score Result -->
+              <div id="spam-score-result" style="display:none; margin-bottom: 1rem; padding: 0.75rem; border-radius: 4px; border: 1px solid var(--border);"></div>
+
+              <!-- A/B Variants -->
+              <div id="ab-variants-container" style="display:none; margin-bottom: 1rem;">
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 0.5rem;">
+                  <label class="form-label" style="margin:0;">A/B Variants</label>
+                  <button class="btn-mini" onclick="removeAbVariant()">Remove Variant</button>
+                </div>
+                <div id="ab-variants-list"></div>
+              </div>
+
+              <!-- Sequence Steps -->
+              <div id="sequence-steps-container" style="display:none; margin-bottom: 1rem;">
+                <label class="form-label">Follow-up Sequence</label>
+                <div id="sequence-steps-list"></div>
+              </div>
+
+              <!-- Send Scheduling -->
+              <div id="send-schedule-container" style="display:none; margin-bottom: 1rem; padding: 0.75rem; background: var(--surface); border: 1px solid var(--border); border-radius: 4px;">
+                <label class="form-label">Send Schedule</label>
+                <div style="display:grid; grid-template-columns: 1fr 1fr; gap: 0.5rem; margin-bottom: 0.5rem;">
+                  <div>
+                    <label class="form-label" style="font-size:0.75rem;">Start Hour</label>
+                    <select id="schedule-start-hour" class="filter-select" style="width:100%;">
+                      <option value="8">8:00 AM</option>
+                      <option value="9" selected>9:00 AM</option>
+                      <option value="10">10:00 AM</option>
+                      <option value="11">11:00 AM</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label class="form-label" style="font-size:0.75rem;">End Hour</label>
+                    <select id="schedule-end-hour" class="filter-select" style="width:100%;">
+                      <option value="15">3:00 PM</option>
+                      <option value="16">4:00 PM</option>
+                      <option value="17" selected>5:00 PM</option>
+                      <option value="18">6:00 PM</option>
+                    </select>
+                  </div>
+                </div>
+                <div style="display:grid; grid-template-columns: 1fr 1fr; gap: 0.5rem;">
+                  <div>
+                    <label class="form-label" style="font-size:0.75rem;">Daily Limit</label>
+                    <input type="number" id="schedule-daily-limit" class="form-input" value="50" min="1" max="500" style="width:100%;">
+                  </div>
+                  <div>
+                    <label class="form-label" style="font-size:0.75rem;">Delay (sec)</label>
+                    <input type="number" id="schedule-delay" class="form-input" value="5" min="1" max="60" style="width:100%;">
+                  </div>
+                </div>
+              </div>
+
+              <div style="display: flex; gap: 0.5rem; flex-wrap: wrap;">
                 <button class="btn" onclick="sendOutreachEmails()" style="flex: 1;">
-                  🚀 Send Emails
+                  Send Emails
                 </button>
                 <button class="btn-secondary" onclick="previewOutreachEmail()">
-                  👁 Preview
+                  Preview
                 </button>
+                <button class="btn-mini" onclick="checkSpamScore()">Spam Check</button>
+                <button class="btn-mini" onclick="addAbVariant()">+ A/B Variant</button>
+                <button class="btn-mini" onclick="addSequenceStep()">+ Follow-up</button>
+                <button class="btn-mini" onclick="toggleSendSchedule()">Schedule</button>
               </div>
             </div>
           </div>
@@ -3266,17 +3323,53 @@ Available merge tags: {{business_name}}, {{first_name}}, {{email}}, {{phone}}, {
                 <tr>
                   <th>Recipient</th>
                   <th>Subject</th>
+                  <th>Step</th>
                   <th>Sent</th>
-                  <th>Opened</th>
+                  <th>Opens</th>
+                  <th>Clicks</th>
                   <th>Status</th>
                 </tr>
               </thead>
               <tbody id="sent-emails-body">
                 <tr>
-                  <td colspan="5" style="text-align: center; color: var(--text-dim);">No emails sent yet</td>
+                  <td colspan="7" style="text-align: center; color: var(--text-dim);">No emails sent yet</td>
                 </tr>
               </tbody>
             </table>
+          </div>
+        </div>
+
+        <!-- Unified Inbox -->
+        <div class="card">
+          <div class="card-header" style="display:flex;justify-content:space-between;align-items:center;">
+            <h2 class="card-title display">Unified Inbox <span id="inbox-unread-badge" style="font-size:0.7rem;background:var(--accent);color:var(--text);padding:2px 8px;border-radius:2px;margin-left:0.5rem;display:none;">0</span></h2>
+            <div style="display:flex;gap:0.5rem;align-items:center;">
+              <button class="btn-mini" onclick="checkAllInboxes()">Refresh</button>
+              <button class="btn-mini" onclick="markAllInboxRead()">Mark All Read</button>
+              <select id="inbox-filter" class="filter-select" onchange="loadInbox()" style="width:auto;min-width:120px;">
+                <option value="">All</option>
+                <option value="unread">Unread</option>
+                <option value="positive">Interested</option>
+                <option value="negative">Not Interested</option>
+                <option value="ooo">Out of Office</option>
+                <option value="neutral">Neutral</option>
+                <option value="bounce">Bounced</option>
+              </select>
+            </div>
+          </div>
+          <div id="inbox-container" style="max-height: 600px; overflow-y: auto;">
+            <p style="color: var(--text-dim); text-align: center; padding: 2rem;">No messages yet. Click "Refresh" to check for replies.</p>
+          </div>
+        </div>
+
+        <!-- Campaign Analytics -->
+        <div class="card">
+          <div class="card-header" style="display:flex;justify-content:space-between;align-items:center;">
+            <h2 class="card-title display">Campaign Analytics</h2>
+            <button class="btn-mini" onclick="loadCampaignAnalytics()">Refresh</button>
+          </div>
+          <div id="campaign-analytics" style="padding: 0;">
+            <p style="color: var(--text-dim); text-align: center; padding: 2rem;">No campaigns yet.</p>
           </div>
         </div>
 
@@ -7863,7 +7956,9 @@ Available merge tags: {{business_name}}, {{first_name}}, {{email}}, {{phone}}, {
         loadEmailAccountsForOutreach(),
         loadSentEmails(),
         updateOutreachCount(),
-        populateWarmupAccountDropdown()
+        populateWarmupAccountDropdown(),
+        loadInbox(),
+        loadCampaignAnalytics()
       ]);
     }
 
@@ -7961,12 +8056,14 @@ Available merge tags: {{business_name}}, {{first_name}}, {{email}}, {{phone}}, {
         if (response.ok) {
           const data = await response.json();
           sentEmails = data.emails || [];
-          outreachStats = data.stats || { totalSent: 0, totalOpened: 0, openRate: 0, sentToday: 0 };
+          outreachStats = data.stats || { totalSent: 0, totalOpened: 0, openRate: 0, clickRate: 0, replyRate: 0, sentToday: 0 };
 
           // Update stats
           document.getElementById('stat-emails-sent').textContent = outreachStats.totalSent;
           document.getElementById('stat-emails-opened').textContent = outreachStats.totalOpened;
           document.getElementById('stat-open-rate').textContent = outreachStats.openRate + '%';
+          document.getElementById('stat-click-rate').textContent = (outreachStats.clickRate || 0) + '%';
+          document.getElementById('stat-reply-rate').textContent = (outreachStats.replyRate || 0) + '%';
           document.getElementById('stat-sent-today').textContent = outreachStats.sentToday;
 
           // Render sent emails table
@@ -8142,23 +8239,34 @@ Available merge tags: {{business_name}}, {{first_name}}, {{email}}, {{phone}}, {
       `).join('');
     }
 
-    // Render sent emails table
+    // Render sent emails table (enhanced with tracking)
     function renderSentEmails() {
       const tbody = document.getElementById('sent-emails-body');
       if (!tbody) return;
 
       if (sentEmails.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="5" style="text-align: center; color: var(--text-dim);">No emails sent yet</td></tr>';
+        tbody.innerHTML = '<tr><td colspan="7" style="text-align: center; color: var(--text-dim);">No emails sent yet</td></tr>';
         return;
+      }
+
+      function getStatusBadge(e) {
+        if (e.status === 'replied') return '<span class="status-badge synced">Replied</span>';
+        if (e.status === 'bounced' || e.bounced_at) return '<span class="status-badge" style="background:rgba(255,0,51,0.15);color:var(--red);border:1px solid var(--red);">Bounced</span>';
+        if (e.status === 'clicked' || e.clicked_at) return '<span class="status-badge synced">Clicked</span>';
+        if (e.status === 'opened' || e.opened_at) return '<span class="status-badge ready">Opened</span>';
+        if (e.status === 'failed') return '<span class="status-badge" style="background:rgba(255,0,51,0.15);color:var(--red);border:1px solid var(--red);">Failed</span>';
+        return '<span class="status-badge pending">Sent</span>';
       }
 
       tbody.innerHTML = sentEmails.map(e => `
         <tr>
-          <td>${escapeHtml(e.to_email || e.lead_email || '')}</td>
-          <td>${escapeHtml(e.subject || '').substring(0, 40)}${(e.subject?.length > 40 ? '...' : '')}</td>
+          <td>${escapeHtml(e.to_email || '')}</td>
+          <td title="${escapeHtml(e.subject || '')}">${escapeHtml(e.subject || '').substring(0, 35)}${(e.subject?.length > 35 ? '...' : '')}</td>
+          <td style="text-align:center;">${e.sequence_step || 1}</td>
           <td>${new Date(e.sent_at).toLocaleDateString()}</td>
-          <td>${e.opened_at ? '✅ ' + new Date(e.opened_at).toLocaleDateString() : '—'}</td>
-          <td><span class="status-badge ${e.opened_at ? 'active' : 'pending'}">${e.opened_at ? 'Opened' : 'Sent'}</span></td>
+          <td style="text-align:center;">${e.open_count || 0}</td>
+          <td style="text-align:center;">${e.click_count || 0}</td>
+          <td>${getStatusBadge(e)}</td>
         </tr>
       `).join('');
     }
@@ -8234,6 +8342,490 @@ Available merge tags: {{business_name}}, {{first_name}}, {{email}}, {{phone}}, {
       document.getElementById('outreach-body').value = template.body || '';
       showToast('Template loaded for editing', 'info');
     }
+
+    // ============================================
+    // SPAM SCORE CHECKER (client-side)
+    // ============================================
+
+    function checkSpamScore() {
+      const subject = document.getElementById('outreach-subject').value;
+      const body = document.getElementById('outreach-body').value;
+      const text = (subject + ' ' + body).toLowerCase();
+
+      if (!subject && !body) {
+        showToast('Enter subject and body first', 'warning');
+        return;
+      }
+
+      let score = 0;
+      const warnings = [];
+
+      // Spam trigger words/phrases
+      const spamPhrases = [
+        { pattern: /\bfree\b/gi, points: 8, label: 'Word "free"' },
+        { pattern: /\bguarantee[ds]?\b/gi, points: 10, label: 'Guarantee language' },
+        { pattern: /\bact now\b/gi, points: 15, label: '"Act now"' },
+        { pattern: /\blimited time\b/gi, points: 12, label: '"Limited time"' },
+        { pattern: /\bclick here\b/gi, points: 10, label: '"Click here"' },
+        { pattern: /\bbuy now\b/gi, points: 12, label: '"Buy now"' },
+        { pattern: /\border now\b/gi, points: 10, label: '"Order now"' },
+        { pattern: /\bno obligation\b/gi, points: 10, label: '"No obligation"' },
+        { pattern: /\brisk.?free\b/gi, points: 10, label: '"Risk free"' },
+        { pattern: /\bspecial offer\b/gi, points: 8, label: '"Special offer"' },
+        { pattern: /\burgent\b/gi, points: 8, label: '"Urgent"' },
+        { pattern: /\bcongratulations\b/gi, points: 12, label: '"Congratulations"' },
+        { pattern: /\bwinner\b/gi, points: 15, label: '"Winner"' },
+        { pattern: /\bcash\b/gi, points: 8, label: 'Word "cash"' },
+        { pattern: /\b100%\s*(free|guarantee|satisfied)/gi, points: 15, label: '"100% ..." claim' },
+        { pattern: /\bdiscount\b/gi, points: 6, label: 'Word "discount"' },
+        { pattern: /\bno cost\b/gi, points: 8, label: '"No cost"' },
+        { pattern: /\bearn money\b/gi, points: 12, label: '"Earn money"' },
+        { pattern: /\bmake money\b/gi, points: 12, label: '"Make money"' },
+        { pattern: /\b(credit card|visa|mastercard)\b/gi, points: 10, label: 'Credit card reference' },
+        { pattern: /\bdouble your\b/gi, points: 15, label: '"Double your"' },
+        { pattern: /\blowest price\b/gi, points: 8, label: '"Lowest price"' },
+        { pattern: /\bdon'?t miss\b/gi, points: 6, label: '"Don\'t miss"' },
+        { pattern: /\binstant\b/gi, points: 5, label: 'Word "instant"' },
+        { pattern: /\bunsubscribe\b/gi, points: -5, label: 'Has unsubscribe (good)' },
+      ];
+
+      for (const sp of spamPhrases) {
+        const matches = text.match(sp.pattern);
+        if (matches) {
+          score += sp.points * matches.length;
+          if (sp.points > 0) warnings.push(`${sp.label} (x${matches.length})`);
+        }
+      }
+
+      // Check for ALL CAPS words (3+ letters)
+      const capsWords = (subject + ' ' + body).match(/\b[A-Z]{3,}\b/g) || [];
+      if (capsWords.length > 0) {
+        score += capsWords.length * 3;
+        warnings.push(`${capsWords.length} ALL-CAPS word(s)`);
+      }
+
+      // Excessive exclamation marks
+      const exclamations = (subject + ' ' + body).match(/!/g) || [];
+      if (exclamations.length > 2) {
+        score += (exclamations.length - 2) * 5;
+        warnings.push(`${exclamations.length} exclamation marks`);
+      }
+
+      // Excessive $$ or price mentions
+      const moneySymbols = (subject + ' ' + body).match(/\$\d+/g) || [];
+      if (moneySymbols.length > 0) {
+        score += moneySymbols.length * 5;
+        warnings.push(`${moneySymbols.length} dollar amount(s)`);
+      }
+
+      // Too short body
+      if (body.length < 50) {
+        score += 10;
+        warnings.push('Very short email body');
+      }
+
+      // No personalization
+      if (!body.includes('{{') && !body.includes('{%')) {
+        score += 5;
+        warnings.push('No personalization merge tags');
+      }
+
+      score = Math.max(0, Math.min(100, score));
+
+      const resultEl = document.getElementById('spam-score-result');
+      let bgColor, textColor, label;
+      if (score <= 20) { bgColor = 'rgba(0,255,65,0.1)'; textColor = 'var(--green)'; label = 'LOW RISK'; }
+      else if (score <= 50) { bgColor = 'rgba(255,204,0,0.1)'; textColor = 'var(--yellow)'; label = 'MODERATE RISK'; }
+      else { bgColor = 'rgba(255,0,51,0.1)'; textColor = 'var(--red)'; label = 'HIGH RISK'; }
+
+      resultEl.style.display = 'block';
+      resultEl.style.background = bgColor;
+      resultEl.style.borderColor = textColor;
+      resultEl.innerHTML = `
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:${warnings.length > 0 ? '0.5rem' : '0'};">
+          <span style="color:${textColor};font-weight:bold;font-family:'JetBrains Mono',monospace;">SPAM SCORE: ${score}/100 - ${label}</span>
+          <button class="btn-mini" onclick="document.getElementById('spam-score-result').style.display='none'" style="font-size:0.6rem;">Close</button>
+        </div>
+        ${warnings.length > 0 ? '<div style="color:var(--text-dim);font-size:0.8rem;">' + warnings.map(w => '- ' + w).join('<br>') + '</div>' : ''}
+      `;
+    }
+
+    // ============================================
+    // A/B TESTING
+    // ============================================
+
+    let abVariants = [];
+
+    function addAbVariant() {
+      const container = document.getElementById('ab-variants-container');
+      container.style.display = 'block';
+
+      const variantId = String.fromCharCode(66 + abVariants.length); // B, C, D...
+      abVariants.push({ id: variantId, subject: '', body: '' });
+
+      renderAbVariants();
+    }
+
+    function removeAbVariant() {
+      if (abVariants.length === 0) return;
+      abVariants.pop();
+      renderAbVariants();
+      if (abVariants.length === 0) {
+        document.getElementById('ab-variants-container').style.display = 'none';
+      }
+    }
+
+    function renderAbVariants() {
+      const list = document.getElementById('ab-variants-list');
+      list.innerHTML = abVariants.map((v, i) => `
+        <div style="background: var(--surface); border: 1px solid var(--border); border-radius: 4px; padding: 0.75rem; margin-bottom: 0.5rem;">
+          <div style="font-weight:bold;color:var(--accent);margin-bottom:0.5rem;">Variant ${v.id}</div>
+          <input type="text" class="form-input" placeholder="Subject for variant ${v.id}" value="${escapeHtml(v.subject)}" onchange="abVariants[${i}].subject=this.value" style="margin-bottom:0.5rem;">
+          <textarea class="form-textarea" rows="3" placeholder="Body for variant ${v.id}" onchange="abVariants[${i}].body=this.value">${escapeHtml(v.body)}</textarea>
+        </div>
+      `).join('');
+    }
+
+    // ============================================
+    // SEQUENCE STEPS (Follow-ups)
+    // ============================================
+
+    let sequenceSteps = [];
+
+    function addSequenceStep() {
+      const container = document.getElementById('sequence-steps-container');
+      container.style.display = 'block';
+
+      const stepNum = sequenceSteps.length + 2; // Step 1 is the main email
+      sequenceSteps.push({ step: stepNum, subject: '', body: '', delay_days: 3 });
+
+      renderSequenceSteps();
+    }
+
+    function removeSequenceStep(idx) {
+      sequenceSteps.splice(idx, 1);
+      // Renumber steps
+      sequenceSteps.forEach((s, i) => s.step = i + 2);
+      renderSequenceSteps();
+      if (sequenceSteps.length === 0) {
+        document.getElementById('sequence-steps-container').style.display = 'none';
+      }
+    }
+
+    function renderSequenceSteps() {
+      const list = document.getElementById('sequence-steps-list');
+      list.innerHTML = sequenceSteps.map((s, i) => `
+        <div style="background: var(--surface); border: 1px solid var(--border); border-radius: 4px; padding: 0.75rem; margin-bottom: 0.5rem;">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:0.5rem;">
+            <span style="font-weight:bold;color:var(--accent);">Follow-up #${i + 1} (Step ${s.step})</span>
+            <div style="display:flex;gap:0.5rem;align-items:center;">
+              <label style="font-size:0.75rem;color:var(--text-dim);">Delay:</label>
+              <input type="number" class="form-input" style="width:60px;padding:4px 8px;" value="${s.delay_days}" min="1" max="30" onchange="sequenceSteps[${i}].delay_days=parseInt(this.value)">
+              <span style="font-size:0.75rem;color:var(--text-dim);">days</span>
+              <button class="btn-mini" onclick="removeSequenceStep(${i})" style="color:var(--red);font-size:0.65rem;">Remove</button>
+            </div>
+          </div>
+          <input type="text" class="form-input" placeholder="Subject (leave blank to re-use)" value="${escapeHtml(s.subject)}" onchange="sequenceSteps[${i}].subject=this.value" style="margin-bottom:0.5rem;">
+          <textarea class="form-textarea" rows="3" placeholder="Follow-up body" onchange="sequenceSteps[${i}].body=this.value">${escapeHtml(s.body)}</textarea>
+        </div>
+      `).join('');
+    }
+
+    // ============================================
+    // SEND SCHEDULING
+    // ============================================
+
+    function toggleSendSchedule() {
+      const container = document.getElementById('send-schedule-container');
+      container.style.display = container.style.display === 'none' ? 'block' : 'none';
+    }
+
+    // ============================================
+    // UNIFIED INBOX
+    // ============================================
+
+    let inboxMessages = [];
+
+    async function loadInbox() {
+      const filter = document.getElementById('inbox-filter')?.value || '';
+      try {
+        const response = await fetch(`${API_BASE}/check-inbox?filter=${filter}&limit=50`, {
+          headers: { 'Authorization': `Bearer ${authToken}` }
+        });
+        if (response.ok) {
+          const data = await response.json();
+          inboxMessages = data.messages || [];
+          renderInbox();
+          updateInboxBadge(data.unread || 0);
+        }
+      } catch (error) {
+        console.error('Failed to load inbox:', error);
+      }
+    }
+
+    function updateInboxBadge(unread) {
+      const badge = document.getElementById('inbox-unread-badge');
+      if (badge) {
+        badge.textContent = unread;
+        badge.style.display = unread > 0 ? 'inline' : 'none';
+      }
+    }
+
+    async function checkAllInboxes() {
+      showToast('Checking for new replies...', 'info');
+      try {
+        const response = await fetch(`${API_BASE}/check-inbox`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${authToken}`
+          },
+          body: JSON.stringify({ action: 'poll' })
+        });
+        if (response.ok) {
+          const data = await response.json();
+          showToast(data.message || 'Inbox checked', 'success');
+          await loadInbox();
+        } else {
+          const data = await response.json();
+          showToast(data.error || 'Failed to check inbox', 'error');
+        }
+      } catch (error) {
+        showToast('Failed to check inbox', 'error');
+      }
+    }
+
+    async function markAllInboxRead() {
+      try {
+        await fetch(`${API_BASE}/check-inbox`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${authToken}`
+          },
+          body: JSON.stringify({ action: 'markAllRead' })
+        });
+        inboxMessages.forEach(m => m.is_read = true);
+        renderInbox();
+        updateInboxBadge(0);
+        showToast('All marked as read', 'success');
+      } catch (error) {
+        showToast('Failed to mark all read', 'error');
+      }
+    }
+
+    async function toggleInboxRead(msgId) {
+      try {
+        await fetch(`${API_BASE}/check-inbox`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${authToken}`
+          },
+          body: JSON.stringify({ action: 'markRead', messageId: msgId })
+        });
+        const msg = inboxMessages.find(m => m.id == msgId);
+        if (msg) msg.is_read = true;
+        renderInbox();
+      } catch (error) {
+        console.error('Failed to mark read:', error);
+      }
+    }
+
+    async function toggleInboxStar(msgId) {
+      try {
+        await fetch(`${API_BASE}/check-inbox`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${authToken}`
+          },
+          body: JSON.stringify({ action: 'toggleStar', messageId: msgId })
+        });
+        const msg = inboxMessages.find(m => m.id == msgId);
+        if (msg) msg.is_starred = !msg.is_starred;
+        renderInbox();
+      } catch (error) {
+        console.error('Failed to toggle star:', error);
+      }
+    }
+
+    function getSentimentBadge(sentiment) {
+      switch (sentiment) {
+        case 'positive': return '<span class="status-badge synced">Interested</span>';
+        case 'negative': return '<span class="status-badge" style="background:rgba(255,0,51,0.15);color:var(--red);border:1px solid var(--red);">Not Interested</span>';
+        case 'ooo': return '<span class="status-badge pending">Out of Office</span>';
+        case 'bounce': return '<span class="status-badge" style="background:rgba(255,0,51,0.15);color:var(--red);border:1px solid var(--red);">Bounced</span>';
+        default: return '<span class="status-badge" style="background:rgba(136,136,136,0.15);color:var(--text-dim);border:1px solid var(--text-dimmer);">Neutral</span>';
+      }
+    }
+
+    function renderInbox() {
+      const container = document.getElementById('inbox-container');
+      if (!container) return;
+
+      if (inboxMessages.length === 0) {
+        container.innerHTML = '<p style="color: var(--text-dim); text-align: center; padding: 2rem;">No messages found.</p>';
+        return;
+      }
+
+      container.innerHTML = inboxMessages.map(m => {
+        const isUnread = !m.is_read;
+        const timeAgo = getTimeAgo(m.received_at);
+        return `
+          <div class="inbox-item" style="padding: 0.75rem 1rem; border-bottom: 1px solid var(--border); cursor: pointer; ${isUnread ? 'background: rgba(255,62,0,0.05); border-left: 3px solid var(--accent);' : ''}" onclick="toggleInboxExpand(this, ${m.id})">
+            <div style="display:flex;justify-content:space-between;align-items:flex-start;">
+              <div style="flex:1;min-width:0;">
+                <div style="display:flex;align-items:center;gap:0.5rem;margin-bottom:0.25rem;">
+                  <span style="cursor:pointer;font-size:1rem;" onclick="event.stopPropagation();toggleInboxStar(${m.id})">${m.is_starred ? '&#9733;' : '&#9734;'}</span>
+                  <strong style="${isUnread ? 'color:var(--text);' : 'color:var(--text-dim);'}">${escapeHtml(m.from_name || m.from_email || 'Unknown')}</strong>
+                  <span style="color:var(--text-dimmer);font-size:0.8rem;">&lt;${escapeHtml(m.from_email || '')}&gt;</span>
+                  ${getSentimentBadge(m.sentiment)}
+                </div>
+                <div style="color:${isUnread ? 'var(--text)' : 'var(--text-dim)'};font-size:0.9rem;margin-bottom:0.15rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${escapeHtml(m.subject || '(no subject)')}</div>
+                <div style="color:var(--text-dimmer);font-size:0.8rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${escapeHtml(m.body_snippet || '')}</div>
+              </div>
+              <div style="text-align:right;min-width:80px;margin-left:0.5rem;">
+                <div style="color:var(--text-dimmer);font-size:0.75rem;font-family:'JetBrains Mono',monospace;">${timeAgo}</div>
+              </div>
+            </div>
+            <div class="inbox-expanded" style="display:none;margin-top:0.75rem;padding-top:0.75rem;border-top:1px solid var(--border);">
+              <div style="background:var(--surface);border:1px solid var(--border);border-radius:4px;padding:1rem;margin-bottom:0.75rem;max-height:300px;overflow-y:auto;white-space:pre-wrap;font-size:0.85rem;color:var(--text-dim);">${escapeHtml(m.body || '(no content)')}</div>
+              <div style="display:flex;gap:0.5rem;">
+                <button class="btn-mini" onclick="event.stopPropagation();replyToInboxMessage(${m.id})">Reply</button>
+                ${isUnread ? `<button class="btn-mini" onclick="event.stopPropagation();toggleInboxRead(${m.id})">Mark Read</button>` : ''}
+              </div>
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
+
+    function toggleInboxExpand(el, msgId) {
+      const expanded = el.querySelector('.inbox-expanded');
+      if (expanded) {
+        const isVisible = expanded.style.display !== 'none';
+        // Collapse all others first
+        document.querySelectorAll('.inbox-expanded').forEach(e => e.style.display = 'none');
+        expanded.style.display = isVisible ? 'none' : 'block';
+        // Mark as read when expanded
+        if (!isVisible) toggleInboxRead(msgId);
+      }
+    }
+
+    function replyToInboxMessage(msgId) {
+      const msg = inboxMessages.find(m => m.id == msgId);
+      if (!msg) return;
+      // Pre-fill compose with reply info
+      const subjectEl = document.getElementById('outreach-subject');
+      const bodyEl = document.getElementById('outreach-body');
+      if (subjectEl) subjectEl.value = 'Re: ' + (msg.subject || '').replace(/^re:\s*/i, '');
+      if (bodyEl) bodyEl.value = '';
+      // Scroll to compose
+      document.querySelector('#email-outreach-section .card')?.scrollIntoView({ behavior: 'smooth' });
+      showToast(`Replying to ${msg.from_email}`, 'info');
+    }
+
+    function getTimeAgo(dateStr) {
+      if (!dateStr) return '';
+      const now = new Date();
+      const date = new Date(dateStr);
+      const diffMs = now - date;
+      const diffMins = Math.floor(diffMs / 60000);
+      if (diffMins < 1) return 'now';
+      if (diffMins < 60) return diffMins + 'm ago';
+      const diffHours = Math.floor(diffMins / 60);
+      if (diffHours < 24) return diffHours + 'h ago';
+      const diffDays = Math.floor(diffHours / 24);
+      if (diffDays < 7) return diffDays + 'd ago';
+      return date.toLocaleDateString();
+    }
+
+    // ============================================
+    // CAMPAIGN ANALYTICS
+    // ============================================
+
+    let campaignsList = [];
+
+    async function loadCampaignAnalytics() {
+      try {
+        const response = await fetch(`${API_BASE}/campaigns`, {
+          headers: { 'Authorization': `Bearer ${authToken}` }
+        });
+        if (response.ok) {
+          const data = await response.json();
+          campaignsList = data.campaigns || [];
+          renderCampaignAnalytics();
+        }
+      } catch (error) {
+        console.error('Failed to load campaigns:', error);
+      }
+    }
+
+    function renderCampaignAnalytics() {
+      const container = document.getElementById('campaign-analytics');
+      if (!container) return;
+
+      if (campaignsList.length === 0) {
+        container.innerHTML = '<p style="color: var(--text-dim); text-align: center; padding: 2rem;">No campaigns yet. Send some emails to see analytics.</p>';
+        return;
+      }
+
+      container.innerHTML = campaignsList.map(c => {
+        const sent = parseInt(c.sent_count) || 0;
+        const opens = parseInt(c.open_count) || 0;
+        const clicks = parseInt(c.click_count) || 0;
+        const replies = parseInt(c.reply_count) || 0;
+        const bounces = parseInt(c.bounce_count) || 0;
+        const openRate = sent > 0 ? ((opens / sent) * 100).toFixed(1) : 0;
+        const clickRate = sent > 0 ? ((clicks / sent) * 100).toFixed(1) : 0;
+        const replyRate = sent > 0 ? ((replies / sent) * 100).toFixed(1) : 0;
+        const bounceRate = sent > 0 ? ((bounces / sent) * 100).toFixed(1) : 0;
+
+        function progressBar(pct, color) {
+          return `<div style="background:var(--surface);border:1px solid var(--border);border-radius:2px;height:6px;width:100%;margin-top:2px;">
+            <div style="background:${color};height:100%;width:${Math.min(pct, 100)}%;border-radius:2px;transition:width 0.3s;"></div>
+          </div>`;
+        }
+
+        const statusColor = c.status === 'active' ? 'var(--green)' : c.status === 'paused' ? 'var(--yellow)' : 'var(--text-dim)';
+
+        return `
+          <div style="padding: 1rem; border-bottom: 1px solid var(--border);">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:0.75rem;">
+              <div>
+                <strong style="color:var(--text);">${escapeHtml(c.name)}</strong>
+                <span style="color:${statusColor};font-size:0.75rem;margin-left:0.5rem;text-transform:uppercase;font-family:'JetBrains Mono',monospace;">${c.status}</span>
+              </div>
+              <span style="color:var(--text-dim);font-size:0.8rem;">${sent} sent</span>
+            </div>
+            <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:0.75rem;">
+              <div>
+                <div style="font-size:0.7rem;color:var(--text-dim);text-transform:uppercase;">Open Rate</div>
+                <div style="font-size:1rem;font-weight:bold;color:var(--green);font-family:'JetBrains Mono',monospace;">${openRate}%</div>
+                ${progressBar(openRate, 'var(--green)')}
+              </div>
+              <div>
+                <div style="font-size:0.7rem;color:var(--text-dim);text-transform:uppercase;">Click Rate</div>
+                <div style="font-size:1rem;font-weight:bold;color:var(--accent);font-family:'JetBrains Mono',monospace;">${clickRate}%</div>
+                ${progressBar(clickRate, 'var(--accent)')}
+              </div>
+              <div>
+                <div style="font-size:0.7rem;color:var(--text-dim);text-transform:uppercase;">Reply Rate</div>
+                <div style="font-size:1rem;font-weight:bold;color:var(--green);font-family:'JetBrains Mono',monospace;">${replyRate}%</div>
+                ${progressBar(replyRate, 'var(--green-dim)')}
+              </div>
+              <div>
+                <div style="font-size:0.7rem;color:var(--text-dim);text-transform:uppercase;">Bounce Rate</div>
+                <div style="font-size:1rem;font-weight:bold;color:var(--red);font-family:'JetBrains Mono',monospace;">${bounceRate}%</div>
+                ${progressBar(bounceRate, 'var(--red)')}
+              </div>
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
+
     // =====================================
     // LEAD LIST FUNCTIONS
     // =====================================
