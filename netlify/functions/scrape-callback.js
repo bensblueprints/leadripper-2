@@ -49,18 +49,36 @@ exports.handler = async (event, context) => {
     }
 
     let savedCount = 0;
+    let skippedCount = 0;
 
-    // Save leads to database
+    // Save leads to database (skip duplicates by phone number)
     if (leads && Array.isArray(leads)) {
       for (const lead of leads) {
         try {
+          const phone = lead.phone || '';
+          // Skip if phone already exists for this user (normalize: digits only, last 10)
+          if (phone) {
+            const digits = phone.replace(/\D/g, '');
+            const last10 = digits.slice(-10);
+            if (last10.length >= 7) {
+              const existing = await pool.query(
+                `SELECT id FROM lr_leads WHERE user_id = $1 AND REGEXP_REPLACE(phone, '[^0-9]', '', 'g') LIKE $2 LIMIT 1`,
+                [userId, '%' + last10]
+              );
+              if (existing.rows.length > 0) {
+                skippedCount++;
+                continue;
+              }
+            }
+          }
+
           await pool.query(
             `INSERT INTO lr_leads (user_id, business_name, phone, email, address, city, state, industry, website, rating, reviews)
              VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)`,
             [
               userId,
               lead.business_name || lead.name,
-              lead.phone,
+              phone,
               lead.email,
               lead.address,
               lead.city || city,
@@ -94,14 +112,15 @@ exports.handler = async (event, context) => {
       [savedCount, userId]
     );
 
-    console.log(`Saved ${savedCount} leads for user ${userId} in ${city} (${industry})`);
+    console.log(`Saved ${savedCount} leads, skipped ${skippedCount} dupes for user ${userId} in ${city} (${industry})`);
 
     return {
       statusCode: 200,
       headers,
       body: JSON.stringify({
         success: true,
-        message: `Saved ${savedCount} leads`,
+        message: `Saved ${savedCount} leads, skipped ${skippedCount} duplicates`,
+        skippedCount,
         savedCount,
         city,
         industry
