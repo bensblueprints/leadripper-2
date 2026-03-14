@@ -18,7 +18,7 @@ exports.handler = async (event, context) => {
     await pool.query(`
       CREATE TABLE IF NOT EXISTS lr_workflows (
         id BIGSERIAL PRIMARY KEY,
-        user_id BIGINT NOT NULL REFERENCES lr_users(id) ON DELETE CASCADE,
+        user_id BIGINT NOT NULL,
         name VARCHAR(255) NOT NULL,
         description TEXT,
         status VARCHAR(20) DEFAULT 'draft',
@@ -38,8 +38,8 @@ exports.handler = async (event, context) => {
     await pool.query(`
       CREATE TABLE IF NOT EXISTS lr_workflow_executions (
         id BIGSERIAL PRIMARY KEY,
-        workflow_id BIGINT NOT NULL REFERENCES lr_workflows(id) ON DELETE CASCADE,
-        user_id BIGINT NOT NULL REFERENCES lr_users(id) ON DELETE CASCADE,
+        workflow_id BIGINT NOT NULL,
+        user_id BIGINT NOT NULL,
         contact_id BIGINT,
         status VARCHAR(20) DEFAULT 'running',
         current_node VARCHAR(50),
@@ -56,7 +56,7 @@ exports.handler = async (event, context) => {
     await pool.query(`
       CREATE TABLE IF NOT EXISTS lr_workflow_logs (
         id BIGSERIAL PRIMARY KEY,
-        execution_id BIGINT NOT NULL REFERENCES lr_workflow_executions(id) ON DELETE CASCADE,
+        execution_id BIGINT NOT NULL,
         node_id VARCHAR(50),
         action_type VARCHAR(50),
         status VARCHAR(20),
