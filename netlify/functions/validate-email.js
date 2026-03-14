@@ -19,6 +19,21 @@ const DISPOSABLE_DOMAINS = [
   'maildrop.cc', 'sharklasers.com', 'guerrillamailblock.com'
 ];
 
+// Fake/placeholder domains that should always fail validation
+const FAKE_PLACEHOLDER_DOMAINS = [
+  'example.com', 'example.org', 'example.net', 'test.com', 'test.org',
+  'domain.com', 'yourdomain.com', 'company.com', 'yourcompany.com',
+  'email.com', 'placeholder.com', 'sample.com', 'demo.com',
+  'website.com', 'yourwebsite.com', 'business.com', 'mysite.com',
+  'acme.com', 'lorem.com', 'ipsum.com', 'fake.com', 'noreply.com',
+];
+
+// Fake prefixes that indicate placeholder emails
+const FAKE_PREFIXES = [
+  'user', 'your', 'name', 'email', 'someone', 'person', 'firstname',
+  'lastname', 'john', 'jane', 'test', 'demo', 'placeholder',
+];
+
 // Common role-based email prefixes
 const ROLE_BASED_PREFIXES = [
   'info', 'admin', 'support', 'sales', 'contact', 'hello', 'help',
@@ -31,6 +46,17 @@ const ROLE_BASED_PREFIXES = [
 function isValidSyntax(email) {
   const emailRegex = /^[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*$/;
   return emailRegex.test(email);
+}
+
+/**
+ * Checks if email is a fake/placeholder (user@domain.com, test@example.com, etc.)
+ */
+function isFakePlaceholder(email) {
+  const [local, domain] = email.toLowerCase().split('@');
+  if (!domain) return true;
+  if (FAKE_PLACEHOLDER_DOMAINS.includes(domain)) return true;
+  if (FAKE_PREFIXES.includes(local)) return true;
+  return false;
 }
 
 /**
@@ -211,6 +237,17 @@ async function validateEmail(email, options = {}) {
     warnings: [],
     errors: []
   };
+
+  // 0. Fake/placeholder check
+  if (isFakePlaceholder(email)) {
+    result.valid = false;
+    result.score = 0;
+    result.errors.push('Fake/placeholder email address (e.g. user@domain.com)');
+    result.checks.fakePlaceholder = true;
+    result.recommendation = 'reject';
+    return result;
+  }
+  result.checks.fakePlaceholder = false;
 
   // 1. Syntax validation
   const syntaxValid = isValidSyntax(email);

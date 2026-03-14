@@ -26,6 +26,40 @@ const emailPatterns = [
   /mailto:([a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,})/gi
 ];
 
+// Fake/placeholder domains and email patterns to filter out
+const FAKE_DOMAINS = [
+  'example.com', 'example.org', 'example.net', 'test.com', 'test.org',
+  'domain.com', 'yourdomain.com', 'company.com', 'yourcompany.com',
+  'email.com', 'mail.com', 'placeholder.com', 'sample.com', 'demo.com',
+  'website.com', 'yourwebsite.com', 'business.com', 'mysite.com',
+  'acme.com', 'lorem.com', 'ipsum.com', 'fake.com', 'noreply.com',
+  'sentry.io', 'sentry-next.wixpress.com', 'wix.com', 'squarespace.com',
+  'wordpress.com', 'w3.org', 'schema.org', 'googleapis.com', 'google.com',
+  'facebook.com', 'twitter.com', 'github.com', 'gravatar.com',
+];
+const FAKE_PREFIXES = [
+  'user', 'your', 'name', 'email', 'someone', 'person', 'firstname',
+  'lastname', 'john', 'jane', 'test', 'demo', 'placeholder', 'noreply',
+  'no-reply', 'donotreply', 'do-not-reply', 'mailer-daemon', 'postmaster',
+];
+
+function isFakeEmail(email) {
+  const lower = email.toLowerCase();
+  const [local, domain] = lower.split('@');
+  if (!domain) return true;
+  // Check fake domains
+  if (FAKE_DOMAINS.some(fd => domain === fd || domain.endsWith('.' + fd))) return true;
+  // Check fake prefixes with generic domains
+  if (FAKE_PREFIXES.includes(local)) return true;
+  // Check file extensions (not real emails)
+  if (/\.(png|jpg|jpeg|gif|svg|webp|css|js)$/i.test(lower)) return true;
+  // Check if it looks like a CSS/code artifact
+  if (local.includes('@') || local.length < 2) return true;
+  // Check for @2x image patterns
+  if (local.includes('@2x') || local.includes('@3x')) return true;
+  return false;
+}
+
 // Common email patterns to try based on business name and domain
 function generatePossibleEmails(businessName, domain) {
   const cleaned = businessName.toLowerCase()
@@ -95,16 +129,8 @@ async function scrapeWebsiteForEmail(websiteUrl) {
     for (const pattern of emailPatterns) {
       const matches = html.match(pattern) || [];
       for (const match of matches) {
-        const email = match.replace(/^mailto:/i, '').toLowerCase();
-        // Filter out common false positives
-        if (!email.includes('example.com') &&
-            !email.includes('sentry.io') &&
-            !email.includes('@2x') &&
-            !email.includes('.png') &&
-            !email.includes('.jpg') &&
-            !email.includes('.gif') &&
-            email.includes('@') &&
-            email.includes('.')) {
+        const email = match.replace(/^mailto:/i, '').toLowerCase().trim();
+        if (email.includes('@') && email.includes('.') && !isFakeEmail(email)) {
           foundEmails.add(email);
         }
       }
@@ -129,11 +155,8 @@ async function scrapeWebsiteForEmail(websiteUrl) {
             for (const pattern of emailPatterns) {
               const matches = contactHtml.match(pattern) || [];
               for (const match of matches) {
-                const email = match.replace(/^mailto:/i, '').toLowerCase();
-                if (!email.includes('example.com') &&
-                    !email.includes('sentry.io') &&
-                    email.includes('@') &&
-                    email.includes('.')) {
+                const email = match.replace(/^mailto:/i, '').toLowerCase().trim();
+                if (email.includes('@') && email.includes('.') && !isFakeEmail(email)) {
                   foundEmails.add(email);
                 }
               }
