@@ -7577,7 +7577,7 @@ I noticed {{business_name}} in {{city}} and wanted to reach out..."></textarea>
                     <div class="detail-label">Website Score</div>
                     <div class="detail-value">${lead.website_score != null ? `${getWebsiteScoreBadge(lead)} ${lead.website_grade} - ${lead.website_score}/100 <button class="btn-secondary" style="font-size:0.75rem;padding:2px 8px;margin-left:8px;" onclick="event.stopPropagation();generateWebsiteReport(${lead.id})">📄 Generate PDF Report</button>` : 'Not analyzed'}</div>
                   </div>
-                  ${lead.email ? `<div class="detail-group" style="grid-column: 1 / -1;">
+                  ${lead.website ? `<div class="detail-group" style="grid-column: 1 / -1;">
                     <div class="detail-label">AI Website Rebuild</div>
                     <div class="detail-value" id="rebuild-container-${lead.id}">
                       ${getRebuildUI(lead)}
