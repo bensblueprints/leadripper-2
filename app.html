@@ -6793,8 +6793,8 @@ I noticed {{business_name}} in {{city}} and wanted to reach out..."></textarea>
       const tbody = document.getElementById('web-ripper-table-body');
       if (!tbody) return;
 
-      // Filter leads that have websites
-      const webLeads = leadsData.filter(l => l.website);
+      // Only show leads that have been sent to Web Ripper (rebuild initiated)
+      const webLeads = leadsData.filter(l => l.rebuild_status || l.rebuild_phase || l.website_rebuilt_at);
 
       // Update stats
       const totalEl = document.getElementById('stat-wr-total');
@@ -6808,7 +6808,7 @@ I noticed {{business_name}} in {{city}} and wanted to reach out..."></textarea>
       if (sentEl) sentEl.textContent = webLeads.filter(l => l.rebuild_sent_to_customer).length;
 
       if (webLeads.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;color:var(--text-dim);padding:2rem;">No leads with websites found. Scrape some leads first!</td></tr>';
+        tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;color:var(--text-dim);padding:2rem;">No sites in the pipeline yet. Go to My Leads, expand a lead, and click "Rebuild Website" to send it here.</td></tr>';
         return;
       }
 
