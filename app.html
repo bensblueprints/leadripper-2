@@ -1808,11 +1808,22 @@
           <button class="btn-mini" onclick="clearFilters()">Clear</button>
         </div>
 
+        <div id="lead-list-actions" style="display:none; background: var(--accent-dim, #1a3a5c); border: 1px solid var(--accent, #4a9eff); border-radius: 4px; padding: 0.75rem; margin-bottom: 1rem; align-items: center; gap: 1rem; flex-wrap: wrap;">
+          <span id="selected-count" class="mono" style="font-weight: 600;">0 selected</span>
+          <select class="form-input mono" id="add-to-list-select" style="width: auto; min-width: 200px;">
+            <option value="">-- Add to List --</option>
+          </select>
+          <button class="btn-secondary" onclick="addSelectedToList()" style="font-size: 0.85rem;">Add to List</button>
+          <button class="btn-secondary" onclick="createNewListFromSelected()" style="font-size: 0.85rem;">+ New List</button>
+          <button class="btn" onclick="callSelectedLeads()" style="font-size: 0.85rem;">Call Selected</button>
+        </div>
+
         <div class="card">
           <div class="table-container">
             <table id="leads-table">
               <thead>
                 <tr>
+                  <th style="width: 40px;"><input type="checkbox" id="select-all-leads" onchange="toggleSelectAllLeads(this)"></th>
                   <th style="width: 30px;"></th>
                   <th>Business Name</th>
                   <th>Phone</th>
@@ -1834,6 +1845,16 @@
                 </tr>
               </tbody>
             </table>
+          </div>
+        </div>
+
+        <div class="card" style="margin-top: 1.5rem;">
+          <div class="card-header">
+            <h2 class="card-title display">Lead Lists</h2>
+            <button class="btn-secondary" onclick="showCreateListModal()" style="font-size: 0.85rem;">+ New List</button>
+          </div>
+          <div id="lead-lists-container">
+            <p style="color: var(--text-dim); text-align: center; padding: 1rem;">Loading lists...</p>
           </div>
         </div>
       </section>
@@ -2839,23 +2860,8 @@ Available merge tags: {{business_name}}, {{first_name}}, {{email}}, {{phone}}, {
           <div class="card-header">
             <h2 class="card-title display">Recent Calls</h2>
           </div>
-          <div class="table-container">
-            <table>
-              <thead>
-                <tr>
-                  <th>Contact</th>
-                  <th>Agent</th>
-                  <th>Duration</th>
-                  <th>Outcome</th>
-                  <th>Date</th>
-                </tr>
-              </thead>
-              <tbody id="call-logs-body">
-                <tr>
-                  <td colspan="5" style="text-align: center; color: var(--text-dim);">No calls yet</td>
-                </tr>
-              </tbody>
-            </table>
+          <div id="call-recordings-container">
+            <p style="color: var(--text-dim); text-align: center; padding: 1rem;">Loading call history...</p>
           </div>
         </div>
       </section>
@@ -5296,7 +5302,7 @@ Available merge tags: {{business_name}}, {{first_name}}, {{email}}, {{phone}}, {
       if (leadsData.length === 0) {
         tbody.innerHTML = `
           <tr>
-            <td colspan="7" class="text-center">
+            <td colspan="8" class="text-center">
               <div class="empty-state">
                 <div class="empty-icon">📋</div>
                 <div class="empty-title">${filterSearch || filterCity || filterIndustry || filterStatus ? 'No leads match your filters' : 'No leads yet'}</div>
@@ -5317,7 +5323,7 @@ Available merge tags: {{business_name}}, {{first_name}}, {{email}}, {{phone}}, {
       // Pagination header
       html += `
         <tr class="pagination-row">
-          <td colspan="7" style="background: var(--surface); padding: 12px;">
+          <td colspan="8" style="background: var(--surface); padding: 12px;">
             <div style="display: flex; justify-content: space-between; align-items: center;">
               <span class="mono" style="color: var(--text-dim);">
                 Showing ${startItem}-${endItem} of ${leadsTotal} leads
@@ -5345,6 +5351,7 @@ Available merge tags: {{business_name}}, {{first_name}}, {{email}}, {{phone}}, {
         // Main row
         html += `
           <tr data-lead-id="${lead.id}" class="${isExpanded ? 'expanded-parent' : ''}">
+            <td><input type="checkbox" class="lead-checkbox" value="${lead.id}" onchange="updateLeadSelection()" ${selectedLeadIds.has(lead.id) ? 'checked' : ''}></td>
             <td>
               <button class="expand-btn ${isExpanded ? 'expanded' : ''}" onclick="toggleLeadExpand(${lead.id})">▶</button>
             </td>
@@ -5362,7 +5369,7 @@ Available merge tags: {{business_name}}, {{first_name}}, {{email}}, {{phone}}, {
           const ratingStars = lead.rating ? '★'.repeat(Math.round(lead.rating)) + '☆'.repeat(5 - Math.round(lead.rating)) : '-';
           html += `
             <tr class="lead-details-row">
-              <td colspan="7">
+              <td colspan="8">
                 <div class="lead-details">
                   <div class="detail-group">
                     <div class="detail-label">Full Address</div>
@@ -5952,12 +5959,18 @@ Available merge tags: {{business_name}}, {{first_name}}, {{email}}, {{phone}}, {
       loadEmailAccounts();
     });
 
+    // Load lead lists when leads section is opened
+    document.querySelector('[data-section="leads"]').addEventListener('click', () => {
+      loadLeadLists();
+    });
+
     // Load ElevenLabs agents when AI Calling section is opened
     const aiCallingNav = document.querySelector('[data-section="ai-calling"]');
     if (aiCallingNav) {
       aiCallingNav.addEventListener('click', () => {
         loadElevenLabsAgents();
         loadAgents();
+        loadCallRecordings();
       });
     }
 
@@ -6821,6 +6834,331 @@ Available merge tags: {{business_name}}, {{first_name}}, {{email}}, {{phone}}, {
       document.getElementById('outreach-body').value = template.body || '';
       showToast('Template loaded for editing', 'info');
     }
+    // =====================================
+    // LEAD LIST FUNCTIONS
+    // =====================================
+
+    let selectedLeadIds = new Set();
+
+    function toggleSelectAllLeads(checkbox) {
+      const checkboxes = document.querySelectorAll('.lead-checkbox');
+      checkboxes.forEach(cb => {
+        cb.checked = checkbox.checked;
+        if (checkbox.checked) {
+          selectedLeadIds.add(parseInt(cb.value));
+        } else {
+          selectedLeadIds.delete(parseInt(cb.value));
+        }
+      });
+      updateLeadSelection();
+    }
+
+    function updateLeadSelection() {
+      selectedLeadIds = new Set();
+      document.querySelectorAll('.lead-checkbox:checked').forEach(cb => {
+        selectedLeadIds.add(parseInt(cb.value));
+      });
+      const count = selectedLeadIds.size;
+      const actionsBar = document.getElementById('lead-list-actions');
+      if (actionsBar) {
+        actionsBar.style.display = count > 0 ? 'flex' : 'none';
+        document.getElementById('selected-count').textContent = `${count} selected`;
+      }
+    }
+
+    async function loadLeadLists() {
+      try {
+        const response = await fetch(`${API_BASE}/lead-lists`, {
+          headers: { 'Authorization': `Bearer ${authToken}` }
+        });
+        const result = await response.json();
+        const lists = result.lists || [];
+
+        // Update the lists container
+        const container = document.getElementById('lead-lists-container');
+        if (container) {
+          if (lists.length === 0) {
+            container.innerHTML = '<p style="color: var(--text-dim); text-align: center; padding: 1rem;">No lists yet. Select leads and create a list!</p>';
+          } else {
+            container.innerHTML = lists.map(list => `
+              <div style="display: flex; align-items: center; justify-content: space-between; padding: 0.75rem; background: var(--surface); border: 1px solid var(--border); border-radius: 4px; margin-bottom: 0.5rem;">
+                <div>
+                  <div style="font-weight: 600;">${list.name}</div>
+                  <div style="font-size: 0.75rem; color: var(--text-dim);">${list.lead_count || 0} leads${list.description ? ' • ' + list.description : ''}</div>
+                </div>
+                <div style="display: flex; gap: 0.5rem;">
+                  <button class="btn" onclick="callList(${list.id}, '${list.name}')" style="font-size: 0.8rem; padding: 4px 10px;">Call</button>
+                  <button class="btn-secondary" onclick="viewList(${list.id})" style="font-size: 0.8rem; padding: 4px 10px;">View</button>
+                  <button class="btn-secondary" onclick="deleteList(${list.id})" style="font-size: 0.8rem; padding: 4px 10px; color: var(--red);">Delete</button>
+                </div>
+              </div>
+            `).join('');
+          }
+        }
+
+        // Update the dropdown
+        const select = document.getElementById('add-to-list-select');
+        if (select) {
+          select.innerHTML = '<option value="">-- Add to List --</option>' +
+            lists.map(l => `<option value="${l.id}">${l.name} (${l.lead_count || 0})</option>`).join('');
+        }
+      } catch (error) {
+        console.error('Failed to load lists:', error);
+      }
+    }
+
+    async function addSelectedToList() {
+      const listId = document.getElementById('add-to-list-select').value;
+      if (!listId) { showToast('Select a list first', 'warning'); return; }
+      if (selectedLeadIds.size === 0) { showToast('No leads selected', 'warning'); return; }
+
+      try {
+        const response = await fetch(`${API_BASE}/lead-list-items`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${authToken}` },
+          body: JSON.stringify({ listId: parseInt(listId), leadIds: Array.from(selectedLeadIds) })
+        });
+        const result = await response.json();
+        if (result.success) {
+          showToast(`Added ${selectedLeadIds.size} leads to list`, 'success');
+          loadLeadLists();
+        } else {
+          showToast(result.error || 'Failed to add leads', 'error');
+        }
+      } catch (error) {
+        showToast('Failed to add leads to list', 'error');
+      }
+    }
+
+    function createNewListFromSelected() {
+      const name = prompt('Enter a name for the new list:');
+      if (!name) return;
+      createListAndAddLeads(name, Array.from(selectedLeadIds));
+    }
+
+    function showCreateListModal() {
+      const name = prompt('Enter a name for the new list:');
+      if (!name) return;
+      createListAndAddLeads(name, []);
+    }
+
+    async function createListAndAddLeads(name, leadIds) {
+      try {
+        // Create list
+        const createResp = await fetch(`${API_BASE}/lead-lists`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${authToken}` },
+          body: JSON.stringify({ name })
+        });
+        const createResult = await createResp.json();
+        if (!createResult.success) { showToast('Failed to create list', 'error'); return; }
+
+        // Add leads if any
+        if (leadIds.length > 0) {
+          await fetch(`${API_BASE}/lead-list-items`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${authToken}` },
+            body: JSON.stringify({ listId: createResult.list.id, leadIds })
+          });
+        }
+
+        showToast(`List "${name}" created with ${leadIds.length} leads`, 'success');
+        loadLeadLists();
+      } catch (error) {
+        showToast('Failed to create list', 'error');
+      }
+    }
+
+    async function deleteList(listId) {
+      if (!confirm('Delete this list? Leads will not be deleted.')) return;
+      try {
+        await fetch(`${API_BASE}/lead-lists`, {
+          method: 'DELETE',
+          headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${authToken}` },
+          body: JSON.stringify({ id: listId })
+        });
+        showToast('List deleted', 'success');
+        loadLeadLists();
+      } catch (error) {
+        showToast('Failed to delete list', 'error');
+      }
+    }
+
+    async function viewList(listId) {
+      try {
+        const response = await fetch(`${API_BASE}/lead-lists?id=${listId}`, {
+          headers: { 'Authorization': `Bearer ${authToken}` }
+        });
+        const result = await response.json();
+        if (result.success && result.list) {
+          const leads = result.list.leads || [];
+          alert(`List: ${result.list.name}\n${leads.length} leads:\n\n${leads.map(l => `${l.business_name || 'Unknown'} - ${l.phone || 'No phone'} - ${l.email || 'No email'}`).join('\n')}`);
+        }
+      } catch (error) {
+        showToast('Failed to load list', 'error');
+      }
+    }
+
+    // =====================================
+    // CALLING FROM LISTS
+    // =====================================
+
+    const EMAIL_COLLECTION_AGENT_ID = 'agent_8001kkng9m9yfqr96f3qkgxtkp4b';
+
+    async function callSelectedLeads() {
+      if (selectedLeadIds.size === 0) { showToast('No leads selected', 'warning'); return; }
+      if (!confirm(`Start calling ${selectedLeadIds.size} selected leads to collect email addresses?`)) return;
+
+      // Create a temporary list and call it
+      const name = 'Quick Call - ' + new Date().toLocaleString();
+      await createListAndAddLeads(name, Array.from(selectedLeadIds));
+
+      // Get the list we just created and call it
+      const listsResp = await fetch(`${API_BASE}/lead-lists`, {
+        headers: { 'Authorization': `Bearer ${authToken}` }
+      });
+      const listsData = await listsResp.json();
+      const newList = (listsData.lists || []).find(l => l.name === name);
+      if (newList) {
+        await startCallingList(newList.id);
+      }
+    }
+
+    async function callList(listId, listName) {
+      if (!confirm(`Start calling all leads in "${listName}" to collect email addresses?`)) return;
+      await startCallingList(listId);
+    }
+
+    async function startCallingList(listId) {
+      showToast('Starting outbound calls...', 'info');
+
+      try {
+        // Get leads in list
+        const response = await fetch(`${API_BASE}/lead-lists?id=${listId}`, {
+          headers: { 'Authorization': `Bearer ${authToken}` }
+        });
+        const result = await response.json();
+        const leads = (result.list?.leads || []).filter(l => l.phone);
+
+        if (leads.length === 0) {
+          showToast('No leads with phone numbers in this list', 'warning');
+          return;
+        }
+
+        let initiated = 0;
+        let failed = 0;
+
+        for (const lead of leads) {
+          try {
+            const callResp = await fetch(`${API_BASE}/initiate-call`, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${authToken}` },
+              body: JSON.stringify({
+                leadId: lead.id,
+                listId: listId,
+                agentId: EMAIL_COLLECTION_AGENT_ID,
+                phoneNumber: lead.phone,
+                contactName: lead.business_name || lead.contact_name || 'Unknown'
+              })
+            });
+            const callResult = await callResp.json();
+            if (callResult.success) {
+              initiated++;
+            } else {
+              failed++;
+              console.error('Call failed for', lead.phone, callResult.error);
+            }
+          } catch (e) {
+            failed++;
+          }
+          // Small delay between calls
+          await new Promise(r => setTimeout(r, 2000));
+        }
+
+        showToast(`Initiated ${initiated} calls (${failed} failed)`, initiated > 0 ? 'success' : 'error');
+        loadCallRecordings();
+      } catch (error) {
+        showToast('Failed to start calls: ' + error.message, 'error');
+      }
+    }
+
+    // =====================================
+    // CALL RECORDINGS
+    // =====================================
+
+    async function loadCallRecordings() {
+      const container = document.getElementById('call-recordings-container');
+      if (!container) return;
+
+      try {
+        const response = await fetch(`${API_BASE}/call-logs?limit=50`, {
+          headers: { 'Authorization': `Bearer ${authToken}` }
+        });
+        const result = await response.json();
+        const calls = result.calls || [];
+
+        if (calls.length === 0) {
+          container.innerHTML = '<p style="color: var(--text-dim); text-align: center; padding: 2rem;">No calls yet. Select leads and start calling!</p>';
+          return;
+        }
+
+        container.innerHTML = calls.map(call => {
+          const date = new Date(call.created_at).toLocaleString();
+          const duration = call.duration ? `${Math.floor(call.duration / 60)}:${String(call.duration % 60).padStart(2, '0')}` : '--';
+          const statusColor = call.status === 'completed' ? '#4ade80' : call.status === 'failed' ? '#f87171' : '#fbbf24';
+
+          return `
+            <div style="padding: 0.75rem; background: var(--surface); border: 1px solid var(--border); border-radius: 4px; margin-bottom: 0.5rem;">
+              <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;">
+                <div>
+                  <span style="font-weight: 600;">${call.contact_name || 'Unknown'}</span>
+                  <span style="color: var(--text-dim); font-size: 0.85rem; margin-left: 0.5rem;">${call.phone_number || ''}</span>
+                </div>
+                <div style="display: flex; align-items: center; gap: 0.75rem;">
+                  <span style="font-size: 0.75rem; color: var(--text-dim);">${duration}</span>
+                  <span style="background: ${statusColor}22; color: ${statusColor}; padding: 2px 8px; border-radius: 4px; font-size: 0.75rem;">${call.status || 'unknown'}</span>
+                </div>
+              </div>
+              ${call.email_collected ? `<div style="font-size: 0.85rem; color: #4ade80; margin-bottom: 0.5rem;">Email collected: ${call.email_collected}</div>` : ''}
+              ${call.outcome ? `<div style="font-size: 0.8rem; color: var(--text-secondary); margin-bottom: 0.5rem;">Outcome: ${call.outcome}</div>` : ''}
+              ${call.recording_url ? `
+                <div style="margin-top: 0.5rem;">
+                  <audio controls preload="none" style="width: 100%; height: 32px;">
+                    <source src="${call.recording_url}" type="audio/mpeg">
+                  </audio>
+                </div>
+              ` : ''}
+              ${call.transcript ? `
+                <details style="margin-top: 0.5rem;">
+                  <summary style="cursor: pointer; font-size: 0.8rem; color: var(--accent);">View Transcript</summary>
+                  <pre style="font-size: 0.75rem; color: var(--text-secondary); white-space: pre-wrap; margin-top: 0.5rem; max-height: 200px; overflow-y: auto;">${call.transcript}</pre>
+                </details>
+              ` : ''}
+              <div style="font-size: 0.7rem; color: var(--text-dim); margin-top: 0.5rem;">${date}</div>
+            </div>
+          `;
+        }).join('');
+
+        // Also try to sync any pending calls
+        syncPendingCalls();
+      } catch (error) {
+        console.error('Failed to load call recordings:', error);
+        container.innerHTML = '<p style="color: var(--text-dim);">Failed to load call history</p>';
+      }
+    }
+
+    async function syncPendingCalls() {
+      try {
+        await fetch(`${API_BASE}/sync-call-results`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${authToken}` },
+          body: JSON.stringify({})
+        });
+      } catch (e) {
+        // Silent fail - not critical
+      }
+    }
+
   </script>
 </body>
 </html>
