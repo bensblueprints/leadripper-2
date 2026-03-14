@@ -46,6 +46,7 @@ exports.handler = async (event, context) => {
       await pool.query(`
         ALTER TABLE lr_leads ADD COLUMN IF NOT EXISTS website_score INTEGER;
         ALTER TABLE lr_leads ADD COLUMN IF NOT EXISTS website_grade VARCHAR(2);
+        ALTER TABLE lr_leads ADD COLUMN IF NOT EXISTS website_analysis JSONB;
         ALTER TABLE lr_leads ADD COLUMN IF NOT EXISTS website_analyzed_at TIMESTAMP;
       `);
     } catch (migrationErr) {
@@ -64,7 +65,7 @@ exports.handler = async (event, context) => {
       SELECT id, business_name, phone, email, address, city, state, industry,
              website, rating, reviews, ghl_synced, ghl_contact_id, created_at,
              email_verified, email_score, email_validation_date,
-             website_score, website_grade, website_analyzed_at
+             website_score, website_grade, website_analysis, website_analyzed_at
       FROM lr_leads WHERE user_id = $1
     `;
     const values = [decoded.userId];
