@@ -1569,6 +1569,375 @@
         grid-template-columns: repeat(2, 1fr);
       }
     }
+
+    /* ===== Softphone Widget ===== */
+    .softphone {
+      position: fixed;
+      bottom: 20px;
+      right: 20px;
+      width: 280px;
+      background: var(--surface);
+      border: 1px solid var(--border-bright);
+      border-radius: 12px;
+      box-shadow: 0 8px 32px rgba(0,0,0,0.5);
+      z-index: 9999;
+      overflow: hidden;
+      transition: all 0.3s ease;
+      font-family: 'IBM Plex Sans', sans-serif;
+    }
+
+    .softphone.hidden {
+      display: none;
+    }
+
+    .softphone.minimized {
+      width: 56px;
+      height: 56px;
+      border-radius: 50%;
+      cursor: pointer;
+      overflow: hidden;
+    }
+
+    .softphone.minimized .softphone-body {
+      display: none;
+    }
+
+    .softphone.minimized .softphone-header {
+      padding: 0;
+      height: 56px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border: none;
+    }
+
+    .softphone.minimized .softphone-header span { display: none; }
+    .softphone.minimized .softphone-header .sp-minimize-btn { display: none; }
+    .softphone.minimized .softphone-header .sp-close-btn { display: none; }
+    .softphone.minimized .sp-fab-icon { display: flex; }
+
+    .softphone-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 12px 16px;
+      background: var(--surface-elevated);
+      border-bottom: 1px solid var(--border);
+    }
+
+    .softphone-header span {
+      font-weight: 600;
+      font-size: 0.85rem;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: var(--text);
+    }
+
+    .softphone-header-btns {
+      display: flex;
+      gap: 6px;
+    }
+
+    .sp-minimize-btn, .sp-close-btn {
+      background: none;
+      border: none;
+      color: var(--text-dim);
+      cursor: pointer;
+      font-size: 1rem;
+      padding: 2px 6px;
+      border-radius: 4px;
+      transition: all 0.2s;
+    }
+
+    .sp-minimize-btn:hover, .sp-close-btn:hover {
+      background: var(--border);
+      color: var(--text);
+    }
+
+    .sp-fab-icon {
+      display: none;
+      font-size: 1.4rem;
+      color: var(--accent);
+    }
+
+    .softphone-body {
+      padding: 12px 16px;
+    }
+
+    .sp-status {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 10px;
+      font-size: 0.8rem;
+      color: var(--text-dim);
+      font-family: 'JetBrains Mono', monospace;
+    }
+
+    .sp-status-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: var(--text-dimmer);
+      flex-shrink: 0;
+    }
+
+    .sp-status-dot.connected {
+      background: var(--green);
+      box-shadow: 0 0 6px var(--green);
+      animation: sp-pulse 2s ease-in-out infinite;
+    }
+
+    .sp-status-dot.on-call {
+      background: var(--red);
+      box-shadow: 0 0 6px var(--red);
+      animation: sp-pulse 1s ease-in-out infinite;
+    }
+
+    @keyframes sp-pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.4; }
+    }
+
+    .sp-number-input {
+      width: 100%;
+      padding: 10px 12px;
+      background: var(--bg);
+      border: 1px solid var(--border);
+      color: var(--text);
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 1.05rem;
+      text-align: center;
+      border-radius: 6px;
+      margin-bottom: 10px;
+      transition: border-color 0.2s;
+    }
+
+    .sp-number-input:focus {
+      outline: none;
+      border-color: var(--accent);
+    }
+
+    .sp-dialpad {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 6px;
+      margin-bottom: 10px;
+    }
+
+    .sp-dialpad button {
+      padding: 12px 0;
+      background: var(--surface-elevated);
+      border: 1px solid var(--border);
+      color: var(--text);
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 1.1rem;
+      font-weight: 600;
+      cursor: pointer;
+      border-radius: 6px;
+      transition: all 0.15s;
+    }
+
+    .sp-dialpad button:hover {
+      background: var(--border-bright);
+      border-color: var(--accent);
+    }
+
+    .sp-dialpad button:active {
+      background: var(--accent);
+      color: #fff;
+      transform: scale(0.95);
+    }
+
+    .sp-dialpad button .sp-key-sub {
+      display: block;
+      font-size: 0.55rem;
+      color: var(--text-dimmer);
+      font-weight: 400;
+      letter-spacing: 0.1em;
+      margin-top: -2px;
+    }
+
+    .sp-controls {
+      display: flex;
+      gap: 6px;
+      margin-bottom: 8px;
+    }
+
+    .sp-btn-call {
+      flex: 1;
+      padding: 10px;
+      background: var(--green-dim);
+      border: none;
+      color: #000;
+      font-weight: 700;
+      font-size: 0.85rem;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      cursor: pointer;
+      border-radius: 6px;
+      transition: all 0.2s;
+    }
+
+    .sp-btn-call:hover { background: var(--green); }
+    .sp-btn-call:disabled { opacity: 0.3; cursor: default; }
+
+    .sp-btn-hangup {
+      flex: 1;
+      padding: 10px;
+      background: var(--red);
+      border: none;
+      color: #fff;
+      font-weight: 700;
+      font-size: 0.85rem;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      cursor: pointer;
+      border-radius: 6px;
+      transition: all 0.2s;
+    }
+
+    .sp-btn-hangup:hover { background: #ff2244; }
+    .sp-btn-hangup:disabled { opacity: 0.3; cursor: default; }
+
+    .sp-btn-mute {
+      padding: 10px 14px;
+      background: var(--surface-elevated);
+      border: 1px solid var(--border);
+      color: var(--text-dim);
+      font-weight: 600;
+      font-size: 0.8rem;
+      cursor: pointer;
+      border-radius: 6px;
+      transition: all 0.2s;
+    }
+
+    .sp-btn-mute:hover { background: var(--border-bright); }
+    .sp-btn-mute.muted { background: var(--yellow); color: #000; border-color: var(--yellow); }
+    .sp-btn-mute:disabled { opacity: 0.3; cursor: default; }
+
+    .sp-timer {
+      text-align: center;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.9rem;
+      color: var(--text-dim);
+      padding: 4px 0;
+    }
+
+    .sp-timer.active {
+      color: var(--green);
+    }
+
+    /* Incoming call overlay */
+    .sp-incoming {
+      display: none;
+      padding: 16px;
+      text-align: center;
+    }
+
+    .sp-incoming.active {
+      display: block;
+    }
+
+    .sp-incoming-caller {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 1.1rem;
+      color: var(--text);
+      margin-bottom: 4px;
+    }
+
+    .sp-incoming-label {
+      font-size: 0.8rem;
+      color: var(--text-dim);
+      margin-bottom: 16px;
+      animation: sp-pulse 1.5s ease-in-out infinite;
+    }
+
+    .sp-incoming-btns {
+      display: flex;
+      gap: 12px;
+      justify-content: center;
+    }
+
+    .sp-btn-accept {
+      padding: 10px 24px;
+      background: var(--green-dim);
+      border: none;
+      color: #000;
+      font-weight: 700;
+      font-size: 0.85rem;
+      cursor: pointer;
+      border-radius: 6px;
+    }
+
+    .sp-btn-accept:hover { background: var(--green); }
+
+    .sp-btn-reject {
+      padding: 10px 24px;
+      background: var(--red);
+      border: none;
+      color: #fff;
+      font-weight: 700;
+      font-size: 0.85rem;
+      cursor: pointer;
+      border-radius: 6px;
+    }
+
+    .sp-btn-reject:hover { background: #ff2244; }
+
+    /* Toggle button in sidebar */
+    .sp-toggle-btn {
+      background: none;
+      border: 1px solid var(--border);
+      color: var(--text-dim);
+      cursor: pointer;
+      padding: 6px 10px;
+      border-radius: 6px;
+      font-size: 1.1rem;
+      transition: all 0.2s;
+      position: relative;
+    }
+
+    .sp-toggle-btn:hover {
+      background: var(--surface-elevated);
+      color: var(--accent);
+      border-color: var(--accent);
+    }
+
+    .sp-toggle-btn.active {
+      color: var(--green);
+      border-color: var(--green);
+    }
+
+    .sp-toggle-btn .sp-badge {
+      position: absolute;
+      top: -4px;
+      right: -4px;
+      width: 10px;
+      height: 10px;
+      background: var(--red);
+      border-radius: 50%;
+      display: none;
+      animation: sp-pulse 1s ease-in-out infinite;
+    }
+
+    .sp-toggle-btn .sp-badge.visible {
+      display: block;
+    }
+
+    /* Click-to-call icon next to phone numbers */
+    .sp-call-icon {
+      cursor: pointer;
+      color: var(--text-dimmer);
+      font-size: 0.85rem;
+      margin-left: 6px;
+      transition: color 0.2s;
+      vertical-align: middle;
+    }
+
+    .sp-call-icon:hover {
+      color: var(--green);
+    }
   </style>
 </head>
 <body>
@@ -1635,7 +2004,13 @@
     <!-- Sidebar -->
     <aside class="sidebar">
       <div class="sidebar-header">
-        <div class="sidebar-logo mono display">LEADRIPPER</div>
+        <div style="display: flex; align-items: center; justify-content: space-between;">
+          <div class="sidebar-logo mono display">LEADRIPPER</div>
+          <button class="sp-toggle-btn" onclick="toggleSoftphone()" title="Softphone">
+            📞
+            <div class="sp-badge" id="sp-incoming-badge"></div>
+          </button>
+        </div>
         <div class="sidebar-user mono" id="user-email">loading...</div>
       </div>
 
@@ -2526,6 +2901,35 @@
             </small>
           </div>
           <button class="btn-secondary" onclick="saveAutoCallSettings()">Save Auto-Call Settings</button>
+        </div>
+
+        <!-- Twilio Softphone Settings -->
+        <div class="card">
+          <div class="card-header">
+            <h2 class="card-title display">📞 Softphone / Twilio</h2>
+          </div>
+          <p style="color: var(--text-secondary); margin-bottom: 1rem;">
+            Connect your Twilio account to make and receive real phone calls directly from your browser.
+          </p>
+          <div class="form-group">
+            <label class="form-label">Twilio Account SID</label>
+            <input type="text" class="form-input mono" id="twilio-account-sid" placeholder="ACxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Twilio Auth Token</label>
+            <input type="password" class="form-input mono" id="twilio-auth-token" placeholder="Enter your Twilio Auth Token">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Twilio Phone Number (Caller ID)</label>
+            <input type="tel" class="form-input mono" id="twilio-phone-number" placeholder="+17867893136">
+            <small style="color: var(--text-dim); display: block; margin-top: 0.25rem;">
+              The Twilio number you own to place calls from
+            </small>
+          </div>
+          <div style="display: flex; gap: 0.5rem; align-items: center;">
+            <button class="btn-secondary" onclick="saveTwilioSettings()">Save Twilio Settings</button>
+            <span id="twilio-status" style="font-size: 0.8rem; color: var(--text-dim);"></span>
+          </div>
         </div>
 
         <!-- API Key Card -->
@@ -5138,6 +5542,17 @@ Available merge tags: {{business_name}}, {{first_name}}, {{email}}, {{phone}}, {
           }
         });
 
+        // Load Twilio softphone settings
+        if (settings.hasTwilioCredentials) {
+          document.getElementById('twilio-account-sid').placeholder = '••••••••';
+          document.getElementById('twilio-auth-token').placeholder = '••••••••';
+          document.getElementById('twilio-status').textContent = 'Connected';
+          document.getElementById('twilio-status').style.color = 'var(--green)';
+        }
+        if (settings.twilioPhoneNumber) {
+          document.getElementById('twilio-phone-number').value = settings.twilioPhoneNumber;
+        }
+
         // Load internal CRM-specific settings if applicable
         if (mode === 'internal') {
           if (settings.calendarTimezone) {
@@ -6151,7 +6566,7 @@ Available merge tags: {{business_name}}, {{first_name}}, {{email}}, {{phone}}, {
               <button class="expand-btn ${isExpanded ? 'expanded' : ''}" onclick="toggleLeadExpand(${lead.id})">▶</button>
             </td>
             <td class="mono">${lead.business_name || '-'}</td>
-            <td class="mono">${lead.phone || '-'}</td>
+            <td class="mono">${lead.phone ? lead.phone + '<span class="sp-call-icon" onclick="event.stopPropagation();spCallNumber(\'' + lead.phone.replace(/'/g, "\\'") + '\')" title="Call with Softphone">📞</span>' : '-'}</td>
             <td>${emailCell}</td>
             <td>${lead.city || '-'}${lead.state ? ', ' + lead.state : ''}</td>
             <td><span class="industry-badge">${lead.industry || '-'}</span></td>
@@ -8055,5 +8470,387 @@ Available merge tags: {{business_name}}, {{first_name}}, {{email}}, {{phone}}, {
     }
 
   </script>
+
+  <!-- Softphone Widget -->
+  <div id="softphone" class="softphone hidden">
+    <div class="softphone-header" onclick="if(document.getElementById('softphone').classList.contains('minimized')){toggleSoftphoneMinimize();}">
+      <span>Softphone</span>
+      <div class="sp-fab-icon">📞</div>
+      <div class="softphone-header-btns">
+        <button class="sp-minimize-btn" onclick="event.stopPropagation();toggleSoftphoneMinimize();" title="Minimize">_</button>
+        <button class="sp-close-btn" onclick="event.stopPropagation();toggleSoftphone();" title="Close">&times;</button>
+      </div>
+    </div>
+    <div class="softphone-body">
+      <div class="sp-status">
+        <div class="sp-status-dot" id="sp-status-dot"></div>
+        <span id="sp-status-text">Disconnected</span>
+      </div>
+
+      <!-- Incoming call overlay -->
+      <div class="sp-incoming" id="sp-incoming">
+        <div class="sp-incoming-label">Incoming Call</div>
+        <div class="sp-incoming-caller" id="sp-incoming-caller">Unknown</div>
+        <div class="sp-incoming-btns">
+          <button class="sp-btn-accept" onclick="spAcceptCall()">Accept</button>
+          <button class="sp-btn-reject" onclick="spRejectCall()">Reject</button>
+        </div>
+      </div>
+
+      <input type="text" class="sp-number-input" id="sp-number" placeholder="+1 (555) 123-4567" onkeydown="if(event.key==='Enter')spCall();">
+
+      <div class="sp-dialpad">
+        <button onclick="spDialpadPress('1')">1<span class="sp-key-sub">&nbsp;</span></button>
+        <button onclick="spDialpadPress('2')">2<span class="sp-key-sub">ABC</span></button>
+        <button onclick="spDialpadPress('3')">3<span class="sp-key-sub">DEF</span></button>
+        <button onclick="spDialpadPress('4')">4<span class="sp-key-sub">GHI</span></button>
+        <button onclick="spDialpadPress('5')">5<span class="sp-key-sub">JKL</span></button>
+        <button onclick="spDialpadPress('6')">6<span class="sp-key-sub">MNO</span></button>
+        <button onclick="spDialpadPress('7')">7<span class="sp-key-sub">PQRS</span></button>
+        <button onclick="spDialpadPress('8')">8<span class="sp-key-sub">TUV</span></button>
+        <button onclick="spDialpadPress('9')">9<span class="sp-key-sub">WXYZ</span></button>
+        <button onclick="spDialpadPress('*')">*</button>
+        <button onclick="spDialpadPress('0')">0<span class="sp-key-sub">+</span></button>
+        <button onclick="spDialpadPress('#')">#</button>
+      </div>
+
+      <div class="sp-controls">
+        <button class="sp-btn-call" id="sp-call-btn" onclick="spCall()" disabled>Call</button>
+        <button class="sp-btn-hangup" id="sp-hangup-btn" onclick="spHangup()" disabled>Hangup</button>
+        <button class="sp-btn-mute" id="sp-mute-btn" onclick="spMute()" disabled>Mute</button>
+      </div>
+
+      <div class="sp-timer" id="sp-timer">00:00</div>
+    </div>
+  </div>
+
+  <script>
+    // ===== SOFTPHONE =====
+    let spDevice = null;
+    let spConnection = null;
+    let spTimer = null;
+    let spSeconds = 0;
+    let spInitialized = false;
+    let spIncomingConn = null;
+
+    function toggleSoftphone() {
+      const el = document.getElementById('softphone');
+      if (el.classList.contains('hidden')) {
+        el.classList.remove('hidden');
+        el.classList.remove('minimized');
+        if (!spInitialized) {
+          initSoftphone();
+        }
+      } else {
+        el.classList.add('hidden');
+      }
+    }
+
+    function toggleSoftphoneMinimize() {
+      const el = document.getElementById('softphone');
+      el.classList.toggle('minimized');
+    }
+
+    async function initSoftphone() {
+      spSetStatus('Connecting...', '');
+
+      try {
+        // Load Twilio Client SDK if not already loaded
+        if (typeof Twilio === 'undefined' || !Twilio.Device) {
+          await loadTwilioSDK();
+        }
+
+        // Get token from our backend
+        const resp = await fetch(`${API_BASE}/twilio-token`, {
+          headers: { 'Authorization': `Bearer ${authToken}` }
+        });
+
+        const data = await resp.json();
+
+        if (!resp.ok) {
+          spSetStatus(data.error || 'Failed to get token', '');
+          return;
+        }
+
+        // Initialize Twilio Device (v1.x API)
+        Twilio.Device.setup(data.token, {
+          closeProtection: true,
+          enableRingingState: true
+        });
+        spDevice = Twilio.Device;
+
+        // Register event handlers
+        Twilio.Device.ready(function(device) {
+          spSetStatus('Ready', 'connected');
+          document.getElementById('sp-call-btn').disabled = false;
+          spInitialized = true;
+          document.querySelector('.sp-toggle-btn').classList.add('active');
+        });
+
+        Twilio.Device.error(function(error) {
+          console.error('Twilio Device error:', error);
+          spSetStatus('Error: ' + (error.message || 'Unknown'), '');
+        });
+
+        Twilio.Device.connect(function(conn) {
+          spConnection = conn;
+          spSetStatus('On Call', 'on-call');
+          document.getElementById('sp-call-btn').disabled = true;
+          document.getElementById('sp-hangup-btn').disabled = false;
+          document.getElementById('sp-mute-btn').disabled = false;
+          startCallTimer();
+        });
+
+        Twilio.Device.disconnect(function() {
+          spConnection = null;
+          spSetStatus('Ready', 'connected');
+          document.getElementById('sp-call-btn').disabled = false;
+          document.getElementById('sp-hangup-btn').disabled = true;
+          document.getElementById('sp-mute-btn').disabled = true;
+          document.getElementById('sp-mute-btn').classList.remove('muted');
+          document.getElementById('sp-mute-btn').textContent = 'Mute';
+          stopCallTimer();
+        });
+
+        Twilio.Device.incoming(function(conn) {
+          spIncomingConn = conn;
+          // Show incoming call UI
+          const callerInfo = conn.parameters.From || 'Unknown';
+          document.getElementById('sp-incoming-caller').textContent = callerInfo;
+          document.getElementById('sp-incoming').classList.add('active');
+          document.getElementById('sp-incoming-badge').classList.add('visible');
+          spSetStatus('Incoming Call', 'on-call');
+
+          // Auto-show softphone if hidden
+          const el = document.getElementById('softphone');
+          if (el.classList.contains('hidden') || el.classList.contains('minimized')) {
+            el.classList.remove('hidden');
+            el.classList.remove('minimized');
+          }
+
+          conn.on('cancel', function() {
+            document.getElementById('sp-incoming').classList.remove('active');
+            document.getElementById('sp-incoming-badge').classList.remove('visible');
+            spIncomingConn = null;
+            spSetStatus('Ready', 'connected');
+          });
+        });
+
+        Twilio.Device.cancel(function() {
+          document.getElementById('sp-incoming').classList.remove('active');
+          document.getElementById('sp-incoming-badge').classList.remove('visible');
+          spIncomingConn = null;
+        });
+
+        Twilio.Device.offline(function() {
+          spSetStatus('Offline', '');
+          document.getElementById('sp-call-btn').disabled = true;
+          document.querySelector('.sp-toggle-btn').classList.remove('active');
+        });
+
+      } catch (error) {
+        console.error('Softphone init error:', error);
+        spSetStatus('Failed to initialize: ' + error.message, '');
+      }
+    }
+
+    function loadTwilioSDK() {
+      return new Promise((resolve, reject) => {
+        const script = document.createElement('script');
+        script.src = 'https://sdk.twilio.com/js/client/releases/1.14/twilio.min.js';
+        script.onload = resolve;
+        script.onerror = () => reject(new Error('Failed to load Twilio SDK'));
+        document.head.appendChild(script);
+      });
+    }
+
+    function spSetStatus(text, dotClass) {
+      document.getElementById('sp-status-text').textContent = text;
+      const dot = document.getElementById('sp-status-dot');
+      dot.className = 'sp-status-dot';
+      if (dotClass) dot.classList.add(dotClass);
+    }
+
+    function spDialpadPress(digit) {
+      const input = document.getElementById('sp-number');
+      // If on a call, send DTMF
+      if (spConnection) {
+        spConnection.sendDigits(digit);
+      }
+      input.value += digit;
+    }
+
+    function spCall() {
+      if (!spDevice) {
+        showToast('Softphone not connected. Check your Twilio settings.', 'error');
+        return;
+      }
+
+      const rawNumber = document.getElementById('sp-number').value.trim();
+      if (!rawNumber) {
+        showToast('Enter a phone number to call', 'error');
+        return;
+      }
+
+      // Normalize to E.164 format
+      let number = rawNumber.replace(/[\s\-\(\)\.]/g, '');
+      if (!number.startsWith('+')) {
+        // Assume US if no country code
+        if (number.startsWith('1') && number.length === 11) {
+          number = '+' + number;
+        } else if (number.length === 10) {
+          number = '+1' + number;
+        } else {
+          number = '+' + number;
+        }
+      }
+
+      Twilio.Device.connect({ To: number });
+    }
+
+    function spHangup() {
+      Twilio.Device.disconnectAll();
+    }
+
+    function spMute() {
+      if (spConnection) {
+        const isMuted = spConnection.isMuted();
+        spConnection.mute(!isMuted);
+        const btn = document.getElementById('sp-mute-btn');
+        btn.classList.toggle('muted', !isMuted);
+        btn.textContent = !isMuted ? 'Unmute' : 'Mute';
+      }
+    }
+
+    function spAcceptCall() {
+      if (spIncomingConn) {
+        spIncomingConn.accept();
+        document.getElementById('sp-incoming').classList.remove('active');
+        document.getElementById('sp-incoming-badge').classList.remove('visible');
+        spIncomingConn = null;
+      }
+    }
+
+    function spRejectCall() {
+      if (spIncomingConn) {
+        spIncomingConn.reject();
+        document.getElementById('sp-incoming').classList.remove('active');
+        document.getElementById('sp-incoming-badge').classList.remove('visible');
+        spIncomingConn = null;
+        spSetStatus('Ready', 'connected');
+      }
+    }
+
+    function startCallTimer() {
+      spSeconds = 0;
+      const timerEl = document.getElementById('sp-timer');
+      timerEl.classList.add('active');
+      updateTimerDisplay();
+      spTimer = setInterval(() => {
+        spSeconds++;
+        updateTimerDisplay();
+      }, 1000);
+    }
+
+    function stopCallTimer() {
+      if (spTimer) {
+        clearInterval(spTimer);
+        spTimer = null;
+      }
+      document.getElementById('sp-timer').classList.remove('active');
+      // Keep the final time displayed for a moment, then reset
+      setTimeout(() => {
+        if (!spConnection) {
+          document.getElementById('sp-timer').textContent = '00:00';
+        }
+      }, 3000);
+    }
+
+    function updateTimerDisplay() {
+      const mins = Math.floor(spSeconds / 60).toString().padStart(2, '0');
+      const secs = (spSeconds % 60).toString().padStart(2, '0');
+      document.getElementById('sp-timer').textContent = `${mins}:${secs}`;
+    }
+
+    // Pre-fill softphone with a number and open it
+    function spCallNumber(phoneNumber) {
+      const el = document.getElementById('softphone');
+      el.classList.remove('hidden');
+      el.classList.remove('minimized');
+      document.getElementById('sp-number').value = phoneNumber;
+      if (!spInitialized) {
+        initSoftphone();
+      }
+    }
+
+    // Save Twilio settings
+    async function saveTwilioSettings() {
+      const accountSid = document.getElementById('twilio-account-sid').value.trim();
+      const authToken = document.getElementById('twilio-auth-token').value.trim();
+      const phoneNumber = document.getElementById('twilio-phone-number').value.trim();
+
+      if (!accountSid || !authToken || !phoneNumber) {
+        showToast('Please fill in all Twilio fields', 'error');
+        return;
+      }
+
+      const statusEl = document.getElementById('twilio-status');
+      statusEl.textContent = 'Saving...';
+      statusEl.style.color = 'var(--text-dim)';
+
+      try {
+        const payload = {};
+        if (accountSid && accountSid !== '••••••••') {
+          payload.twilioAccountSid = accountSid;
+        }
+        if (authToken && authToken !== '••••••••') {
+          payload.twilioAuthToken = authToken;
+        }
+        payload.twilioPhoneNumber = phoneNumber;
+
+        const response = await fetch(`${API_BASE}/update-settings`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${authToken}`
+          },
+          body: JSON.stringify(payload)
+        });
+
+        const result = await response.json();
+        if (result.success) {
+          statusEl.textContent = 'Saved!';
+          statusEl.style.color = 'var(--green)';
+          showToast('Twilio settings saved successfully', 'success');
+
+          // Mask the fields
+          document.getElementById('twilio-account-sid').value = '';
+          document.getElementById('twilio-account-sid').placeholder = '••••••••';
+          document.getElementById('twilio-auth-token').value = '';
+          document.getElementById('twilio-auth-token').placeholder = '••••••••';
+
+          // Re-initialize softphone if it was already open
+          if (spInitialized) {
+            spInitialized = false;
+            if (typeof Twilio !== 'undefined' && Twilio.Device) {
+              Twilio.Device.destroy();
+            }
+            spDevice = null;
+            initSoftphone();
+          }
+        } else {
+          statusEl.textContent = result.error || 'Failed';
+          statusEl.style.color = 'var(--red)';
+          showToast(result.error || 'Failed to save Twilio settings', 'error');
+        }
+      } catch (error) {
+        console.error('Save Twilio settings error:', error);
+        statusEl.textContent = 'Error';
+        statusEl.style.color = 'var(--red)';
+        showToast('Failed to save Twilio settings', 'error');
+      }
+    }
+  </script>
+
 </body>
 </html>

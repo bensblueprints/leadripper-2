@@ -68,7 +68,8 @@ exports.handler = async (event, context) => {
           aiCallingEnabled: false, autoCallEnabled: false, autoCallAgentId: null,
           autoFollowupEnabled: false, followupAgentId: null,
           crmMode: 'ghl', emailSignature: null,
-          calendarTimezone: null, calendarWorkingHours: null
+          calendarTimezone: null, calendarWorkingHours: null,
+          twilioAccountSid: null, twilioPhoneNumber: null, hasTwilioCredentials: false
         })
       };
     }
@@ -110,7 +111,10 @@ exports.handler = async (event, context) => {
         crmMode: settings.crm_mode || 'ghl',
         emailSignature: settings.email_signature || null,
         calendarTimezone: settings.calendar_timezone || null,
-        calendarWorkingHours: settings.calendar_working_hours ? JSON.parse(settings.calendar_working_hours) : null
+        calendarWorkingHours: settings.calendar_working_hours ? JSON.parse(settings.calendar_working_hours) : null,
+        twilioAccountSid: settings.twilio_account_sid ? '••••••••' : null,
+        twilioPhoneNumber: settings.twilio_phone_number || null,
+        hasTwilioCredentials: !!(settings.twilio_account_sid && settings.twilio_auth_token && settings.twilio_phone_number)
       })
     };
   } catch (error) {

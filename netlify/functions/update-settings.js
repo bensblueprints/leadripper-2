@@ -49,7 +49,7 @@ exports.handler = async (event, context) => {
   }
 
   try {
-    const { ghlApiKey, ghlLocationId, ghlAutoSync, ghlPipelineId, ghlStageId, ghlIndustryPipelines, ghlDripEnabled, ghlDripInterval, resendApiKey, webhookUrl, name, company, elevenlabsApiKey, elevenlabsDefaultVoice, aiCallingEnabled, autoCallEnabled, autoCallAgentId, autoFollowupEnabled, followupAgentId, crmMode, emailSignature, calendarTimezone, calendarWorkingHours } = JSON.parse(event.body);
+    const { ghlApiKey, ghlLocationId, ghlAutoSync, ghlPipelineId, ghlStageId, ghlIndustryPipelines, ghlDripEnabled, ghlDripInterval, resendApiKey, webhookUrl, name, company, elevenlabsApiKey, elevenlabsDefaultVoice, aiCallingEnabled, autoCallEnabled, autoCallAgentId, autoFollowupEnabled, followupAgentId, crmMode, emailSignature, calendarTimezone, calendarWorkingHours, twilioAccountSid, twilioAuthToken, twilioPhoneNumber } = JSON.parse(event.body);
 
     // Update user profile if provided
     if (name !== undefined || company !== undefined) {
@@ -76,7 +76,7 @@ exports.handler = async (event, context) => {
     }
 
     // Update settings if provided
-    const hasSettingsUpdate = [ghlApiKey, ghlLocationId, ghlAutoSync, ghlPipelineId, ghlStageId, ghlIndustryPipelines, ghlDripEnabled, ghlDripInterval, resendApiKey, webhookUrl, elevenlabsApiKey, elevenlabsDefaultVoice, aiCallingEnabled, autoCallEnabled, autoCallAgentId, autoFollowupEnabled, followupAgentId, crmMode, emailSignature, calendarTimezone, calendarWorkingHours].some(v => v !== undefined);
+    const hasSettingsUpdate = [ghlApiKey, ghlLocationId, ghlAutoSync, ghlPipelineId, ghlStageId, ghlIndustryPipelines, ghlDripEnabled, ghlDripInterval, resendApiKey, webhookUrl, elevenlabsApiKey, elevenlabsDefaultVoice, aiCallingEnabled, autoCallEnabled, autoCallAgentId, autoFollowupEnabled, followupAgentId, crmMode, emailSignature, calendarTimezone, calendarWorkingHours, twilioAccountSid, twilioAuthToken, twilioPhoneNumber].some(v => v !== undefined);
     if (hasSettingsUpdate) {
       // First ensure settings row exists
       await pool.query(
@@ -194,6 +194,25 @@ exports.handler = async (event, context) => {
         settingsValues.push(JSON.stringify(calendarWorkingHours));
         paramIndex++;
       }
+      if (twilioAccountSid !== undefined) {
+        settingsUpdates.push(`twilio_account_sid = $${paramIndex}`);
+        settingsValues.push(twilioAccountSid);
+        paramIndex++;
+        // Clear auto-generated keys when SID changes so they get re-created
+        settingsUpdates.push(`twilio_twiml_app_sid = NULL`);
+        settingsUpdates.push(`twilio_api_key_sid = NULL`);
+        settingsUpdates.push(`twilio_api_key_secret = NULL`);
+      }
+      if (twilioAuthToken !== undefined) {
+        settingsUpdates.push(`twilio_auth_token = $${paramIndex}`);
+        settingsValues.push(twilioAuthToken);
+        paramIndex++;
+      }
+      if (twilioPhoneNumber !== undefined) {
+        settingsUpdates.push(`twilio_phone_number = $${paramIndex}`);
+        settingsValues.push(twilioPhoneNumber);
+        paramIndex++;
+      }
 
       if (settingsUpdates.length > 0) {
         settingsValues.push(decoded.userId);
@@ -255,7 +274,10 @@ exports.handler = async (event, context) => {
           crmMode: settings.crm_mode || 'ghl',
           emailSignature: settings.email_signature || null,
           calendarTimezone: settings.calendar_timezone || null,
-          calendarWorkingHours: settings.calendar_working_hours ? JSON.parse(settings.calendar_working_hours) : null
+          calendarWorkingHours: settings.calendar_working_hours ? JSON.parse(settings.calendar_working_hours) : null,
+          twilioAccountSid: settings.twilio_account_sid ? '••••••••' : null,
+          twilioPhoneNumber: settings.twilio_phone_number || null,
+          hasTwilioCredentials: !!(settings.twilio_account_sid && settings.twilio_auth_token && settings.twilio_phone_number)
         }
       })
     };
