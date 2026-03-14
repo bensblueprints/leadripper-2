@@ -5475,7 +5475,7 @@ I noticed {{business_name}} in {{city}} and wanted to reach out..."></textarea>
             headers: { 'Authorization': `Bearer ${authToken}` }
           });
           const settings = await resp.json();
-          if (settings.elevenlabsApiKey && !settings.elevenlabsApiKey.startsWith('••')) {
+          if (settings.elevenlabsApiKey && !settings.elevenlabsApiKey.includes('····')) {
             return await fetchAndPopulateVoices(select, settings.elevenlabsApiKey, selectedVoiceId);
           }
         } catch (e) {}
@@ -6296,7 +6296,8 @@ I noticed {{business_name}} in {{city}} and wanted to reach out..."></textarea>
 
         // Load ElevenLabs and AI Calling settings (available in ALL modes)
         if (settings.elevenlabsApiKey) {
-          document.getElementById('elevenlabs-api-key').value = settings.elevenlabsApiKey;
+          document.getElementById('elevenlabs-api-key').placeholder = settings.elevenlabsApiKey;
+          document.getElementById('elevenlabs-api-key').value = '';
           // Auto-load voices from ElevenLabs API
           loadElevenLabsVoicesWithKey(settings.elevenlabsApiKey, settings.elevenlabsDefaultVoice);
         }
