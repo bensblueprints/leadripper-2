@@ -6925,6 +6925,48 @@ I noticed {{business_name}} in {{city}} and wanted to reach out..."></textarea>
 
     // Score a single lead's website
     // =====================================
+    // EDIT LEAD INLINE
+    // =====================================
+    async function saveLeadEdit(leadId) {
+      const contactName = document.getElementById('edit-name-' + leadId)?.value?.trim();
+      const email = document.getElementById('edit-email-' + leadId)?.value?.trim();
+      const phone = document.getElementById('edit-phone-' + leadId)?.value?.trim();
+      const businessName = document.getElementById('edit-biz-' + leadId)?.value?.trim();
+
+      try {
+        const resp = await fetch(`${API_BASE}/cli-api`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${authToken}` },
+          body: JSON.stringify({
+            action: 'update_lead',
+            leadId,
+            email: email || undefined,
+            contactName: contactName || undefined,
+            phone: phone || undefined,
+            businessName: businessName || undefined
+          })
+        });
+        const data = await resp.json();
+        if (data.success && data.updated) {
+          // Update local data
+          const lead = leadsData.find(l => l.id === leadId);
+          if (lead) {
+            if (contactName !== undefined) lead.contact_name = contactName;
+            if (email) lead.email = email;
+            if (phone) lead.phone = phone;
+            if (businessName) lead.business_name = businessName;
+          }
+          renderLeadsTable();
+          showToast('Lead updated', 'success');
+        } else {
+          showToast(data.error || 'Failed to update', 'error');
+        }
+      } catch (e) {
+        showToast('Failed to save: ' + e.message, 'error');
+      }
+    }
+
+    // =====================================
     // CONTACT TAGS
     // =====================================
     async function addTagToLeadPrompt(leadId) {
@@ -7302,7 +7344,7 @@ I noticed {{business_name}} in {{city}} and wanted to reach out..."></textarea>
             <td>
               <button class="expand-btn ${isExpanded ? 'expanded' : ''}" onclick="toggleLeadExpand(${lead.id})">▶</button>
             </td>
-            <td class="mono">${lead.business_name || '-'}</td>
+            <td class="mono">${lead.business_name || '-'}${lead.contact_name ? `<div style="font-size:0.7rem;color:var(--text-dim);font-weight:normal;">👤 ${escapeHtml(lead.contact_name)}</div>` : ''}</td>
             <td class="mono">${lead.phone ? lead.phone + '<span class="sp-call-icon" onclick="event.stopPropagation();spCallNumber(\'' + lead.phone.replace(/'/g, "\\'") + '\')" title="Call with Softphone">📞</span>' : '-'}</td>
             <td>${emailCell}</td>
             <td>${lead.city || '-'}${lead.state ? ', ' + lead.state : ''}</td>
@@ -7319,6 +7361,28 @@ I noticed {{business_name}} in {{city}} and wanted to reach out..."></textarea>
             <tr class="lead-details-row">
               <td colspan="9">
                 <div class="lead-details">
+                  <div class="detail-group" style="grid-column: 1 / -1; border-bottom: 1px solid var(--border); padding-bottom: 0.75rem; margin-bottom: 0.5rem;">
+                    <div class="detail-label" style="margin-bottom: 0.5rem; font-size: 0.8rem; font-weight: 600;">Edit Lead</div>
+                    <div style="display: grid; grid-template-columns: 1fr 1fr 1fr 1fr auto; gap: 0.5rem; align-items: end;">
+                      <div>
+                        <label style="font-size: 0.65rem; color: var(--text-dim); display: block; margin-bottom: 2px;">Contact Name</label>
+                        <input type="text" class="form-input mono" id="edit-name-${lead.id}" value="${escapeHtml(lead.contact_name || '')}" placeholder="Owner / Decision Maker" style="font-size: 0.8rem; padding: 0.35rem 0.5rem;">
+                      </div>
+                      <div>
+                        <label style="font-size: 0.65rem; color: var(--text-dim); display: block; margin-bottom: 2px;">Email</label>
+                        <input type="email" class="form-input mono" id="edit-email-${lead.id}" value="${escapeHtml(lead.email || '')}" placeholder="owner@business.com" style="font-size: 0.8rem; padding: 0.35rem 0.5rem;">
+                      </div>
+                      <div>
+                        <label style="font-size: 0.65rem; color: var(--text-dim); display: block; margin-bottom: 2px;">Phone</label>
+                        <input type="text" class="form-input mono" id="edit-phone-${lead.id}" value="${escapeHtml(lead.phone || '')}" placeholder="(555) 123-4567" style="font-size: 0.8rem; padding: 0.35rem 0.5rem;">
+                      </div>
+                      <div>
+                        <label style="font-size: 0.65rem; color: var(--text-dim); display: block; margin-bottom: 2px;">Business Name</label>
+                        <input type="text" class="form-input mono" id="edit-biz-${lead.id}" value="${escapeHtml(lead.business_name || '')}" placeholder="Business Name" style="font-size: 0.8rem; padding: 0.35rem 0.5rem;">
+                      </div>
+                      <button class="btn" onclick="event.stopPropagation();saveLeadEdit(${lead.id})" style="font-size: 0.8rem; padding: 0.35rem 1rem; white-space: nowrap;">Save</button>
+                    </div>
+                  </div>
                   <div class="detail-group">
                     <div class="detail-label">Full Address</div>
                     <div class="detail-value">${lead.address || '-'}</div>
