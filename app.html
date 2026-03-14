@@ -7224,15 +7224,23 @@ I noticed {{business_name}} in {{city}} and wanted to reach out..."></textarea>
         return;
       }
 
-      // Fetch ALL leads without emails from the backend (not just current page)
-      showToast('Fetching all leads without emails...', 'info');
+      // Fetch leads without emails in batches to avoid timeout
+      showToast('Fetching leads without emails...', 'info');
       let leadsToScrape = [];
       try {
-        const resp = await fetch(`${API_BASE}/get-leads?limit=10000&offset=0`, {
-          headers: { 'Authorization': `Bearer ${authToken}` }
-        });
-        const allData = await resp.json();
-        leadsToScrape = (allData.leads || []).filter(l => !l.email && l.website);
+        let offset = 0;
+        const batchSize = 200;
+        while (true) {
+          const resp = await fetch(`${API_BASE}/get-leads?limit=${batchSize}&offset=${offset}`, {
+            headers: { 'Authorization': `Bearer ${authToken}` }
+          });
+          if (!resp.ok) throw new Error('HTTP ' + resp.status);
+          const batch = await resp.json();
+          const filtered = (batch.leads || []).filter(l => !l.email && l.website);
+          leadsToScrape = leadsToScrape.concat(filtered);
+          if (!batch.leads || batch.leads.length < batchSize) break;
+          offset += batchSize;
+        }
       } catch (e) {
         showToast('Failed to fetch leads: ' + e.message, 'error');
         return;
@@ -7313,15 +7321,23 @@ I noticed {{business_name}} in {{city}} and wanted to reach out..."></textarea>
         return;
       }
 
-      // Fetch ALL leads with websites from the backend (not just current page)
-      showToast('Fetching all leads with websites...', 'info');
+      // Fetch leads with unscored websites in batches
+      showToast('Fetching leads with websites...', 'info');
       let leadsToScore = [];
       try {
-        const resp = await fetch(`${API_BASE}/get-leads?limit=10000&offset=0`, {
-          headers: { 'Authorization': `Bearer ${authToken}` }
-        });
-        const allData = await resp.json();
-        leadsToScore = (allData.leads || []).filter(l => l.website && l.website_score == null);
+        let offset = 0;
+        const batchSize = 200;
+        while (true) {
+          const resp = await fetch(`${API_BASE}/get-leads?limit=${batchSize}&offset=${offset}`, {
+            headers: { 'Authorization': `Bearer ${authToken}` }
+          });
+          if (!resp.ok) throw new Error('HTTP ' + resp.status);
+          const batch = await resp.json();
+          const filtered = (batch.leads || []).filter(l => l.website && l.website_score == null);
+          leadsToScore = leadsToScore.concat(filtered);
+          if (!batch.leads || batch.leads.length < batchSize) break;
+          offset += batchSize;
+        }
       } catch (e) {
         showToast('Failed to fetch leads: ' + e.message, 'error');
         return;
