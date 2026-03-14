@@ -627,8 +627,8 @@
       border: none;
       color: var(--text-dim);
       cursor: pointer;
-      padding: 4px 8px;
-      font-size: 1rem;
+      padding: 6px 10px;
+      font-size: 1.2rem;
       transition: transform 0.2s;
     }
 
@@ -639,6 +639,14 @@
     .expand-btn.expanded {
       transform: rotate(90deg);
       color: var(--accent);
+    }
+
+    /* Bigger checkboxes in leads table */
+    .lead-checkbox, #select-all-leads {
+      width: 18px !important;
+      height: 18px !important;
+      cursor: pointer;
+      accent-color: var(--accent);
     }
 
     .lead-details-row {
@@ -2461,13 +2469,17 @@
           <button class="btn-mini" onclick="clearFilters()">Clear</button>
         </div>
 
-        <div id="lead-list-actions" style="display:none; background: var(--accent-dim, #1a3a5c); border: 1px solid var(--accent, #4a9eff); border-radius: 4px; padding: 0.75rem; margin-bottom: 1rem; align-items: center; gap: 1rem; flex-wrap: wrap;">
+        <div id="lead-list-actions" style="display:none; background: var(--accent-dim, #1a3a5c); border: 1px solid var(--accent, #4a9eff); border-radius: 4px; padding: 0.75rem; margin-bottom: 1rem; align-items: center; gap: 0.75rem; flex-wrap: wrap;">
           <span id="selected-count" class="mono" style="font-weight: 600;">0 selected</span>
           <select class="form-input mono" id="add-to-list-select" style="width: auto; min-width: 200px;">
             <option value="">-- Add to List --</option>
           </select>
           <button class="btn-secondary" onclick="addSelectedToList()" style="font-size: 0.85rem;">Add to List</button>
           <button class="btn-secondary" onclick="createNewListFromSelected()" style="font-size: 0.85rem;">+ New List</button>
+          <select class="form-input mono" id="add-to-pipeline-select" style="width: auto; min-width: 200px;">
+            <option value="">-- Add to Pipeline --</option>
+          </select>
+          <button class="btn-secondary" onclick="addSelectedToPipeline()" style="font-size: 0.85rem;">Add to Pipeline</button>
           <button class="btn-secondary" onclick="bulkAddTag()" style="font-size: 0.85rem;">+ Tag</button>
           <button class="btn-bulk scrape" onclick="scrapeSelectedEmails()" style="font-size: 0.85rem;">Scrape Emails</button>
           <button class="btn" onclick="callSelectedLeads()" style="font-size: 0.85rem;">Call Selected</button>
@@ -10629,15 +10641,72 @@ I noticed {{business_name}} in {{city}} and wanted to reach out..."></textarea>
           }
         }
 
-        // Update the dropdown
+        // Update the list dropdown
         const select = document.getElementById('add-to-list-select');
         if (select) {
           select.innerHTML = '<option value="">-- Add to List --</option>' +
             lists.map(l => `<option value="${l.id}">${l.name} (${l.item_count || 0})</option>`).join('');
         }
+
+        // Also populate pipeline dropdown
+        try {
+          const pipeResp = await fetch(`${API_BASE}/crm-pipelines`, {
+            headers: { 'Authorization': `Bearer ${authToken}` }
+          });
+          if (pipeResp.ok) {
+            const pipeData = await pipeResp.json();
+            const pipelines = pipeData.pipelines || [];
+            const pipeSelect = document.getElementById('add-to-pipeline-select');
+            if (pipeSelect) {
+              let opts = '<option value="">-- Add to Pipeline --</option>';
+              for (const pipe of pipelines) {
+                const stages = pipe.stages || [];
+                for (const stage of stages) {
+                  opts += `<option value="${pipe.id}:${stage.id}">${escapeHtml(pipe.name)} → ${escapeHtml(stage.name)}</option>`;
+                }
+              }
+              pipeSelect.innerHTML = opts;
+            }
+          }
+        } catch {}
       } catch (error) {
         console.error('Failed to load lists:', error);
       }
+    }
+
+    async function addSelectedToPipeline() {
+      const val = document.getElementById('add-to-pipeline-select')?.value;
+      if (!val) { showToast('Select a pipeline stage first', 'warning'); return; }
+      if (selectedLeadIds.size === 0) { showToast('No leads selected', 'warning'); return; }
+
+      const [pipelineId, stageId] = val.split(':');
+      let added = 0;
+
+      for (const leadId of selectedLeadIds) {
+        const lead = leadsData.find(l => l.id === leadId);
+        if (!lead) continue;
+
+        try {
+          await fetch(`${API_BASE}/crm-deals`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${authToken}` },
+            body: JSON.stringify({
+              pipelineId: parseInt(pipelineId),
+              stageId: parseInt(stageId),
+              title: lead.business_name || 'Lead #' + leadId,
+              value: 0,
+              contactName: lead.contact_name || lead.business_name || '',
+              contactEmail: lead.email || '',
+              contactPhone: lead.phone || '',
+              company: lead.business_name || '',
+              leadId: leadId
+            })
+          });
+          added++;
+        } catch {}
+      }
+
+      showToast(`Added ${added} leads to pipeline`, 'success');
     }
 
     async function addSelectedToList() {
