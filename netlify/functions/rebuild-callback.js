@@ -67,10 +67,10 @@ exports.handler = async (event) => {
     if (preview_url) { updates.push(`rebuild_preview_url = $${idx++}`); values.push(preview_url); }
     if (new_website_url) { updates.push(`rebuilt_website_url = $${idx++}`); values.push(new_website_url); }
 
-    // If complete, also update the main website field
+    // Do NOT overwrite the original website URL — keep it as-is
+    // The rebuilt URL is stored in rebuilt_website_url / rebuild_preview_url
     if (status === 'complete' && new_website_url) {
-      updates.push(`website = $${idx++}`);
-      values.push(new_website_url);
+      updates.push(`website_rebuilt_at = NOW()`);
     }
 
     values.push(lead_id);
