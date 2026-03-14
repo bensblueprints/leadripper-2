@@ -6162,7 +6162,7 @@ I noticed {{business_name}} in {{city}} and wanted to reach out..."></textarea>
     }
 
     // Update Dashboard
-    function updateDashboard() {
+    async function updateDashboard() {
       const isUnlimited = currentUser.leadsLimit === -1;
       const limitDisplay = isUnlimited ? 'Unlimited' : (currentUser.leadsLimit || 50);
 
@@ -6170,9 +6170,30 @@ I noticed {{business_name}} in {{city}} and wanted to reach out..."></textarea>
       document.getElementById('stat-leads-used').textContent = currentUser.leadsUsed || 0;
       document.getElementById('stat-leads-limit').textContent = isUnlimited ? '/ Unlimited' : `/ ${limitDisplay} limit`;
 
-      document.getElementById('sub-plan').textContent = (currentUser.plan || 'free').toUpperCase();
-      document.getElementById('sub-limit').textContent = limitDisplay;
-      document.getElementById('sub-used').textContent = currentUser.leadsUsed || 0;
+      const subPlan = document.getElementById('sub-plan');
+      const subLimit = document.getElementById('sub-limit');
+      const subUsed = document.getElementById('sub-used');
+      if (subPlan) subPlan.textContent = (currentUser.plan || 'free').toUpperCase();
+      if (subLimit) subLimit.textContent = limitDisplay;
+      if (subUsed) subUsed.textContent = currentUser.leadsUsed || 0;
+
+      // Fetch live stats from get-leads
+      try {
+        const resp = await fetch(`${API_BASE}/get-leads?limit=1`, {
+          headers: { 'Authorization': `Bearer ${authToken}` }
+        });
+        if (resp.ok) {
+          const data = await resp.json();
+          const totalEl = document.getElementById('stat-total-leads');
+          if (totalEl) totalEl.textContent = data.total || 0;
+
+          const citiesEl = document.getElementById('stat-cities');
+          if (citiesEl) citiesEl.textContent = data.availableCities?.length || 0;
+
+          const leadsUsedEl = document.getElementById('stat-leads-used');
+          if (leadsUsedEl) leadsUsedEl.textContent = data.total || currentUser.leadsUsed || 0;
+        }
+      } catch {}
     }
 
     // Leads state
