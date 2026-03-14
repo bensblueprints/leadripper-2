@@ -8083,7 +8083,7 @@ I noticed {{business_name}} in {{city}} and wanted to reach out..."></textarea>
             <td>
               <button class="expand-btn ${isExpanded ? 'expanded' : ''}" onclick="toggleLeadExpand(${lead.id})">▶</button>
             </td>
-            <td class="mono">${lead.business_name || '-'}${lead.contact_name ? `<div style="font-size:0.7rem;color:var(--text-dim);font-weight:normal;">👤 ${escapeHtml(lead.contact_name)}</div>` : ''}</td>
+            <td class="mono">${lead.business_name || '-'}<a href="https://www.google.com/maps/search/${encodeURIComponent((lead.business_name || '') + ' ' + (lead.city || '') + ' ' + (lead.state || ''))}" target="_blank" onclick="event.stopPropagation()" style="margin-left:4px;text-decoration:none;font-size:0.7rem;" title="View on Google Maps">📍</a>${lead.contact_name ? `<div style="font-size:0.7rem;color:var(--text-dim);font-weight:normal;">👤 ${escapeHtml(lead.contact_name)}</div>` : ''}</td>
             <td class="mono">${lead.phone ? lead.phone + '<span class="sp-call-icon" onclick="event.stopPropagation();spCallNumber(\'' + lead.phone.replace(/'/g, "\\'") + '\')" title="Call with Softphone">📞</span>' : '-'}</td>
             <td>${emailCell}</td>
             <td>${lead.city || '-'}${lead.state ? ', ' + lead.state : ''}</td>
@@ -8129,6 +8129,10 @@ I noticed {{business_name}} in {{city}} and wanted to reach out..."></textarea>
                   <div class="detail-group">
                     <div class="detail-label">Website</div>
                     <div class="detail-value">${lead.website ? `<a href="${lead.website}" target="_blank">${lead.website}</a>` : '-'}</div>
+                  </div>
+                  <div class="detail-group">
+                    <div class="detail-label">Google Business</div>
+                    <div class="detail-value"><a href="https://www.google.com/maps/search/${encodeURIComponent((lead.business_name || '') + ' ' + (lead.city || '') + ' ' + (lead.state || ''))}" target="_blank" style="color:var(--accent);text-decoration:none;display:inline-flex;align-items:center;gap:4px;">📍 View on Google Maps</a></div>
                   </div>
                   <div class="detail-group">
                     <div class="detail-label">Rating</div>
