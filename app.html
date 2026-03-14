@@ -449,6 +449,59 @@
       box-shadow: 0 0 15px var(--accent-glow);
     }
 
+    .btn-bulk.score-sites {
+      background: #6c5ce7;
+      color: var(--text);
+    }
+
+    .btn-bulk.score-sites:hover:not(:disabled) {
+      background: #7d6ff0;
+      box-shadow: 0 0 15px rgba(108, 92, 231, 0.5);
+    }
+
+    /* Website Score Badge */
+    .website-score-badge {
+      display: inline-block;
+      padding: 2px 8px;
+      border-radius: 3px;
+      font-size: 0.75rem;
+      font-weight: 700;
+      font-family: 'JetBrains Mono', monospace;
+      letter-spacing: 0.5px;
+      min-width: 42px;
+      text-align: center;
+    }
+
+    .website-score-badge.grade-a {
+      background: rgba(0, 255, 65, 0.15);
+      color: var(--green);
+      border: 1px solid rgba(0, 255, 65, 0.3);
+    }
+
+    .website-score-badge.grade-b {
+      background: rgba(0, 255, 65, 0.1);
+      color: var(--green-dim);
+      border: 1px solid rgba(0, 204, 51, 0.3);
+    }
+
+    .website-score-badge.grade-c {
+      background: rgba(255, 204, 0, 0.15);
+      color: var(--yellow);
+      border: 1px solid rgba(255, 204, 0, 0.3);
+    }
+
+    .website-score-badge.grade-d {
+      background: rgba(255, 62, 0, 0.15);
+      color: var(--accent);
+      border: 1px solid rgba(255, 62, 0, 0.3);
+    }
+
+    .website-score-badge.grade-f {
+      background: rgba(255, 0, 51, 0.15);
+      color: var(--red);
+      border: 1px solid rgba(255, 0, 51, 0.3);
+    }
+
     /* Bulk Progress Bar */
     .bulk-progress {
       margin-top: 16px;
@@ -1762,6 +1815,7 @@
             <div class="header-actions">
               <button class="btn" onclick="addNoEmailToCallList()" style="background: var(--accent); font-size: 0.85rem;">📞 Add No-Email Leads to Call List</button>
               <button class="btn-bulk scrape" id="scrape-all-btn" onclick="scrapeAllEmails()">🔍 Scrape All Emails</button>
+              <button class="btn-bulk score-sites" id="score-sites-btn" onclick="scoreAllWebsites()">🌐 Score Websites</button>
               <button class="btn-bulk validate" id="validate-all-btn" onclick="validateAllEmails()">✓ Validate All</button>
               <button class="btn-secondary" id="export-leads-btn">⬇ Export CSV</button>
             </div>
@@ -1831,12 +1885,13 @@
                   <th>Email</th>
                   <th>City</th>
                   <th>Industry</th>
+                  <th>Score</th>
                   <th>Actions</th>
                 </tr>
               </thead>
               <tbody id="leads-table-body">
                 <tr>
-                  <td colspan="6" class="text-center">
+                  <td colspan="9" class="text-center">
                     <div class="empty-state">
                       <div class="empty-icon">📋</div>
                       <div class="empty-title">No leads yet</div>
@@ -4827,7 +4882,7 @@ Available merge tags: {{business_name}}, {{first_name}}, {{email}}, {{phone}}, {
       // Show loading state
       tbody.innerHTML = `
         <tr>
-          <td colspan="7" class="text-center">
+          <td colspan="9" class="text-center">
             <div class="empty-state">
               <div class="empty-icon">⏳</div>
               <div class="empty-title">Loading leads...</div>
@@ -4875,7 +4930,7 @@ Available merge tags: {{business_name}}, {{first_name}}, {{email}}, {{phone}}, {
         console.error('Error loading leads:', error);
         tbody.innerHTML = `
           <tr>
-            <td colspan="7" class="text-center">
+            <td colspan="9" class="text-center">
               <div class="empty-state">
                 <div class="empty-icon">⚠️</div>
                 <div class="empty-title">Error loading leads</div>
@@ -5115,6 +5170,87 @@ Available merge tags: {{business_name}}, {{first_name}}, {{email}}, {{phone}}, {
       showToast(`Scraping complete! Found ${bulkSuccessCount} emails, ${bulkFailCount} failed`, bulkSuccessCount > 0 ? 'success' : 'warning');
     }
 
+    // Score All Websites
+    async function scoreAllWebsites() {
+      if (bulkOperationActive) {
+        showToast('Another bulk operation is already running', 'warning');
+        return;
+      }
+
+      // Find leads with websites that haven't been scored yet
+      const leadsToScore = leadsData.filter(l => l.website && l.website_score == null);
+      if (leadsToScore.length === 0) {
+        showToast('All leads with websites have been scored!', 'info');
+        return;
+      }
+
+      bulkOperationActive = true;
+      bulkOperationCancelled = false;
+      bulkProcessed = 0;
+      bulkTotal = leadsToScore.length;
+      bulkSuccessCount = 0;
+      bulkFailCount = 0;
+
+      document.getElementById('scrape-all-btn').disabled = true;
+      document.getElementById('score-sites-btn').disabled = true;
+      document.getElementById('validate-all-btn').disabled = true;
+
+      updateBulkProgress('Scoring websites...', 0, bulkTotal, 'Starting...');
+
+      let gradeF = 0;
+      let gradeD = 0;
+
+      for (const lead of leadsToScore) {
+        if (bulkOperationCancelled) {
+          break;
+        }
+
+        updateBulkProgress('Scoring websites...', bulkProcessed, bulkTotal, `Analyzing: ${lead.business_name}`);
+
+        try {
+          const response = await fetch(`${API_BASE}/analyze-website`, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': `Bearer ${authToken}`
+            },
+            body: JSON.stringify({ url: lead.website, leadId: lead.id })
+          });
+
+          const data = await response.json();
+
+          if (response.ok && data.success) {
+            lead.website_score = data.score;
+            lead.website_grade = data.grade;
+            lead.website_analyzed_at = data.analyzedAt;
+            bulkSuccessCount++;
+            if (data.grade === 'F') gradeF++;
+            if (data.grade === 'D') gradeD++;
+          } else {
+            bulkFailCount++;
+          }
+        } catch (error) {
+          console.error('Score error for lead', lead.id, error);
+          bulkFailCount++;
+        }
+
+        bulkProcessed++;
+        updateBulkProgress('Scoring websites...', bulkProcessed, bulkTotal, `Scored: ${bulkSuccessCount} | Failed: ${bulkFailCount} | 🔥 Needs Website: ${gradeF}`);
+        renderLeadsTable();
+
+        // Small delay between requests
+        await new Promise(r => setTimeout(r, 800));
+      }
+
+      bulkOperationActive = false;
+      document.getElementById('scrape-all-btn').disabled = false;
+      document.getElementById('score-sites-btn').disabled = false;
+      document.getElementById('validate-all-btn').disabled = false;
+
+      setTimeout(hideBulkProgress, 5000);
+      showToast(`Website scoring complete! ${bulkSuccessCount} analyzed. ${gradeF} need new websites (Grade F), ${gradeD} poor websites (Grade D)`, 'success');
+    }
+
     // Validate All Emails (cron-style with rate limiting)
     async function validateAllEmails() {
       if (bulkOperationActive) {
@@ -5270,6 +5406,60 @@ Available merge tags: {{business_name}}, {{first_name}}, {{email}}, {{phone}}, {
       }, 4000);
     }
 
+    // Get website score badge for a lead
+    function getWebsiteScoreBadge(lead) {
+      if (lead.website_score == null) {
+        if (!lead.website) return '<span style="color: var(--text-dimmer);">-</span>';
+        return `<button class="btn-action scrape" style="font-size: 0.7rem; padding: 2px 6px;" onclick="event.stopPropagation(); scoreWebsiteForLead(${lead.id})">Analyze</button>`;
+      }
+      const score = lead.website_score;
+      const grade = lead.website_grade || '?';
+      let gradeClass = 'grade-f';
+      if (score >= 80) gradeClass = 'grade-a';
+      else if (score >= 65) gradeClass = 'grade-b';
+      else if (score >= 50) gradeClass = 'grade-c';
+      else if (score >= 30) gradeClass = 'grade-d';
+      return `<span class="website-score-badge ${gradeClass}" title="Website Score: ${score}/100">${grade} ${score}</span>`;
+    }
+
+    // Score a single lead's website
+    async function scoreWebsiteForLead(leadId) {
+      const lead = leadsData.find(l => l.id === leadId);
+      if (!lead || !lead.website) {
+        showToast('No website URL for this lead', 'warning');
+        return;
+      }
+
+      showToast(`Analyzing ${lead.business_name}...`, 'info');
+
+      try {
+        const response = await fetch(`${API_BASE}/analyze-website`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${authToken}`
+          },
+          body: JSON.stringify({ url: lead.website, leadId: lead.id })
+        });
+
+        const data = await response.json();
+
+        if (response.ok && data.success) {
+          lead.website_score = data.score;
+          lead.website_grade = data.grade;
+          lead.website_analyzed_at = data.analyzedAt;
+          renderLeadsTable();
+          const emoji = data.grade === 'F' ? '🔥' : data.grade === 'D' ? '⚠️' : '✓';
+          showToast(`${emoji} ${lead.business_name}: Grade ${data.grade} (${data.score}/100) - ${data.gradeLabel}`, data.score < 50 ? 'warning' : 'success');
+        } else {
+          showToast(`Failed to analyze: ${data.error || 'Unknown error'}`, 'error');
+        }
+      } catch (error) {
+        console.error('Score website error:', error);
+        showToast('Failed to analyze website', 'error');
+      }
+    }
+
     // Get action button for a lead
     function getActionButton(lead) {
       // 1. No email - show Scrape Email button
@@ -5303,7 +5493,7 @@ Available merge tags: {{business_name}}, {{first_name}}, {{email}}, {{phone}}, {
       if (leadsData.length === 0) {
         tbody.innerHTML = `
           <tr>
-            <td colspan="8" class="text-center">
+            <td colspan="9" class="text-center">
               <div class="empty-state">
                 <div class="empty-icon">📋</div>
                 <div class="empty-title">${filterSearch || filterCity || filterIndustry || filterStatus ? 'No leads match your filters' : 'No leads yet'}</div>
@@ -5324,7 +5514,7 @@ Available merge tags: {{business_name}}, {{first_name}}, {{email}}, {{phone}}, {
       // Pagination header
       html += `
         <tr class="pagination-row">
-          <td colspan="8" style="background: var(--surface); padding: 12px;">
+          <td colspan="9" style="background: var(--surface); padding: 12px;">
             <div style="display: flex; justify-content: space-between; align-items: center;">
               <span class="mono" style="color: var(--text-dim);">
                 Showing ${startItem}-${endItem} of ${leadsTotal} leads
@@ -5361,6 +5551,7 @@ Available merge tags: {{business_name}}, {{first_name}}, {{email}}, {{phone}}, {
             <td>${emailCell}</td>
             <td>${lead.city || '-'}${lead.state ? ', ' + lead.state : ''}</td>
             <td><span class="industry-badge">${lead.industry || '-'}</span></td>
+            <td>${getWebsiteScoreBadge(lead)}</td>
             <td class="action-cell">${getActionButton(lead)}</td>
           </tr>
         `;
@@ -5370,7 +5561,7 @@ Available merge tags: {{business_name}}, {{first_name}}, {{email}}, {{phone}}, {
           const ratingStars = lead.rating ? '★'.repeat(Math.round(lead.rating)) + '☆'.repeat(5 - Math.round(lead.rating)) : '-';
           html += `
             <tr class="lead-details-row">
-              <td colspan="8">
+              <td colspan="9">
                 <div class="lead-details">
                   <div class="detail-group">
                     <div class="detail-label">Full Address</div>
@@ -5391,6 +5582,10 @@ Available merge tags: {{business_name}}, {{first_name}}, {{email}}, {{phone}}, {
                   <div class="detail-group">
                     <div class="detail-label">Email Score</div>
                     <div class="detail-value">${lead.email_score ? `${lead.email_score}/100` : 'Not validated'}</div>
+                  </div>
+                  <div class="detail-group">
+                    <div class="detail-label">Website Score</div>
+                    <div class="detail-value">${lead.website_score != null ? `${getWebsiteScoreBadge(lead)} ${lead.website_grade} - ${lead.website_score}/100` : 'Not analyzed'}</div>
                   </div>
                   <div class="detail-group">
                     <div class="detail-label">GHL Status</div>
