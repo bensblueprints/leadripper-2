@@ -9,7 +9,7 @@ const pool = new Pool({
 const JWT_SECRET = process.env.JWT_SECRET || 'leadripper-secret-key-2026';
 
 // API Keys for real scraping
-const GOOGLE_MAPS_API_KEY = process.env.GOOGLE_MAPS_API_KEY;
+const GOOGLE_MAPS_API_KEY = process.env.GOOGLE_MAPS_API_KEY || 'AIzaSyCngyzhiymWqY3ypkY4U5znvC_m18F1srA';
 const SERP_API_KEY = process.env.SERP_API_KEY;
 
 // n8n webhook URL on your NAS server
@@ -311,40 +311,11 @@ exports.handler = async (event, context) => {
       };
     }
 
-    // Try n8n webhook first, fall back to direct generation
-    const n8nPayload = {
-      userId: decoded.userId,
-      userEmail: decoded.email,
-      cities: citiesToScrape,
-      industry,
-      maxResults: Math.min(maxResults || 50, 100),
-      callbackUrl: `${process.env.URL || 'https://leadripper.netlify.app'}/.netlify/functions/scrape-callback`
-    };
-
-    let n8nSuccess = false;
-    try {
-      const n8nResponse = await fetch(N8N_WEBHOOK_URL, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(n8nPayload)
-      });
-
-      if (n8nResponse.ok) {
-        n8nSuccess = true;
-        console.log('n8n webhook triggered successfully');
-      } else {
-        console.error('n8n webhook failed:', await n8nResponse.text());
-      }
-    } catch (n8nError) {
-      console.error('n8n connection error:', n8nError.message);
-    }
-
-    // If n8n failed, try SerpAPI for real leads, then fallback to demo data
+    // Scrape directly using Google Places API
     let totalLeadsGenerated = 0;
     let usedRealScraping = false;
 
-    if (!n8nSuccess) {
-      console.log('n8n unavailable, trying SerpAPI for real leads...');
+    {
 
       for (const city of citiesToScrape) {
         // Try to get real leads from SerpAPI
@@ -398,16 +369,6 @@ exports.handler = async (event, context) => {
         `UPDATE lr_users SET leads_used = leads_used + $1, updated_at = NOW() WHERE id = $2`,
         [totalLeadsGenerated, decoded.userId]
       );
-    } else {
-      // Record the cities as being scraped (in progress) - n8n will update counts later
-      for (const city of citiesToScrape) {
-        await pool.query(
-          `INSERT INTO lr_scraped_cities (user_id, city, industry, lead_count, scraped_at)
-           VALUES ($1, $2, $3, 0, NOW())
-           ON CONFLICT (user_id, city, industry) DO NOTHING`,
-          [decoded.userId, city, industry]
-        );
-      }
     }
 
     return {
@@ -415,11 +376,9 @@ exports.handler = async (event, context) => {
       headers,
       body: JSON.stringify({
         success: true,
-        message: n8nSuccess
-          ? `Scraping initiated for ${citiesToScrape.length} cities`
-          : usedRealScraping
-            ? `Scraped ${totalLeadsGenerated} real leads from ${citiesToScrape.length} cities`
-            : `No leads generated - API keys not configured or scraping failed`,
+        message: usedRealScraping
+          ? `Scraped ${totalLeadsGenerated} real leads from ${citiesToScrape.length} cities`
+          : `No leads generated - scraping failed`,
         citiesToScrape: citiesToScrape.length,
         citiesSkipped: cities.length - citiesToScrape.length,
         cities: citiesToScrape,
