@@ -48,6 +48,7 @@ exports.handler = async (event, context) => {
         ALTER TABLE lr_leads ADD COLUMN IF NOT EXISTS website_grade VARCHAR(2);
         ALTER TABLE lr_leads ADD COLUMN IF NOT EXISTS website_analysis JSONB;
         ALTER TABLE lr_leads ADD COLUMN IF NOT EXISTS website_analyzed_at TIMESTAMP;
+        ALTER TABLE lr_leads ADD COLUMN IF NOT EXISTS website_rebuilt_at TIMESTAMP;
       `);
     } catch (migrationErr) {
       console.log('Column check note:', migrationErr.message);
@@ -66,7 +67,7 @@ exports.handler = async (event, context) => {
              website, rating, reviews, ghl_synced, ghl_contact_id, created_at,
              email_verified, email_score, email_validation_date,
              website_score, website_grade, website_analysis, website_analyzed_at,
-             tags, contact_name
+             website_rebuilt_at, tags, contact_name
       FROM lr_leads WHERE user_id = $1
     `;
     const values = [decoded.userId];

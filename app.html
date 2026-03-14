@@ -6417,6 +6417,77 @@ I noticed {{business_name}} in {{city}} and wanted to reach out..."></textarea>
       }
     }
 
+    // Rebuild website for a lead via OpenClaw AI pipeline
+    async function rebuildWebsiteForLead(leadId) {
+      const btn = document.getElementById(`rebuild-btn-${leadId}`);
+      const lead = leadsData.find(l => l.id === leadId);
+
+      if (!lead) {
+        showToast('Lead not found', 'error');
+        return;
+      }
+
+      if (!lead.email) {
+        showToast('Lead needs an email before rebuilding', 'error');
+        return;
+      }
+
+      if (!lead.website) {
+        showToast('Lead has no website URL to rebuild', 'error');
+        return;
+      }
+
+      if (btn) {
+        btn.innerHTML = '🔄 Launching AI Pipeline...';
+        btn.disabled = true;
+        btn.style.opacity = '0.7';
+      }
+
+      try {
+        const response = await fetch(`${API_BASE}/rebuild-website`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${authToken}`
+          },
+          body: JSON.stringify({
+            leadId: lead.id,
+            url: lead.website,
+            business_name: lead.business_name,
+            contact_email: lead.email,
+            contact_phone: lead.phone || '',
+            contact_name: lead.contact_name || lead.business_name,
+            website_score: lead.website_score,
+            website_grade: lead.website_grade,
+            website_analysis: lead.website_analysis
+          })
+        });
+
+        const data = await response.json();
+
+        if (response.ok) {
+          lead.website_rebuilt_at = new Date().toISOString();
+          showToast(`🏗️ AI rebuild pipeline launched for ${lead.business_name}! Check OpenClaw dashboard for progress.`, 'success');
+          renderLeadsTable();
+        } else {
+          showToast(data.error || 'Failed to launch rebuild pipeline', 'error');
+          if (btn) {
+            btn.innerHTML = '🏗️ Rebuild Website & Send to Customer';
+            btn.disabled = false;
+            btn.style.opacity = '1';
+          }
+        }
+      } catch (error) {
+        console.error('Rebuild error:', error);
+        showToast('Failed to connect to rebuild service', 'error');
+        if (btn) {
+          btn.innerHTML = '🏗️ Rebuild Website & Send to Customer';
+          btn.disabled = false;
+          btn.style.opacity = '1';
+        }
+      }
+    }
+
     // Check if we can validate (rate limit: 100/hour)
     function canValidate() {
       const now = Date.now();
@@ -7272,6 +7343,16 @@ I noticed {{business_name}} in {{city}} and wanted to reach out..."></textarea>
                     <div class="detail-label">Website Score</div>
                     <div class="detail-value">${lead.website_score != null ? `${getWebsiteScoreBadge(lead)} ${lead.website_grade} - ${lead.website_score}/100 <button class="btn-secondary" style="font-size:0.75rem;padding:2px 8px;margin-left:8px;" onclick="event.stopPropagation();generateWebsiteReport(${lead.id})">📄 Generate PDF Report</button>` : 'Not analyzed'}</div>
                   </div>
+                  ${lead.email ? `<div class="detail-group" style="grid-column: 1 / -1;">
+                    <div class="detail-label">AI Website Rebuild</div>
+                    <div class="detail-value">
+                      <button id="rebuild-btn-${lead.id}" class="btn-action" style="background:linear-gradient(135deg,#ff3e00,#ff6b35);color:#fff;font-size:0.8rem;padding:6px 16px;border:none;border-radius:6px;cursor:pointer;font-weight:600;" onclick="event.stopPropagation();rebuildWebsiteForLead(${lead.id})">
+                        🏗️ Rebuild Website & Send to Customer
+                      </button>
+                      <span style="font-size:0.7rem;color:var(--text-dim);margin-left:8px;">Scrapes site → AI rebuilds → QA tests → Emails preview → AI calls customer</span>
+                      ${lead.website_rebuilt_at ? `<span style="font-size:0.7rem;color:#0f0;margin-left:8px;">✓ Rebuilt ${new Date(lead.website_rebuilt_at).toLocaleDateString()}</span>` : ''}
+                    </div>
+                  </div>` : ''}
                   <div class="detail-group" style="grid-column: 1 / -1;">
                     <div class="detail-label">Tags</div>
                     <div class="detail-value" style="display:flex;flex-wrap:wrap;gap:0.3rem;align-items:center;">
