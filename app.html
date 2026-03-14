@@ -3516,10 +3516,12 @@ I noticed {{business_name}} in {{city}} and wanted to reach out..."></textarea>
                   Preview
                 </button>
                 <button class="btn-mini" onclick="checkSpamScore()">Spam Check</button>
+                <button class="btn-mini" onclick="saveComposerAsTemplate()">Save as Template</button>
                 <button class="btn-mini" onclick="addAbVariant()">+ A/B Variant</button>
                 <button class="btn-mini" onclick="addSequenceStep()">+ Follow-up</button>
                 <button class="btn-mini" onclick="toggleSendSchedule()">Schedule</button>
               </div>
+              <div id="campaign-composer-health" style="margin-top:0.75rem;padding:0.75rem;border:1px solid var(--border);background:var(--surface);border-radius:4px;color:var(--text-dim);font-size:0.82rem;"></div>
               <div id="campaign-composer-status" style="display:none;margin-top:0.75rem;padding:0.75rem;border:1px solid var(--border);background:var(--surface);border-radius:4px;color:var(--text-dim);font-size:0.85rem;"></div>
             </div>
             </div>
@@ -8829,6 +8831,7 @@ I noticed {{business_name}} in {{city}} and wanted to reach out..."></textarea>
       } catch (error) {
         console.error('Failed to update recipient count:', error);
       }
+      renderCampaignComposerHealth();
     }
 
     // Load template content when selected
@@ -8840,6 +8843,7 @@ I noticed {{business_name}} in {{city}} and wanted to reach out..."></textarea>
       if (template) {
         document.getElementById('outreach-subject').value = template.subject || '';
         document.getElementById('outreach-body').value = template.body || '';
+        renderCampaignComposerHealth();
       }
     }
 
@@ -8901,6 +8905,7 @@ I noticed {{business_name}} in {{city}} and wanted to reach out..."></textarea>
 
         if (response.ok && data.success) {
           showToast(data.message, 'success');
+          renderCampaignComposerHealth();
           setCampaignComposerStatus(currentCampaignId ? `Campaign linked: #${currentCampaignId}` : 'Sent without a saved campaign', 'success');
           await loadSentEmails();
           await loadEmailAccountsForOutreach();
@@ -9280,12 +9285,14 @@ I noticed {{business_name}} in {{city}} and wanted to reach out..."></textarea>
       abVariants.push({ id: variantId, subject: '', body: '' });
 
       renderAbVariants();
+      renderCampaignComposerHealth();
     }
 
     function removeAbVariant() {
       if (abVariants.length === 0) return;
       abVariants.pop();
       renderAbVariants();
+      renderCampaignComposerHealth();
       if (abVariants.length === 0) {
         document.getElementById('ab-variants-container').style.display = 'none';
       }
@@ -9316,6 +9323,7 @@ I noticed {{business_name}} in {{city}} and wanted to reach out..."></textarea>
       sequenceSteps.push({ step: stepNum, subject: '', body: '', delay_days: 3 });
 
       renderSequenceSteps();
+      renderCampaignComposerHealth();
     }
 
     function removeSequenceStep(idx) {
@@ -9323,6 +9331,7 @@ I noticed {{business_name}} in {{city}} and wanted to reach out..."></textarea>
       // Renumber steps
       sequenceSteps.forEach((s, i) => s.step = i + 2);
       renderSequenceSteps();
+      renderCampaignComposerHealth();
       if (sequenceSteps.length === 0) {
         document.getElementById('sequence-steps-container').style.display = 'none';
       }
@@ -9354,6 +9363,7 @@ I noticed {{business_name}} in {{city}} and wanted to reach out..."></textarea>
     function toggleSendSchedule() {
       const container = document.getElementById('send-schedule-container');
       container.style.display = container.style.display === 'none' ? 'block' : 'none';
+      renderCampaignComposerHealth();
     }
 
     function getCurrentCampaignPayload(statusOverride) {
@@ -9394,6 +9404,26 @@ I noticed {{business_name}} in {{city}} and wanted to reach out..."></textarea>
       el.style.display = 'block';
       el.style.color = colors[tone] || colors.info;
       el.textContent = message;
+    }
+
+    function renderCampaignComposerHealth() {
+      const el = document.getElementById('campaign-composer-health');
+      if (!el) return;
+      const checks = [
+        { ok: !!document.getElementById('campaign-name')?.value?.trim(), label: 'Campaign named' },
+        { ok: !!document.getElementById('outreach-from-account')?.value, label: 'Sender connected' },
+        { ok: !!document.getElementById('outreach-subject')?.value?.trim(), label: 'Subject written' },
+        { ok: !!document.getElementById('outreach-body')?.value?.trim(), label: 'Email body written' },
+        { ok: parseInt(document.getElementById('outreach-recipient-count')?.textContent || '0') > 0, label: 'Recipients matched' },
+        { ok: abVariants.length > 0, label: 'A/B variants added' },
+        { ok: sequenceSteps.length > 0, label: 'Follow-up sequence added' },
+        { ok: document.getElementById('send-schedule-container')?.style.display !== 'none', label: 'Schedule configured' }
+      ];
+      el.innerHTML = `<div style="display:flex;justify-content:space-between;align-items:center;gap:1rem;flex-wrap:wrap;">
+        <strong style="color:var(--text);">Campaign Readiness</strong>
+        <span style="font-family:'JetBrains Mono',monospace;color:var(--accent);">${checks.filter(c => c.ok).length}/${checks.length} checks</span>
+      </div>
+      <div style="display:flex;flex-wrap:wrap;gap:0.45rem;margin-top:0.6rem;">${checks.map(check => `<span style="padding:0.28rem 0.55rem;border-radius:999px;border:1px solid ${check.ok ? 'rgba(16,185,129,0.35)' : 'var(--border)'};color:${check.ok ? 'var(--green)' : 'var(--text-dim)'};background:${check.ok ? 'rgba(16,185,129,0.08)' : 'transparent'};font-size:0.72rem;">${check.ok ? '✓' : '•'} ${check.label}</span>`).join('')}</div>`;
     }
 
     function populateCampaignPicker() {
@@ -9444,6 +9474,7 @@ I noticed {{business_name}} in {{city}} and wanted to reach out..."></textarea>
 
       document.getElementById('campaign-picker').value = String(campaign.id);
       updateOutreachCount();
+      renderCampaignComposerHealth();
       setCampaignComposerStatus(`Loaded campaign: ${campaign.name}`, 'success');
     }
 
@@ -9487,6 +9518,7 @@ I noticed {{business_name}} in {{city}} and wanted to reach out..."></textarea>
       document.getElementById('send-schedule-container').style.display = 'none';
       renderAbVariants();
       renderSequenceSteps();
+      renderCampaignComposerHealth();
       setCampaignComposerStatus('Composer reset. Start a new campaign.', 'info');
       updateOutreachCount();
     }
@@ -9523,6 +9555,7 @@ I noticed {{business_name}} in {{city}} and wanted to reach out..."></textarea>
           await loadCampaignAnalytics();
           populateCampaignPicker();
           document.getElementById('campaign-picker').value = String(currentCampaignId);
+          renderCampaignComposerHealth();
         } else {
           showToast(data.error || 'Failed to save campaign', 'error');
           setCampaignComposerStatus('Failed to save campaign', 'error');
@@ -9581,6 +9614,33 @@ I noticed {{business_name}} in {{city}} and wanted to reach out..."></textarea>
       } catch (error) {
         console.error('Delete campaign error:', error);
         showToast('Failed to delete campaign', 'error');
+      }
+    }
+
+    async function saveComposerAsTemplate() {
+      const subject = document.getElementById('outreach-subject')?.value?.trim();
+      const body = document.getElementById('outreach-body')?.value?.trim();
+      const name = document.getElementById('campaign-name')?.value?.trim() || `Template ${new Date().toLocaleDateString()}`;
+      if (!subject || !body) {
+        showToast('Write a subject and body first', 'error');
+        return;
+      }
+      try {
+        const response = await fetch(`${API_BASE}/email-templates`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${authToken}` },
+          body: JSON.stringify({ name, subject, body })
+        });
+        const data = await response.json();
+        if (response.ok) {
+          showToast('Template saved from campaign', 'success');
+          await loadEmailTemplates();
+        } else {
+          showToast(data.error || 'Failed to save template', 'error');
+        }
+      } catch (error) {
+        console.error('Save template from composer error:', error);
+        showToast('Failed to save template', 'error');
       }
     }
 

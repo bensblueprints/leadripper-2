@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>LeadRipper Setup Hub</title>
+  <meta name="description" content="Setup guides for LeadRipper: connect email, Twilio, GoHighLevel, ElevenLabs, and launch campaigns correctly.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg:#0a0a0a;
+      --surface:#131313;
+      --surface-2:#1b1b1b;
+      --text:#f5f5f5;
+      --text-dim:#a1a1aa;
+      --muted:#71717a;
+      --accent:#ff3e00;
+      --accent-2:#ff6b35;
+      --green:#10b981;
+      --border:rgba(255,255,255,0.08);
+    }
+    *{box-sizing:border-box;margin:0;padding:0}
+    body{font-family:'Manrope',sans-serif;background:var(--bg);color:var(--text);line-height:1.6}
+    body::before{content:'';position:fixed;inset:0;background-image:linear-gradient(to right, rgba(255,62,0,.025) 1px, transparent 1px),linear-gradient(to bottom, rgba(255,62,0,.025) 1px, transparent 1px);background-size:34px 34px;pointer-events:none}
+    .container{width:min(1180px,calc(100% - 2rem));margin:0 auto;position:relative;z-index:1}
+    header{padding:1rem 0;border-bottom:1px solid var(--border);background:rgba(10,10,10,.82);backdrop-filter:blur(10px);position:sticky;top:0;z-index:10}
+    .nav{display:flex;justify-content:space-between;align-items:center;gap:1rem;flex-wrap:wrap}
+    .logo{font-family:'Syne',sans-serif;font-weight:800;font-size:1.5rem;background:linear-gradient(135deg,var(--accent),var(--accent-2));-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+    .links{display:flex;gap:1rem;flex-wrap:wrap}
+    .links a,.btn{color:var(--text);text-decoration:none;font-weight:700}
+    .btn{display:inline-flex;align-items:center;justify-content:center;padding:.85rem 1.15rem;border-radius:12px;border:1px solid var(--border);background:var(--surface)}
+    .btn.primary{background:linear-gradient(135deg,var(--accent),var(--accent-2));border:none}
+    .hero{padding:4.5rem 0 2rem}
+    .eyebrow{display:inline-block;padding:.45rem .8rem;border-radius:999px;border:1px solid rgba(255,62,0,.3);background:rgba(255,62,0,.08);color:var(--accent-2);font-size:.85rem;font-weight:800;margin-bottom:1rem}
+    h1{font-family:'Syne',sans-serif;font-size:clamp(2.4rem,6vw,4.4rem);line-height:1.02;letter-spacing:-.05em;max-width:920px;margin-bottom:1rem}
+    .hero p{max-width:800px;color:var(--text-dim);font-size:1.07rem}
+    .section{padding:2rem 0}
+    .section h2{font-family:'Syne',sans-serif;font-size:clamp(1.5rem,3vw,2.5rem);margin-bottom:.6rem;letter-spacing:-.04em}
+    .section p{color:var(--text-dim);max-width:840px}
+    .grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:1rem;margin-top:1.25rem}
+    .card{background:linear-gradient(180deg,rgba(255,255,255,.03),rgba(255,255,255,.015));border:1px solid var(--border);border-radius:22px;padding:1.25rem}
+    .card h3{margin-bottom:.55rem;font-size:1.08rem}
+    .card p{color:var(--text-dim);font-size:.95rem}
+    .badge{display:inline-block;font-size:.74rem;text-transform:uppercase;letter-spacing:.08em;color:var(--accent-2);font-weight:800;margin-bottom:.65rem}
+    .steps{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:1rem;margin-top:1.2rem}
+    .step{background:var(--surface);border:1px solid var(--border);border-radius:18px;padding:1rem}
+    .step strong{display:inline-flex;width:32px;height:32px;border-radius:50%;align-items:center;justify-content:center;background:rgba(255,62,0,.1);color:var(--accent-2);margin-bottom:.6rem}
+    ul{padding-left:1.1rem;color:var(--text-dim)}
+    li+li{margin-top:.35rem}
+    .note{margin-top:1.2rem;padding:1rem;border:1px solid rgba(16,185,129,.25);background:rgba(16,185,129,.06);border-radius:18px;color:#d1fae5}
+    footer{padding:2rem 0 4rem}
+    @media (max-width:980px){.grid,.steps{grid-template-columns:1fr}}
+  </style>
+</head>
+<body>
+  <header>
+    <div class="container nav">
+      <div class="logo">LeadRipper</div>
+      <div class="links">
+        <a href="#quick-start">Quick Start</a>
+        <a href="#integrations">Integrations</a>
+        <a href="#campaigns">Campaigns</a>
+        <a class="btn" href="/agency.html">Agency Page</a>
+        <a class="btn primary" href="/app">Open App</a>
+      </div>
+    </div>
+  </header>
+
+  <main class="container">
+    <section class="hero">
+      <div class="eyebrow">Setup hub</div>
+      <h1>Everything a new LeadRipper user needs to get from zero to live outreach.</h1>
+      <p>Use this page as the product's setup and education hub. It gives users a clear path for connecting senders, Twilio, GoHighLevel, ElevenLabs, and launching campaigns without getting lost.</p>
+    </section>
+
+    <section class="section" id="quick-start">
+      <h2>Quick Start</h2>
+      <p>The shortest path to value: connect a sender, scrape leads, build a campaign, send outreach, and track replies.</p>
+      <div class="steps">
+        <div class="step"><strong>1</strong><h3>Connect email</h3><p>Add your first sender account with SMTP/IMAP, then verify it's ready to send.</p></div>
+        <div class="step"><strong>2</strong><h3>Scrape leads</h3><p>Use the lead scraper to pull local businesses by city + niche and save them to a list.</p></div>
+        <div class="step"><strong>3</strong><h3>Build campaign</h3><p>Create a campaign, add subject/body, optional variants, follow-ups, and schedule.</p></div>
+        <div class="step"><strong>4</strong><h3>Launch + track</h3><p>Send, monitor replies in the unified inbox, and move hot leads into the pipeline.</p></div>
+      </div>
+    </section>
+
+    <section class="section" id="integrations">
+      <h2>Integration Guides</h2>
+      <p>These are the core integrations that make LeadRipper feel like an outbound operating system rather than a simple email tool.</p>
+      <div class="grid">
+        <div class="card">
+          <div class="badge">Twilio</div>
+          <h3>Connect calling infrastructure</h3>
+          <ul>
+            <li>Create or connect a Twilio account</li>
+            <li>Attach a number</li>
+            <li>Configure softphone / call routing</li>
+            <li>Test outbound call flow</li>
+          </ul>
+        </div>
+        <div class="card">
+          <div class="badge">GoHighLevel</div>
+          <h3>Sync contacts and opportunities</h3>
+          <ul>
+            <li>Connect API key or location credentials</li>
+            <li>Map lead and opportunity fields</li>
+            <li>Choose when sync happens</li>
+            <li>Prevent duplicates</li>
+          </ul>
+        </div>
+        <div class="card">
+          <div class="badge">ElevenLabs</div>
+          <h3>Enable AI voice</h3>
+          <ul>
+            <li>Add API key</li>
+            <li>Pick a voice or agent</li>
+            <li>Link Twilio call flow</li>
+            <li>Test voice quality + fallback handling</li>
+          </ul>
+        </div>
+      </div>
+    </section>
+
+    <section class="section" id="campaigns">
+      <h2>Campaign Setup Checklist</h2>
+      <p>Campaigns should be teachable. The checklist below can also be turned into in-app onboarding and tooltips.</p>
+      <div class="grid">
+        <div class="card">
+          <div class="badge">Recipients</div>
+          <h3>Build the right audience</h3>
+          <p>Filter by list, city, niche, verified emails only, and exclude recently emailed leads.</p>
+        </div>
+        <div class="card">
+          <div class="badge">Message</div>
+          <h3>Write a strong offer</h3>
+          <p>Use merge tags, save templates, add A/B variants, and make the first email clear and relevant.</p>
+        </div>
+        <div class="card">
+          <div class="badge">Sequence</div>
+          <h3>Follow up properly</h3>
+          <p>Add follow-up steps, delays, and send schedules so campaigns feel deliberate instead of spammy.</p>
+        </div>
+      </div>
+      <div class="note">Tip: keep the lead scraper as the hero, and treat campaigns, inbox, pipeline, calling, and integrations as clean supporting modules.</div>
+    </section>
+
+    <section class="section">
+      <h2>Tooltip Priority</h2>
+      <p>These are the first UI areas that deserve tiny explanatory tips because they can confuse new users quickly.</p>
+      <div class="grid">
+        <div class="card"><h3>Sender Rotation + Warmup</h3><p>Explain what rotates, why it matters, and how limits protect sender reputation.</p></div>
+        <div class="card"><h3>A/B Testing + Spintax</h3><p>Explain how variants are chosen and how message variation helps test deliverability and response.</p></div>
+        <div class="card"><h3>Twilio / GHL / ElevenLabs</h3><p>Explain which credentials are required, what each integration enables, and what “connected” should mean.</p></div>
+      </div>
+    </section>
+  </main>
+
+  <footer class="container">
+    <a class="btn primary" href="/app">Open LeadRipper</a>
+  </footer>
+</body>
+</html>

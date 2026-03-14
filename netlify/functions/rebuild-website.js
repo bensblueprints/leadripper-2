@@ -74,6 +74,10 @@ exports.handler = async (event) => {
     }
     if (issues.length === 0) issues.push('outdated design', 'needs modernization');
 
+    // Determine the app's base URL for callbacks
+    const appBaseUrl = `https://${event.headers.host || 'leadripper2.netlify.app'}`;
+    const callbackUrl = `${appBaseUrl}/.netlify/functions/rebuild-callback`;
+
     // Send webhook to OpenClaw gateway to trigger the lead-rebuilder skill
     const openclawPayload = {
       message: `lead-rebuild: Rebuild the website for ${business_name}. Their current site is ${url}.
@@ -91,8 +95,30 @@ Lead details:
 - Email: ${contact_email}
 - Phone: ${contact_phone || 'N/A'}
 - Contact: ${contact_name}
+- Lead ID: ${leadId}
 - Current Score: ${website_score || 'N/A'}/100 (${website_grade || 'N/A'})
-- Issues: ${issues.join(', ')}`,
+- Issues: ${issues.join(', ')}
+
+IMPORTANT — Progress Callback:
+After EACH phase completes, you MUST send a progress update by running:
+curl -X POST "${callbackUrl}" -H "Authorization: Bearer ${OPENCLAW_HOOKS_TOKEN}" -H "Content-Type: application/json" -d '<JSON>'
+
+Use these payloads for each phase:
+- Scraping started: {"lead_id":${leadId},"phase":"scrape","status":"in_progress","progress_pct":10,"message":"Scraping original website..."}
+- Scraping done: {"lead_id":${leadId},"phase":"scrape","status":"complete","progress_pct":20,"message":"Site scraped successfully"}
+- Rebuilding started: {"lead_id":${leadId},"phase":"rebuild","status":"in_progress","progress_pct":25,"message":"AI is building your new website..."}
+- Rebuilding done: {"lead_id":${leadId},"phase":"rebuild","status":"complete","progress_pct":50,"message":"New website built"}
+- QA testing started: {"lead_id":${leadId},"phase":"qa","status":"in_progress","progress_pct":55,"message":"QA agents testing links, images & content..."}
+- QA testing done: {"lead_id":${leadId},"phase":"qa","status":"complete","progress_pct":70,"message":"QA passed"}
+- Fixing issues (if any): {"lead_id":${leadId},"phase":"fix","status":"in_progress","progress_pct":75,"message":"Fixing QA issues..."}
+- Deploying preview: {"lead_id":${leadId},"phase":"deploy","status":"in_progress","progress_pct":80,"message":"Deploying preview site..."}
+- Deploy done: {"lead_id":${leadId},"phase":"deploy","status":"complete","progress_pct":85,"message":"Preview ready","preview_url":"<URL>"}
+- Emailing customer: {"lead_id":${leadId},"phase":"email","status":"in_progress","progress_pct":90,"message":"Emailing preview to customer..."}
+- Email sent: {"lead_id":${leadId},"phase":"email","status":"complete","progress_pct":95,"message":"Email sent to ${contact_email}"}
+- Calling customer: {"lead_id":${leadId},"phase":"call","status":"in_progress","progress_pct":97,"message":"AI calling customer..."}
+- ALL DONE: {"lead_id":${leadId},"phase":"complete","status":"complete","progress_pct":100,"message":"Pipeline complete!","new_website_url":"<PREVIEW_URL>"}
+
+You MUST call the callback at each step. This updates the LeadRipper dashboard in real-time.`,
       name: `rebuild-${business_name.replace(/[^a-zA-Z0-9]/g, '-').toLowerCase()}`,
       deliver: true,
       channel: "telegram"
@@ -127,10 +153,26 @@ Lead details:
       };
     }
 
-    // Ensure column exists and update lead
-    await pool.query(`ALTER TABLE lr_leads ADD COLUMN IF NOT EXISTS website_rebuilt_at TIMESTAMP`);
+    // Ensure columns exist and set initial progress
+    await pool.query(`
+      ALTER TABLE lr_leads ADD COLUMN IF NOT EXISTS website_rebuilt_at TIMESTAMP;
+      ALTER TABLE lr_leads ADD COLUMN IF NOT EXISTS rebuild_phase VARCHAR(50);
+      ALTER TABLE lr_leads ADD COLUMN IF NOT EXISTS rebuild_status VARCHAR(20);
+      ALTER TABLE lr_leads ADD COLUMN IF NOT EXISTS rebuild_progress INTEGER;
+      ALTER TABLE lr_leads ADD COLUMN IF NOT EXISTS rebuild_message TEXT;
+      ALTER TABLE lr_leads ADD COLUMN IF NOT EXISTS rebuild_preview_url TEXT;
+      ALTER TABLE lr_leads ADD COLUMN IF NOT EXISTS rebuilt_website_url TEXT;
+      ALTER TABLE lr_leads ADD COLUMN IF NOT EXISTS rebuild_updated_at TIMESTAMP;
+    `);
     await pool.query(
-      `UPDATE lr_leads SET website_rebuilt_at = NOW() WHERE id = $1 AND user_id = $2`,
+      `UPDATE lr_leads SET
+        website_rebuilt_at = NOW(),
+        rebuild_phase = 'initialized',
+        rebuild_status = 'in_progress',
+        rebuild_progress = 5,
+        rebuild_message = 'Pipeline launched — starting scrape...',
+        rebuild_updated_at = NOW()
+      WHERE id = $1 AND user_id = $2`,
       [leadId, user.userId]
     );
 
