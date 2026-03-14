@@ -2434,6 +2434,30 @@
               <option value="synced">Synced to GHL</option>
             </select>
           </div>
+          <div class="filter-group">
+            <select id="filter-rating" class="filter-select" onchange="applyFilters()">
+              <option value="">All Ratings</option>
+              <option value="5">5 Stars</option>
+              <option value="4">4+ Stars</option>
+              <option value="3">3+ Stars</option>
+              <option value="2">2+ Stars</option>
+              <option value="1">1+ Stars</option>
+              <option value="0">No Rating</option>
+            </select>
+          </div>
+          <div class="filter-group">
+            <select id="filter-reviews" class="filter-select" onchange="applyFilters()">
+              <option value="">All Reviews</option>
+              <option value="1000">1000+ Reviews</option>
+              <option value="500">500+ Reviews</option>
+              <option value="200">200+ Reviews</option>
+              <option value="100">100+ Reviews</option>
+              <option value="50">50+ Reviews</option>
+              <option value="25">25+ Reviews</option>
+              <option value="10">10+ Reviews</option>
+              <option value="0">No Reviews</option>
+            </select>
+          </div>
           <button class="btn-mini" onclick="clearFilters()">Clear</button>
         </div>
 
@@ -2445,6 +2469,7 @@
           <button class="btn-secondary" onclick="addSelectedToList()" style="font-size: 0.85rem;">Add to List</button>
           <button class="btn-secondary" onclick="createNewListFromSelected()" style="font-size: 0.85rem;">+ New List</button>
           <button class="btn-secondary" onclick="bulkAddTag()" style="font-size: 0.85rem;">+ Tag</button>
+          <button class="btn-bulk scrape" onclick="scrapeSelectedEmails()" style="font-size: 0.85rem;">Scrape Emails</button>
           <button class="btn" onclick="callSelectedLeads()" style="font-size: 0.85rem;">Call Selected</button>
         </div>
 
@@ -6391,6 +6416,8 @@ I noticed {{business_name}} in {{city}} and wanted to reach out..."></textarea>
     let filterIndustry = '';
     let filterStatus = '';
     let filterTag = '';
+    let filterRating = '';
+    let filterReviews = '';
     let searchTimeout = null;
     let expandedLeads = new Set();
     let availableCities = [];
@@ -6453,6 +6480,8 @@ I noticed {{business_name}} in {{city}} and wanted to reach out..."></textarea>
       filterIndustry = document.getElementById('filter-industry').value;
       filterStatus = document.getElementById('filter-status').value;
       filterTag = document.getElementById('filter-tag')?.value || '';
+      filterRating = document.getElementById('filter-rating')?.value || '';
+      filterReviews = document.getElementById('filter-reviews')?.value || '';
       loadLeads(1);
     }
 
@@ -6462,10 +6491,14 @@ I noticed {{business_name}} in {{city}} and wanted to reach out..."></textarea>
       filterCity = '';
       filterIndustry = '';
       filterStatus = '';
+      filterRating = '';
+      filterReviews = '';
       document.getElementById('filter-search').value = '';
       document.getElementById('filter-city').value = '';
       document.getElementById('filter-industry').value = '';
       document.getElementById('filter-status').value = '';
+      if (document.getElementById('filter-rating')) document.getElementById('filter-rating').value = '';
+      if (document.getElementById('filter-reviews')) document.getElementById('filter-reviews').value = '';
       loadLeads(1);
     }
 
@@ -6575,6 +6608,24 @@ I noticed {{business_name}} in {{city}} and wanted to reach out..."></textarea>
             const tags = lead.tags || [];
             return tags.includes(filterTag);
           });
+        }
+
+        // Apply rating filter
+        if (filterRating) {
+          if (filterRating === '0') {
+            leadsData = leadsData.filter(lead => !lead.rating || lead.rating === 0);
+          } else {
+            leadsData = leadsData.filter(lead => lead.rating >= parseInt(filterRating));
+          }
+        }
+
+        // Apply reviews filter
+        if (filterReviews) {
+          if (filterReviews === '0') {
+            leadsData = leadsData.filter(lead => !lead.reviews || lead.reviews === 0);
+          } else {
+            leadsData = leadsData.filter(lead => lead.reviews >= parseInt(filterReviews));
+          }
         }
 
         // Load tag filter options
@@ -7161,12 +7212,26 @@ I noticed {{business_name}} in {{city}} and wanted to reach out..."></textarea>
         return;
       }
 
-      // Find leads without emails
-      const leadsToScrape = leadsData.filter(l => !l.email);
-      if (leadsToScrape.length === 0) {
-        showToast('All leads already have emails!', 'info');
+      // Fetch ALL leads without emails from the backend (not just current page)
+      showToast('Fetching all leads without emails...', 'info');
+      let leadsToScrape = [];
+      try {
+        const resp = await fetch(`${API_BASE}/get-leads?limit=10000&offset=0`, {
+          headers: { 'Authorization': `Bearer ${authToken}` }
+        });
+        const allData = await resp.json();
+        leadsToScrape = (allData.leads || []).filter(l => !l.email && l.website);
+      } catch (e) {
+        showToast('Failed to fetch leads: ' + e.message, 'error');
         return;
       }
+
+      if (leadsToScrape.length === 0) {
+        showToast('All leads already have emails (or no website to scrape)!', 'info');
+        return;
+      }
+
+      if (!confirm(`This will scrape emails for ${leadsToScrape.length} leads. Continue?`)) return;
 
       bulkOperationActive = true;
       bulkOperationCancelled = false;
@@ -7200,7 +7265,9 @@ I noticed {{business_name}} in {{city}} and wanted to reach out..."></textarea>
           const data = await response.json();
 
           if (response.ok && data.email) {
-            lead.email = data.email;
+            // Update local leadsData if this lead is on the current page
+            const localLead = leadsData.find(l => l.id === lead.id);
+            if (localLead) localLead.email = data.email;
             bulkSuccessCount++;
           } else {
             bulkFailCount++;
@@ -7212,7 +7279,7 @@ I noticed {{business_name}} in {{city}} and wanted to reach out..."></textarea>
 
         bulkProcessed++;
         updateBulkProgress('Scraping emails...', bulkProcessed, bulkTotal, `Found: ${bulkSuccessCount} | Failed: ${bulkFailCount}`);
-        renderLeadsTable();
+        if (bulkProcessed % 5 === 0) renderLeadsTable();
 
         // Small delay to not overwhelm the server
         await new Promise(r => setTimeout(r, 500));
@@ -7222,6 +7289,7 @@ I noticed {{business_name}} in {{city}} and wanted to reach out..."></textarea>
       document.getElementById('scrape-all-btn').disabled = false;
       document.getElementById('validate-all-btn').disabled = false;
 
+      renderLeadsTable();
       setTimeout(hideBulkProgress, 3000);
       showToast(`Scraping complete! Found ${bulkSuccessCount} emails, ${bulkFailCount} failed`, bulkSuccessCount > 0 ? 'success' : 'warning');
     }
@@ -7233,12 +7301,26 @@ I noticed {{business_name}} in {{city}} and wanted to reach out..."></textarea>
         return;
       }
 
-      // Find leads with websites that haven't been scored yet
-      const leadsToScore = leadsData.filter(l => l.website && l.website_score == null);
+      // Fetch ALL leads with websites from the backend (not just current page)
+      showToast('Fetching all leads with websites...', 'info');
+      let leadsToScore = [];
+      try {
+        const resp = await fetch(`${API_BASE}/get-leads?limit=10000&offset=0`, {
+          headers: { 'Authorization': `Bearer ${authToken}` }
+        });
+        const allData = await resp.json();
+        leadsToScore = (allData.leads || []).filter(l => l.website && l.website_score == null);
+      } catch (e) {
+        showToast('Failed to fetch leads: ' + e.message, 'error');
+        return;
+      }
+
       if (leadsToScore.length === 0) {
         showToast('All leads with websites have been scored!', 'info');
         return;
       }
+
+      if (!confirm(`This will score ${leadsToScore.length} websites. Continue?`)) return;
 
       bulkOperationActive = true;
       bulkOperationCancelled = false;
@@ -7279,6 +7361,13 @@ I noticed {{business_name}} in {{city}} and wanted to reach out..."></textarea>
             lead.website_score = data.score;
             lead.website_grade = data.grade;
             lead.website_analyzed_at = data.analyzedAt;
+            // Update local leadsData if this lead is on the current page
+            const localLead = leadsData.find(l => l.id === lead.id);
+            if (localLead) {
+              localLead.website_score = data.score;
+              localLead.website_grade = data.grade;
+              localLead.website_analyzed_at = data.analyzedAt;
+            }
             bulkSuccessCount++;
             if (data.grade === 'F') gradeF++;
             if (data.grade === 'D') gradeD++;
@@ -7292,7 +7381,7 @@ I noticed {{business_name}} in {{city}} and wanted to reach out..."></textarea>
 
         bulkProcessed++;
         updateBulkProgress('Scoring websites...', bulkProcessed, bulkTotal, `Scored: ${bulkSuccessCount} | Failed: ${bulkFailCount} | 🔥 Needs Website: ${gradeF}`);
-        renderLeadsTable();
+        if (bulkProcessed % 5 === 0) renderLeadsTable();
 
         // Small delay between requests
         await new Promise(r => setTimeout(r, 800));
@@ -7303,6 +7392,7 @@ I noticed {{business_name}} in {{city}} and wanted to reach out..."></textarea>
       document.getElementById('score-sites-btn').disabled = false;
       document.getElementById('validate-all-btn').disabled = false;
 
+      renderLeadsTable();
       setTimeout(hideBulkProgress, 5000);
       showToast(`Website scoring complete! ${bulkSuccessCount} analyzed. ${gradeF} need new websites (Grade F), ${gradeD} poor websites (Grade D)`, 'success');
     }
@@ -7619,6 +7709,71 @@ I noticed {{business_name}} in {{city}} and wanted to reach out..."></textarea>
           showToast(`Tagged ${data.updated} leads with "${tag.trim()}"`, 'success');
         }
       } catch (e) { showToast('Failed to bulk tag', 'error'); }
+    }
+
+    async function scrapeSelectedEmails() {
+      if (selectedLeadIds.size === 0) { showToast('No leads selected', 'warning'); return; }
+      const leadsToScrape = leadsData.filter(l => selectedLeadIds.has(l.id) && l.website && !l.email);
+      if (leadsToScrape.length === 0) { showToast('No selected leads need email scraping (all have emails or no website)', 'warning'); return; }
+
+      if (bulkOperationActive) {
+        showToast('Another bulk operation is already running', 'warning');
+        return;
+      }
+
+      bulkOperationActive = true;
+      bulkOperationCancelled = false;
+      bulkProcessed = 0;
+      bulkTotal = leadsToScrape.length;
+      bulkSuccessCount = 0;
+      bulkFailCount = 0;
+
+      document.getElementById('scrape-all-btn').disabled = true;
+      document.getElementById('validate-all-btn').disabled = true;
+
+      updateBulkProgress('Scraping selected emails...', 0, bulkTotal, 'Starting...');
+
+      for (const lead of leadsToScrape) {
+        if (bulkOperationCancelled) break;
+
+        updateBulkProgress('Scraping selected emails...', bulkProcessed, bulkTotal, `Processing: ${lead.business_name}`);
+
+        try {
+          const response = await fetch(`${API_BASE}/scrape-email`, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': `Bearer ${authToken}`
+            },
+            body: JSON.stringify({ leadId: lead.id })
+          });
+
+          const data = await response.json();
+
+          if (response.ok && data.email) {
+            lead.email = data.email;
+            bulkSuccessCount++;
+          } else {
+            bulkFailCount++;
+          }
+        } catch (error) {
+          console.error('Scrape error for lead', lead.id, error);
+          bulkFailCount++;
+        }
+
+        bulkProcessed++;
+        updateBulkProgress('Scraping selected emails...', bulkProcessed, bulkTotal, `Found: ${bulkSuccessCount} | Failed: ${bulkFailCount}`);
+        renderLeadsTable();
+
+        await new Promise(r => setTimeout(r, 500));
+      }
+
+      bulkOperationActive = false;
+      document.getElementById('scrape-all-btn').disabled = false;
+      document.getElementById('validate-all-btn').disabled = false;
+
+      setTimeout(hideBulkProgress, 3000);
+      showToast(`Scraping complete! Found ${bulkSuccessCount} emails, ${bulkFailCount} failed`, bulkSuccessCount > 0 ? 'success' : 'warning');
     }
 
     async function loadTagFilter() {
