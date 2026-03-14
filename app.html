@@ -612,6 +612,9 @@
       outline: none;
       border-color: var(--accent);
     }
+    .filter-select option {
+      padding: 4px 8px;
+    }
 
     .filter-select option {
       background: var(--surface);
@@ -6286,36 +6289,42 @@ I noticed {{business_name}} in {{city}} and wanted to reach out..."></textarea>
       loadLeads(1);
     }
 
-    // Populate filter dropdowns
-    function populateFilterDropdowns() {
-      // Extract unique cities and industries from leads
-      const cities = new Set();
-      const industries = new Set();
+    // Populate filter dropdowns from API data (all leads, not just current page)
+    function populateFilterDropdowns(apiData) {
+      // Use API-provided lists (from ALL leads) if available
+      if (apiData?.availableCities) {
+        availableCities = apiData.availableCities;
+      }
+      if (apiData?.availableIndustries) {
+        availableIndustries = apiData.availableIndustries;
+      }
 
-      leadsData.forEach(lead => {
-        if (lead.city) cities.add(lead.city);
-        if (lead.industry) industries.add(lead.industry);
-      });
+      // Fallback: merge from current page data
+      if (availableCities.length === 0 || availableIndustries.length === 0) {
+        leadsData.forEach(lead => {
+          if (lead.city && !availableCities.includes(lead.city)) availableCities.push(lead.city);
+          if (lead.industry && !availableIndustries.includes(lead.industry)) availableIndustries.push(lead.industry);
+        });
+      }
 
-      // Update available options (merge with existing)
-      cities.forEach(c => { if (!availableCities.includes(c)) availableCities.push(c); });
-      industries.forEach(i => { if (!availableIndustries.includes(i)) availableIndustries.push(i); });
-
-      // Sort alphabetically
       availableCities.sort();
       availableIndustries.sort();
 
       // Populate city dropdown
       const citySelect = document.getElementById('filter-city');
-      const currentCity = citySelect.value;
-      citySelect.innerHTML = '<option value="">All Cities</option>' +
-        availableCities.map(c => `<option value="${c}" ${c === currentCity ? 'selected' : ''}>${c}</option>`).join('');
+      const currentCity = citySelect?.value || '';
+      if (citySelect) {
+        citySelect.innerHTML = '<option value="">All Cities (' + availableCities.length + ')</option>' +
+          availableCities.map(c => `<option value="${escapeHtml(c)}" ${c === currentCity ? 'selected' : ''}>${escapeHtml(c)}</option>`).join('');
+      }
 
       // Populate industry dropdown
       const industrySelect = document.getElementById('filter-industry');
-      const currentIndustry = industrySelect.value;
-      industrySelect.innerHTML = '<option value="">All Industries</option>' +
-        availableIndustries.map(i => `<option value="${i}" ${i === currentIndustry ? 'selected' : ''}>${i}</option>`).join('');
+      const currentIndustry = industrySelect?.value || '';
+      if (industrySelect) {
+        industrySelect.innerHTML = '<option value="">All Industries (' + availableIndustries.length + ')</option>' +
+          availableIndustries.map(i => `<option value="${escapeHtml(i)}" ${i === currentIndustry ? 'selected' : ''}>${escapeHtml(i)}</option>`).join('');
+      }
     }
 
     // Toggle lead expansion
@@ -6391,7 +6400,7 @@ I noticed {{business_name}} in {{city}} and wanted to reach out..."></textarea>
         // Load tag filter options
         loadTagFilter();
 
-        populateFilterDropdowns();
+        populateFilterDropdowns(data);
         populateIndustrySuggestions();
         renderLeadsTable();
 
