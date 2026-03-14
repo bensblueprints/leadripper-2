@@ -2744,6 +2744,13 @@
               <h3 style="margin-bottom: 1rem; color: var(--text-dim);">Select Recipients</h3>
 
               <div class="form-group">
+                <label class="form-label">Select from List</label>
+                <select id="outreach-filter-list" class="filter-select" onchange="updateOutreachCount()">
+                  <option value="">All Leads (no list filter)</option>
+                </select>
+              </div>
+
+              <div class="form-group">
                 <label class="form-label">Filter by City</label>
                 <select id="outreach-filter-city" class="filter-select" onchange="updateOutreachCount()">
                   <option value="">All Cities</option>
@@ -7148,24 +7155,34 @@ Available merge tags: {{business_name}}, {{first_name}}, {{email}}, {{phone}}, {
     // Load available filter options
     async function loadOutreachFilters() {
       try {
-        const response = await fetch(`${API_BASE}/get-leads?limit=1`, {
-          headers: { 'Authorization': `Bearer ${authToken}` }
-        });
-        if (response.ok) {
-          const data = await response.json();
+        const [leadsResp, listsResp] = await Promise.all([
+          fetch(`${API_BASE}/get-leads?limit=1`, { headers: { 'Authorization': `Bearer ${authToken}` } }),
+          fetch(`${API_BASE}/lead-lists`, { headers: { 'Authorization': `Bearer ${authToken}` } })
+        ]);
 
-          // Populate city filter
+        if (leadsResp.ok) {
+          const data = await leadsResp.json();
+
           const citySelect = document.getElementById('outreach-filter-city');
           if (citySelect && data.availableCities) {
             citySelect.innerHTML = '<option value="">All Cities</option>' +
               data.availableCities.map(c => `<option value="${escapeHtml(c)}">${escapeHtml(c)}</option>`).join('');
           }
 
-          // Populate industry filter
           const industrySelect = document.getElementById('outreach-filter-industry');
           if (industrySelect && data.availableIndustries) {
             industrySelect.innerHTML = '<option value="">All Industries</option>' +
               data.availableIndustries.map(i => `<option value="${escapeHtml(i)}">${escapeHtml(i)}</option>`).join('');
+          }
+        }
+
+        if (listsResp.ok) {
+          const listsData = await listsResp.json();
+          const lists = listsData.lists || [];
+          const listSelect = document.getElementById('outreach-filter-list');
+          if (listSelect) {
+            listSelect.innerHTML = '<option value="">All Leads (no list filter)</option>' +
+              lists.map(l => `<option value="${l.id}">${escapeHtml(l.name)} (${l.item_count || 0})</option>`).join('');
           }
         }
       } catch (error) {

@@ -123,9 +123,11 @@ exports.handler = async (event, context) => {
     query += ` ORDER BY created_at DESC LIMIT $${paramIndex} OFFSET $${paramIndex + 1}`;
     values.push(limit, offset);
 
-    const [result, countResult] = await Promise.all([
+    const [result, countResult, citiesResult, industriesResult] = await Promise.all([
       pool.query(query, values),
-      pool.query(countQuery, countValues)
+      pool.query(countQuery, countValues),
+      pool.query('SELECT DISTINCT city FROM lr_leads WHERE user_id = $1 AND city IS NOT NULL AND city != \'\' ORDER BY city', [decoded.userId]),
+      pool.query('SELECT DISTINCT industry FROM lr_leads WHERE user_id = $1 AND industry IS NOT NULL AND industry != \'\' ORDER BY industry', [decoded.userId])
     ]);
 
     return {
@@ -136,7 +138,9 @@ exports.handler = async (event, context) => {
         leads: result.rows,
         total: parseInt(countResult.rows[0].total),
         limit,
-        offset
+        offset,
+        availableCities: citiesResult.rows.map(r => r.city),
+        availableIndustries: industriesResult.rows.map(r => r.industry)
       })
     };
   } catch (error) {
