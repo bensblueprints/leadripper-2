@@ -3336,8 +3336,25 @@
 
         <!-- Compose Email Card -->
         <div class="card">
-          <div class="card-header">
+          <div class="card-header" style="display:flex;justify-content:space-between;align-items:center;gap:1rem;flex-wrap:wrap;">
             <h2 class="card-title display">Compose Campaign</h2>
+            <div style="display:flex;gap:0.5rem;align-items:center;flex-wrap:wrap;">
+              <select id="campaign-picker" class="filter-select" onchange="loadCampaignIntoComposer(this.value)" style="min-width:220px;">
+                <option value="">New campaign...</option>
+              </select>
+              <button class="btn-mini" onclick="resetCampaignComposer()">Clear</button>
+            </div>
+          </div>
+
+          <div style="display:grid;grid-template-columns:2fr 1fr;gap:1rem;margin-bottom:1.25rem;">
+            <div class="form-group" style="margin-bottom:0;">
+              <label class="form-label">Campaign Name</label>
+              <input type="text" id="campaign-name" class="form-input" placeholder="Q2 Plumbers - Website Rescue">
+            </div>
+            <div style="display:flex;align-items:flex-end;gap:0.5rem;flex-wrap:wrap;">
+              <button class="btn-secondary" onclick="saveCurrentCampaign('draft')" style="width:auto;">Save Draft</button>
+              <button class="btn-mini" onclick="saveCurrentCampaign('active')">Activate</button>
+            </div>
           </div>
 
           <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem;">
@@ -3491,7 +3508,7 @@ I noticed {{business_name}} in {{city}} and wanted to reach out..."></textarea>
                 </div>
               </div>
 
-              <div style="display: flex; gap: 0.5rem; flex-wrap: wrap;">
+                  <div style="display: flex; gap: 0.5rem; flex-wrap: wrap;">
                 <button class="btn" onclick="sendOutreachEmails()" style="flex: 1;">
                   Send Emails
                 </button>
@@ -3503,6 +3520,8 @@ I noticed {{business_name}} in {{city}} and wanted to reach out..."></textarea>
                 <button class="btn-mini" onclick="addSequenceStep()">+ Follow-up</button>
                 <button class="btn-mini" onclick="toggleSendSchedule()">Schedule</button>
               </div>
+              <div id="campaign-composer-status" style="display:none;margin-top:0.75rem;padding:0.75rem;border:1px solid var(--border);background:var(--surface);border-radius:4px;color:var(--text-dim);font-size:0.85rem;"></div>
+            </div>
             </div>
           </div>
         </div>
@@ -6356,6 +6375,13 @@ I noticed {{business_name}} in {{city}} and wanted to reach out..."></textarea>
         populateFilterDropdowns();
         populateIndustrySuggestions();
         renderLeadsTable();
+
+        // Auto-start polling for any leads with active rebuilds
+        leadsData.forEach(lead => {
+          if (lead.rebuild_status === 'in_progress') {
+            startRebuildPolling(lead.id);
+          }
+        });
       } catch (error) {
         console.error('Error loading leads:', error);
         tbody.innerHTML = `
@@ -6417,6 +6443,126 @@ I noticed {{business_name}} in {{city}} and wanted to reach out..."></textarea>
       }
     }
 
+    // Track which leads are being polled for rebuild status
+    const rebuildPollers = {};
+
+    // Get the rebuild UI for a lead (button, progress bar, or completed state)
+    function getRebuildUI(lead) {
+      const isBuilding = lead.rebuild_status === 'in_progress';
+      const isComplete = lead.rebuild_status === 'complete' && lead.rebuild_phase === 'complete';
+      const progress = lead.rebuild_progress || 0;
+      const message = lead.rebuild_message || '';
+      const previewUrl = lead.rebuild_preview_url || lead.rebuilt_website_url || '';
+
+      if (isComplete) {
+        return `
+          <div style="display:flex;flex-direction:column;gap:6px;width:100%;">
+            <div style="display:flex;align-items:center;gap:8px;">
+              <span style="color:#0f0;font-weight:600;">✓ Website Rebuilt</span>
+              <span style="font-size:0.7rem;color:var(--text-dim);">${lead.website_rebuilt_at ? new Date(lead.website_rebuilt_at).toLocaleDateString() : ''}</span>
+            </div>
+            ${previewUrl ? `<a href="${previewUrl}" target="_blank" style="color:var(--accent);font-size:0.8rem;text-decoration:underline;">🔗 View Rebuilt Site</a>` : ''}
+            <button id="rebuild-btn-${lead.id}" class="btn-action" style="background:linear-gradient(135deg,#ff3e00,#ff6b35);color:#fff;font-size:0.75rem;padding:4px 12px;border:none;border-radius:6px;cursor:pointer;font-weight:600;width:fit-content;margin-top:4px;" onclick="event.stopPropagation();rebuildWebsiteForLead(${lead.id})">
+              🔄 Rebuild Again
+            </button>
+          </div>`;
+      }
+
+      if (isBuilding) {
+        // Start polling if not already
+        if (!rebuildPollers[lead.id]) {
+          startRebuildPolling(lead.id);
+        }
+        const phaseLabels = {
+          initialized: '🚀 Initializing',
+          scrape: '🔍 Scraping Site',
+          rebuild: '🏗️ AI Building Website',
+          qa: '🧪 QA Testing',
+          fix: '🔧 Fixing Issues',
+          deploy: '🚀 Deploying Preview',
+          email: '📧 Emailing Customer',
+          call: '📞 Calling Customer'
+        };
+        const phaseLabel = phaseLabels[lead.rebuild_phase] || lead.rebuild_phase || 'Processing';
+
+        return `
+          <div style="display:flex;flex-direction:column;gap:6px;width:100%;">
+            <div style="display:flex;align-items:center;gap:8px;">
+              <span style="font-weight:600;color:var(--accent);font-size:0.85rem;">${phaseLabel}</span>
+              <span style="font-size:0.75rem;color:var(--text-dim);">${progress}%</span>
+            </div>
+            <div style="width:100%;background:rgba(255,255,255,0.1);border-radius:8px;height:20px;overflow:hidden;position:relative;">
+              <div id="rebuild-progress-bar-${lead.id}" style="height:100%;background:linear-gradient(90deg,#ff3e00,#ff6b35,#ffaa00);border-radius:8px;transition:width 0.5s ease;width:${progress}%;display:flex;align-items:center;justify-content:center;">
+                <span style="font-size:0.65rem;font-weight:700;color:#000;text-shadow:0 0 2px rgba(255,255,255,0.5);">${progress}%</span>
+              </div>
+            </div>
+            <div style="font-size:0.7rem;color:var(--text-dim);font-style:italic;" id="rebuild-message-${lead.id}">${message}</div>
+          </div>`;
+      }
+
+      // Default: show the rebuild button
+      return `
+        <div style="display:flex;align-items:center;flex-wrap:wrap;gap:8px;">
+          <button id="rebuild-btn-${lead.id}" class="btn-action" style="background:linear-gradient(135deg,#ff3e00,#ff6b35);color:#fff;font-size:0.8rem;padding:6px 16px;border:none;border-radius:6px;cursor:pointer;font-weight:600;" onclick="event.stopPropagation();rebuildWebsiteForLead(${lead.id})">
+            🏗️ Rebuild Website & Send to Customer
+          </button>
+          <span style="font-size:0.7rem;color:var(--text-dim);">Scrapes site → AI rebuilds → QA tests → Emails preview → AI calls customer</span>
+          ${lead.website_rebuilt_at ? `<span style="font-size:0.7rem;color:#0f0;">✓ Last rebuilt ${new Date(lead.website_rebuilt_at).toLocaleDateString()}</span>` : ''}
+        </div>`;
+    }
+
+    // Poll rebuild status for a lead
+    function startRebuildPolling(leadId) {
+      if (rebuildPollers[leadId]) return;
+      rebuildPollers[leadId] = setInterval(async () => {
+        try {
+          const response = await fetch(`${API_BASE}/rebuild-status?leadId=${leadId}`, {
+            headers: { 'Authorization': `Bearer ${authToken}` }
+          });
+          if (!response.ok) return;
+          const data = await response.json();
+
+          // Update local lead data
+          const lead = leadsData.find(l => l.id === leadId);
+          if (lead) {
+            lead.rebuild_phase = data.rebuild_phase;
+            lead.rebuild_status = data.rebuild_status;
+            lead.rebuild_progress = data.rebuild_progress;
+            lead.rebuild_message = data.rebuild_message;
+            lead.rebuild_preview_url = data.rebuild_preview_url;
+            lead.rebuilt_website_url = data.rebuilt_website_url;
+
+            // Update the progress bar in-place without full re-render
+            const container = document.getElementById(`rebuild-container-${leadId}`);
+            if (container) {
+              const bar = document.getElementById(`rebuild-progress-bar-${leadId}`);
+              const msg = document.getElementById(`rebuild-message-${leadId}`);
+              if (bar && data.rebuild_progress != null) {
+                bar.style.width = data.rebuild_progress + '%';
+                bar.innerHTML = `<span style="font-size:0.65rem;font-weight:700;color:#000;text-shadow:0 0 2px rgba(255,255,255,0.5);">${data.rebuild_progress}%</span>`;
+              }
+              if (msg && data.rebuild_message) {
+                msg.textContent = data.rebuild_message;
+              }
+            }
+
+            // If complete, stop polling and update the lead's website
+            if (data.rebuild_status === 'complete' && data.rebuild_phase === 'complete') {
+              clearInterval(rebuildPollers[leadId]);
+              delete rebuildPollers[leadId];
+              if (data.rebuilt_website_url) {
+                lead.website = data.rebuilt_website_url;
+              }
+              showToast(`✅ Website rebuild complete for ${lead.business_name}!`, 'success');
+              renderLeadsTable();
+            }
+          }
+        } catch (e) {
+          console.error('Rebuild poll error:', e);
+        }
+      }, 3000); // Poll every 3 seconds
+    }
+
     // Rebuild website for a lead via OpenClaw AI pipeline
     async function rebuildWebsiteForLead(leadId) {
       const btn = document.getElementById(`rebuild-btn-${leadId}`);
@@ -6467,7 +6613,12 @@ I noticed {{business_name}} in {{city}} and wanted to reach out..."></textarea>
 
         if (response.ok) {
           lead.website_rebuilt_at = new Date().toISOString();
-          showToast(`🏗️ AI rebuild pipeline launched for ${lead.business_name}! Check OpenClaw dashboard for progress.`, 'success');
+          lead.rebuild_status = 'in_progress';
+          lead.rebuild_phase = 'initialized';
+          lead.rebuild_progress = 5;
+          lead.rebuild_message = 'Pipeline launched — starting scrape...';
+          showToast(`🏗️ AI rebuild pipeline launched for ${lead.business_name}!`, 'success');
+          startRebuildPolling(lead.id);
           renderLeadsTable();
         } else {
           showToast(data.error || 'Failed to launch rebuild pipeline', 'error');
@@ -7409,12 +7560,8 @@ I noticed {{business_name}} in {{city}} and wanted to reach out..."></textarea>
                   </div>
                   ${lead.email ? `<div class="detail-group" style="grid-column: 1 / -1;">
                     <div class="detail-label">AI Website Rebuild</div>
-                    <div class="detail-value">
-                      <button id="rebuild-btn-${lead.id}" class="btn-action" style="background:linear-gradient(135deg,#ff3e00,#ff6b35);color:#fff;font-size:0.8rem;padding:6px 16px;border:none;border-radius:6px;cursor:pointer;font-weight:600;" onclick="event.stopPropagation();rebuildWebsiteForLead(${lead.id})">
-                        🏗️ Rebuild Website & Send to Customer
-                      </button>
-                      <span style="font-size:0.7rem;color:var(--text-dim);margin-left:8px;">Scrapes site → AI rebuilds → QA tests → Emails preview → AI calls customer</span>
-                      ${lead.website_rebuilt_at ? `<span style="font-size:0.7rem;color:#0f0;margin-left:8px;">✓ Rebuilt ${new Date(lead.website_rebuilt_at).toLocaleDateString()}</span>` : ''}
+                    <div class="detail-value" id="rebuild-container-${lead.id}">
+                      ${getRebuildUI(lead)}
                     </div>
                   </div>` : ''}
                   <div class="detail-group" style="grid-column: 1 / -1;">
@@ -8501,6 +8648,7 @@ I noticed {{business_name}} in {{city}} and wanted to reach out..."></textarea>
     let emailAccounts = [];
     let sentEmails = [];
     let outreachStats = { totalSent: 0, totalOpened: 0, openRate: 0, sentToday: 0 };
+    let currentCampaignId = null;
 
     // Load email outreach data when section is shown
     async function loadEmailOutreachData() {
@@ -8514,6 +8662,7 @@ I noticed {{business_name}} in {{city}} and wanted to reach out..."></textarea>
         loadInbox(),
         loadCampaignAnalytics()
       ]);
+      populateCampaignPicker();
     }
 
     // Load available filter options
@@ -8632,6 +8781,7 @@ I noticed {{business_name}} in {{city}} and wanted to reach out..."></textarea>
     async function updateOutreachCount() {
       const city = document.getElementById('outreach-filter-city')?.value || '';
       const industry = document.getElementById('outreach-filter-industry')?.value || '';
+      const listId = document.getElementById('outreach-filter-list')?.value || '';
       const verifiedOnly = document.getElementById('outreach-verified-only')?.checked;
       const excludeRecent = document.getElementById('outreach-exclude-recent')?.checked;
       const limit = parseInt(document.getElementById('outreach-limit')?.value) || 25;
@@ -8647,7 +8797,33 @@ I noticed {{business_name}} in {{city}} and wanted to reach out..."></textarea>
         });
         if (response.ok) {
           const data = await response.json();
-          const count = Math.min(data.total || 0, limit);
+          let leads = Array.isArray(data.leads) ? data.leads : [];
+
+          if (listId) {
+            try {
+              const listResp = await fetch(`${API_BASE}/lead-list-items?listId=${encodeURIComponent(listId)}`, {
+                headers: { 'Authorization': `Bearer ${authToken}` }
+              });
+              if (listResp.ok) {
+                const listData = await listResp.json();
+                const allowedIds = new Set((listData.items || []).map(item => item.lead_id || item.id));
+                leads = leads.filter(lead => allowedIds.has(lead.id));
+              }
+            } catch (listError) {
+              console.error('Failed to filter outreach count by list:', listError);
+            }
+          }
+
+          if (excludeRecent) {
+            const recentEmails = new Set(
+              sentEmails
+                .filter(email => email.sent_at && (Date.now() - new Date(email.sent_at).getTime()) < (7 * 24 * 60 * 60 * 1000))
+                .map(email => (email.to_email || '').toLowerCase())
+            );
+            leads = leads.filter(lead => !recentEmails.has((lead.email || '').toLowerCase()));
+          }
+
+          const count = Math.min(leads.length || 0, limit);
           document.getElementById('outreach-recipient-count').textContent = count;
         }
       } catch (error) {
@@ -8709,9 +8885,11 @@ I noticed {{business_name}} in {{city}} and wanted to reach out..."></textarea>
             emailAccountId: accountId,
             subject,
             body,
+            campaignId: currentCampaignId || undefined,
             filters: {
               city: city || undefined,
               industry: industry || undefined,
+              listId: document.getElementById('outreach-filter-list').value || undefined,
               emailVerified: verifiedOnly,
               excludeRecent,
               limit
@@ -8723,8 +8901,10 @@ I noticed {{business_name}} in {{city}} and wanted to reach out..."></textarea>
 
         if (response.ok && data.success) {
           showToast(data.message, 'success');
+          setCampaignComposerStatus(currentCampaignId ? `Campaign linked: #${currentCampaignId}` : 'Sent without a saved campaign', 'success');
           await loadSentEmails();
           await loadEmailAccountsForOutreach();
+          await loadCampaignAnalytics();
         } else {
           showToast(data.error || 'Failed to send emails', 'error');
         }
@@ -9176,6 +9356,234 @@ I noticed {{business_name}} in {{city}} and wanted to reach out..."></textarea>
       container.style.display = container.style.display === 'none' ? 'block' : 'none';
     }
 
+    function getCurrentCampaignPayload(statusOverride) {
+      return {
+        id: currentCampaignId,
+        name: document.getElementById('campaign-name')?.value?.trim() || '',
+        subject: document.getElementById('outreach-subject')?.value || '',
+        body: document.getElementById('outreach-body')?.value || '',
+        fromAccountId: document.getElementById('outreach-from-account')?.value || null,
+        sequenceSteps: sequenceSteps,
+        settings: {
+          listId: document.getElementById('outreach-filter-list')?.value || null,
+          city: document.getElementById('outreach-filter-city')?.value || null,
+          industry: document.getElementById('outreach-filter-industry')?.value || null,
+          verifiedOnly: !!document.getElementById('outreach-verified-only')?.checked,
+          excludeRecent: !!document.getElementById('outreach-exclude-recent')?.checked,
+          limit: parseInt(document.getElementById('outreach-limit')?.value) || 25,
+          abVariants,
+          schedule: document.getElementById('send-schedule-container')?.style.display !== 'none' ? {
+            startHour: parseInt(document.getElementById('schedule-start-hour')?.value) || 9,
+            endHour: parseInt(document.getElementById('schedule-end-hour')?.value) || 17,
+            dailyLimit: parseInt(document.getElementById('schedule-daily-limit')?.value) || 50,
+            delaySeconds: parseInt(document.getElementById('schedule-delay')?.value) || 5
+          } : null
+        },
+        status: statusOverride || 'draft'
+      };
+    }
+
+    function setCampaignComposerStatus(message, tone = 'info') {
+      const el = document.getElementById('campaign-composer-status');
+      if (!el) return;
+      const colors = {
+        info: 'var(--text-dim)',
+        success: 'var(--green)',
+        error: 'var(--red)'
+      };
+      el.style.display = 'block';
+      el.style.color = colors[tone] || colors.info;
+      el.textContent = message;
+    }
+
+    function populateCampaignPicker() {
+      const picker = document.getElementById('campaign-picker');
+      if (!picker) return;
+      picker.innerHTML = '<option value="">New campaign...</option>' + campaignsList.map(c => {
+        const status = (c.status || 'draft').toUpperCase();
+        return `<option value="${c.id}">${escapeHtml(c.name)} · ${status}</option>`;
+      }).join('');
+      if (currentCampaignId) picker.value = String(currentCampaignId);
+    }
+
+    function applyCampaignToComposer(campaign) {
+      if (!campaign) return;
+      currentCampaignId = campaign.id || null;
+      document.getElementById('campaign-name').value = campaign.name || '';
+      document.getElementById('outreach-subject').value = campaign.subject || '';
+      document.getElementById('outreach-body').value = campaign.body || '';
+      if (campaign.from_account_id) document.getElementById('outreach-from-account').value = String(campaign.from_account_id);
+
+      const settings = typeof campaign.settings === 'string' ? JSON.parse(campaign.settings || '{}') : (campaign.settings || {});
+      const steps = typeof campaign.sequence_steps === 'string' ? JSON.parse(campaign.sequence_steps || '[]') : (campaign.sequence_steps || []);
+
+      document.getElementById('outreach-filter-list').value = settings.listId || '';
+      document.getElementById('outreach-filter-city').value = settings.city || '';
+      document.getElementById('outreach-filter-industry').value = settings.industry || '';
+      document.getElementById('outreach-verified-only').checked = settings.verifiedOnly !== false;
+      document.getElementById('outreach-exclude-recent').checked = settings.excludeRecent !== false;
+      document.getElementById('outreach-limit').value = settings.limit || 25;
+
+      abVariants = Array.isArray(settings.abVariants) ? settings.abVariants : [];
+      document.getElementById('ab-variants-container').style.display = abVariants.length ? 'block' : 'none';
+      renderAbVariants();
+
+      sequenceSteps = Array.isArray(steps) ? steps : [];
+      document.getElementById('sequence-steps-container').style.display = sequenceSteps.length ? 'block' : 'none';
+      renderSequenceSteps();
+
+      if (settings.schedule) {
+        document.getElementById('send-schedule-container').style.display = 'block';
+        document.getElementById('schedule-start-hour').value = settings.schedule.startHour || 9;
+        document.getElementById('schedule-end-hour').value = settings.schedule.endHour || 17;
+        document.getElementById('schedule-daily-limit').value = settings.schedule.dailyLimit || 50;
+        document.getElementById('schedule-delay').value = settings.schedule.delaySeconds || 5;
+      } else {
+        document.getElementById('send-schedule-container').style.display = 'none';
+      }
+
+      document.getElementById('campaign-picker').value = String(campaign.id);
+      updateOutreachCount();
+      setCampaignComposerStatus(`Loaded campaign: ${campaign.name}`, 'success');
+    }
+
+    async function loadCampaignIntoComposer(campaignId) {
+      if (!campaignId) {
+        resetCampaignComposer();
+        return;
+      }
+      const existing = campaignsList.find(c => String(c.id) === String(campaignId));
+      if (existing && existing.subject !== undefined) {
+        applyCampaignToComposer(existing);
+        return;
+      }
+      try {
+        const response = await fetch(`${API_BASE}/campaigns?id=${encodeURIComponent(campaignId)}`, {
+          headers: { 'Authorization': `Bearer ${authToken}` }
+        });
+        const data = await response.json();
+        if (response.ok && data.campaign) {
+          applyCampaignToComposer(data.campaign);
+        } else {
+          showToast(data.error || 'Failed to load campaign', 'error');
+        }
+      } catch (error) {
+        console.error('Load campaign error:', error);
+        showToast('Failed to load campaign', 'error');
+      }
+    }
+
+    function resetCampaignComposer() {
+      currentCampaignId = null;
+      document.getElementById('campaign-picker').value = '';
+      document.getElementById('campaign-name').value = '';
+      document.getElementById('outreach-template').value = '';
+      document.getElementById('outreach-subject').value = '';
+      document.getElementById('outreach-body').value = '';
+      abVariants = [];
+      sequenceSteps = [];
+      document.getElementById('ab-variants-container').style.display = 'none';
+      document.getElementById('sequence-steps-container').style.display = 'none';
+      document.getElementById('send-schedule-container').style.display = 'none';
+      renderAbVariants();
+      renderSequenceSteps();
+      setCampaignComposerStatus('Composer reset. Start a new campaign.', 'info');
+      updateOutreachCount();
+    }
+
+    async function saveCurrentCampaign(status = 'draft') {
+      const payload = getCurrentCampaignPayload(status);
+      if (!payload.name) {
+        showToast('Add a campaign name first', 'error');
+        return;
+      }
+      if (!payload.subject) {
+        showToast('Add a subject before saving', 'error');
+        return;
+      }
+      if (!payload.body) {
+        showToast('Add an email body before saving', 'error');
+        return;
+      }
+
+      try {
+        const response = await fetch(`${API_BASE}/campaigns`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${authToken}`
+          },
+          body: JSON.stringify(payload)
+        });
+        const data = await response.json();
+        if (response.ok && data.success) {
+          currentCampaignId = data.campaign.id;
+          setCampaignComposerStatus(`${status === 'active' ? 'Active' : 'Draft'} campaign saved: ${data.campaign.name}`, 'success');
+          showToast(data.message || 'Campaign saved', 'success');
+          await loadCampaignAnalytics();
+          populateCampaignPicker();
+          document.getElementById('campaign-picker').value = String(currentCampaignId);
+        } else {
+          showToast(data.error || 'Failed to save campaign', 'error');
+          setCampaignComposerStatus('Failed to save campaign', 'error');
+        }
+      } catch (error) {
+        console.error('Save campaign error:', error);
+        showToast('Failed to save campaign', 'error');
+        setCampaignComposerStatus('Failed to save campaign', 'error');
+      }
+    }
+
+    async function updateCampaignStatus(id, status) {
+      try {
+        const response = await fetch(`${API_BASE}/campaigns`, {
+          method: 'PUT',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${authToken}`
+          },
+          body: JSON.stringify({ id, status })
+        });
+        const data = await response.json();
+        if (response.ok && data.success) {
+          showToast(`Campaign ${status}`, 'success');
+          await loadCampaignAnalytics();
+          populateCampaignPicker();
+        } else {
+          showToast(data.error || 'Failed to update campaign', 'error');
+        }
+      } catch (error) {
+        console.error('Update campaign status error:', error);
+        showToast('Failed to update campaign', 'error');
+      }
+    }
+
+    async function deleteCampaign(id) {
+      if (!confirm('Delete this campaign?')) return;
+      try {
+        const response = await fetch(`${API_BASE}/campaigns`, {
+          method: 'DELETE',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${authToken}`
+          },
+          body: JSON.stringify({ id })
+        });
+        const data = await response.json();
+        if (response.ok && data.success) {
+          if (String(currentCampaignId) === String(id)) resetCampaignComposer();
+          showToast('Campaign deleted', 'success');
+          await loadCampaignAnalytics();
+          populateCampaignPicker();
+        } else {
+          showToast(data.error || 'Failed to delete campaign', 'error');
+        }
+      } catch (error) {
+        console.error('Delete campaign error:', error);
+        showToast('Failed to delete campaign', 'error');
+      }
+    }
+
     // ============================================
     // UNIFIED INBOX
     // ============================================
@@ -9392,6 +9800,7 @@ I noticed {{business_name}} in {{city}} and wanted to reach out..."></textarea>
           const data = await response.json();
           campaignsList = data.campaigns || [];
           renderCampaignAnalytics();
+          populateCampaignPicker();
         }
       } catch (error) {
         console.error('Failed to load campaigns:', error);
@@ -9428,12 +9837,17 @@ I noticed {{business_name}} in {{city}} and wanted to reach out..."></textarea>
 
         return `
           <div style="padding: 1rem; border-bottom: 1px solid var(--border);">
-            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:0.75rem;">
+            <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:1rem;margin-bottom:0.75rem;flex-wrap:wrap;">
               <div>
                 <strong style="color:var(--text);">${escapeHtml(c.name)}</strong>
                 <span style="color:${statusColor};font-size:0.75rem;margin-left:0.5rem;text-transform:uppercase;font-family:'JetBrains Mono',monospace;">${c.status}</span>
               </div>
-              <span style="color:var(--text-dim);font-size:0.8rem;">${sent} sent</span>
+              <div style="display:flex;gap:0.4rem;align-items:center;flex-wrap:wrap;justify-content:flex-end;">
+                <span style="color:var(--text-dim);font-size:0.8rem;">${sent} sent</span>
+                <button class="btn-mini" onclick="loadCampaignIntoComposer(${c.id})">Load</button>
+                ${c.status !== 'active' ? `<button class="btn-mini" onclick="updateCampaignStatus(${c.id}, 'active')">Activate</button>` : `<button class="btn-mini" onclick="updateCampaignStatus(${c.id}, 'paused')">Pause</button>`}
+                <button class="btn-mini" style="color: var(--red);" onclick="deleteCampaign(${c.id})">Delete</button>
+              </div>
             </div>
             <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:0.75rem;">
               <div>

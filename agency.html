@@ -1,0 +1,416 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>LeadRipper for Agencies | Scrape, Score, Reach Out, Close</title>
+  <meta name="description" content="LeadRipper is the outbound operating system for agencies: scrape local leads, score websites, run email and AI calling, manage pipeline, and sync to GoHighLevel.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg-primary: #0a0a0a;
+      --bg-secondary: #111111;
+      --bg-elevated: #171717;
+      --bg-card: #1f1f1f;
+      --text-primary: #f4f4f5;
+      --text-secondary: #a1a1aa;
+      --text-muted: #71717a;
+      --accent-primary: #ff3e00;
+      --accent-secondary: #ff6b35;
+      --accent-success: #10b981;
+      --border: rgba(255,255,255,0.08);
+      --glow: rgba(255, 62, 0, 0.24);
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: 'Manrope', sans-serif;
+      background: var(--bg-primary);
+      color: var(--text-primary);
+      line-height: 1.6;
+      overflow-x: hidden;
+    }
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background-image:
+        linear-gradient(to right, rgba(255,62,0,0.03) 1px, transparent 1px),
+        linear-gradient(to bottom, rgba(255,62,0,0.03) 1px, transparent 1px);
+      background-size: 36px 36px;
+      pointer-events: none;
+      z-index: 0;
+    }
+    .glow {
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      background:
+        radial-gradient(circle at 20% 15%, rgba(255,62,0,0.18), transparent 32%),
+        radial-gradient(circle at 80% 20%, rgba(255,107,53,0.12), transparent 28%),
+        radial-gradient(circle at 50% 80%, rgba(255,62,0,0.08), transparent 30%);
+      z-index: 0;
+    }
+    .container {
+      position: relative;
+      z-index: 1;
+      width: min(1200px, calc(100% - 2rem));
+      margin: 0 auto;
+    }
+    header {
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      backdrop-filter: blur(12px);
+      background: rgba(10,10,10,0.78);
+      border-bottom: 1px solid var(--border);
+    }
+    .nav {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 1rem 0;
+      gap: 1rem;
+    }
+    .logo {
+      font-family: 'Syne', sans-serif;
+      font-size: 1.5rem;
+      font-weight: 800;
+      letter-spacing: -0.03em;
+      background: linear-gradient(135deg, var(--accent-primary), var(--accent-secondary));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+    .nav-links { display:flex; gap:1.25rem; align-items:center; flex-wrap:wrap; }
+    .nav-links a { color: var(--text-secondary); text-decoration:none; font-weight:600; }
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.5rem;
+      text-decoration: none;
+      border: none;
+      border-radius: 12px;
+      padding: 0.95rem 1.3rem;
+      font-weight: 800;
+      cursor: pointer;
+      transition: 0.25s ease;
+    }
+    .btn-primary {
+      color: white;
+      background: linear-gradient(135deg, var(--accent-primary), var(--accent-secondary));
+      box-shadow: 0 0 24px var(--glow);
+    }
+    .btn-primary:hover { transform: translateY(-2px); }
+    .btn-secondary {
+      color: var(--text-primary);
+      background: var(--bg-elevated);
+      border: 1px solid var(--border);
+    }
+    .hero {
+      padding: 6rem 0 4rem;
+      display: grid;
+      grid-template-columns: 1.15fr 0.85fr;
+      gap: 2rem;
+      align-items: center;
+    }
+    .badge {
+      display:inline-flex;
+      align-items:center;
+      gap:0.5rem;
+      font-size:0.9rem;
+      padding:0.5rem 0.9rem;
+      border:1px solid rgba(255,62,0,0.3);
+      border-radius:999px;
+      background:rgba(255,62,0,0.08);
+      color:var(--accent-secondary);
+      margin-bottom:1rem;
+      font-weight:700;
+    }
+    h1 {
+      font-family:'Syne', sans-serif;
+      font-size: clamp(2.5rem, 6vw, 4.8rem);
+      line-height: 1.02;
+      letter-spacing: -0.05em;
+      margin-bottom: 1.25rem;
+    }
+    h1 .accent {
+      background: linear-gradient(135deg, var(--accent-primary), var(--accent-secondary));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+    .hero p {
+      font-size: 1.12rem;
+      color: var(--text-secondary);
+      max-width: 720px;
+      margin-bottom: 1.5rem;
+    }
+    .hero-actions { display:flex; gap:0.75rem; flex-wrap:wrap; margin-bottom:1.2rem; }
+    .hero-proof {
+      display:flex;
+      gap:1rem;
+      flex-wrap:wrap;
+      color:var(--text-muted);
+      font-size:0.95rem;
+    }
+    .hero-panel, .panel, .feature, .pricing-card, .step {
+      background: linear-gradient(180deg, rgba(255,255,255,0.03), rgba(255,255,255,0.015));
+      border:1px solid var(--border);
+      border-radius:24px;
+    }
+    .hero-panel {
+      padding: 1.25rem;
+      box-shadow: 0 24px 80px rgba(0,0,0,0.35);
+    }
+    .terminal {
+      background:#0d0d0d;
+      border:1px solid rgba(255,255,255,0.06);
+      border-radius:18px;
+      overflow:hidden;
+    }
+    .terminal-top {
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      padding:0.9rem 1rem;
+      border-bottom:1px solid rgba(255,255,255,0.06);
+      color:var(--text-muted);
+      font-size:0.8rem;
+      text-transform:uppercase;
+      letter-spacing:0.08em;
+    }
+    .terminal-body { padding: 1rem; display:grid; gap:0.85rem; }
+    .row {
+      background: #141414;
+      border: 1px solid rgba(255,255,255,0.06);
+      border-radius: 16px;
+      padding: 0.9rem;
+    }
+    .row strong { display:block; margin-bottom:0.3rem; }
+    .row small { color:var(--text-secondary); }
+    section { padding: 1.4rem 0 4rem; }
+    .section-head { margin-bottom: 1.5rem; max-width: 760px; }
+    .section-head h2 {
+      font-family:'Syne', sans-serif;
+      font-size: clamp(1.9rem, 4vw, 3rem);
+      line-height: 1.08;
+      letter-spacing: -0.04em;
+      margin-bottom: 0.75rem;
+    }
+    .section-head p { color: var(--text-secondary); }
+    .grid-3 {
+      display:grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 1rem;
+    }
+    .feature { padding: 1.35rem; }
+    .feature .eyebrow {
+      color: var(--accent-secondary);
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      font-weight: 800;
+      font-size: 0.78rem;
+      margin-bottom: 0.65rem;
+    }
+    .feature h3 { margin-bottom:0.5rem; font-size:1.1rem; }
+    .feature p { color:var(--text-secondary); font-size:0.96rem; }
+    .workflow {
+      display:grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 1rem;
+    }
+    .step { padding: 1.15rem; position: relative; }
+    .step-number {
+      display:inline-flex;
+      width: 34px; height:34px;
+      border-radius:50%;
+      align-items:center; justify-content:center;
+      background:rgba(255,62,0,0.12);
+      color:var(--accent-secondary);
+      font-weight:800;
+      margin-bottom:0.85rem;
+    }
+    .step p { color: var(--text-secondary); font-size: 0.95rem; }
+    .pricing {
+      display:grid;
+      grid-template-columns: 1.1fr 0.9fr;
+      gap: 1rem;
+      align-items: start;
+    }
+    .pricing-card { padding: 1.4rem; }
+    .price {
+      font-size: 3rem;
+      line-height: 1;
+      font-weight: 800;
+      margin: 0.7rem 0;
+    }
+    ul.clean {
+      list-style:none;
+      display:grid;
+      gap:0.7rem;
+      margin-top:1rem;
+    }
+    ul.clean li { color:var(--text-secondary); }
+    ul.clean li strong { color:var(--text-primary); }
+    .footer-cta {
+      text-align:center;
+      padding: 2rem;
+      margin-bottom: 4rem;
+    }
+    .footer-cta p { color: var(--text-secondary); margin: 0.8rem auto 1.4rem; max-width: 720px; }
+    @media (max-width: 980px) {
+      .hero, .pricing, .workflow, .grid-3 { grid-template-columns: 1fr; }
+    }
+    @media (max-width: 720px) {
+      .nav { flex-direction: column; align-items: flex-start; }
+      .hero { padding-top: 4rem; }
+      h1 { font-size: 2.4rem; }
+    }
+  </style>
+</head>
+<body>
+  <div class="glow"></div>
+  <header>
+    <div class="container nav">
+      <div class="logo">LeadRipper</div>
+      <div class="nav-links">
+        <a href="#features">Features</a>
+        <a href="#workflow">Workflow</a>
+        <a href="#pricing">Pricing</a>
+        <a class="btn btn-primary" href="/app">Open App</a>
+      </div>
+    </div>
+  </header>
+
+  <main class="container">
+    <section class="hero">
+      <div>
+        <div class="badge">Built for agencies, closers, and outbound operators</div>
+        <h1>Scrape leads. <span class="accent">Score bad websites.</span> Launch outreach and close from one system.</h1>
+        <p>
+          LeadRipper combines Google Places lead generation, email enrichment, cold outreach, softphone calling,
+          pipeline CRM, GoHighLevel sync, Twilio, and ElevenLabs into one agency outbound operating system.
+        </p>
+        <div class="hero-actions">
+          <a class="btn btn-primary" href="/app">Start in the app</a>
+          <a class="btn btn-secondary" href="#workflow">See the workflow</a>
+        </div>
+        <div class="hero-proof">
+          <span>Unlimited inboxes + warmup</span>
+          <span>GoHighLevel sync</span>
+          <span>Twilio softphone</span>
+          <span>ElevenLabs AI calling</span>
+        </div>
+      </div>
+      <div class="hero-panel">
+        <div class="terminal">
+          <div class="terminal-top">
+            <span>LeadRipper // agency mode</span>
+            <span>pipeline active</span>
+          </div>
+          <div class="terminal-body">
+            <div class="row"><strong>1. Scrape local businesses</strong><small>Pull targeted local leads from Google Places by city + niche.</small></div>
+            <div class="row"><strong>2. Find contact paths</strong><small>Discover emails, validate addresses, and flag no-email leads for calling.</small></div>
+            <div class="row"><strong>3. Grade the funnel</strong><small>Score websites, identify weak offers, and tee up a rebuild pitch.</small></div>
+            <div class="row"><strong>4. Reach out from one dashboard</strong><small>Email, AI calling, softphone, pipeline movement, and CRM sync.</small></div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section id="features">
+      <div class="section-head">
+        <h2>Built like LeadRipper. Framed for agencies that need a full outbound stack.</h2>
+        <p>This version keeps the LeadRipper DNA, but positions it around the whole workflow — not just cold email.</p>
+      </div>
+      <div class="grid-3">
+        <div class="feature">
+          <div class="eyebrow">Lead generation</div>
+          <h3>Google Places-powered local prospecting</h3>
+          <p>Search by city, niche, and market. Pull real businesses into one working list instead of juggling five tools.</p>
+        </div>
+        <div class="feature">
+          <div class="eyebrow">Enrichment</div>
+          <h3>Email discovery, validation, and website scoring</h3>
+          <p>Prioritize the best targets fast, find missing emails, and spot weak websites you can actually sell into.</p>
+        </div>
+        <div class="feature">
+          <div class="eyebrow">Execution</div>
+          <h3>Email, Twilio softphone, AI calling, and CRM</h3>
+          <p>Run outreach, handle replies, call directly from the app, and push everything into your internal CRM or GoHighLevel.</p>
+        </div>
+      </div>
+    </section>
+
+    <section id="workflow">
+      <div class="section-head">
+        <h2>The agency workflow, end to end.</h2>
+        <p>Instead of buying one tool for scraping, one for email, one for calls, one for CRM, and another for syncs — run the full flow here.</p>
+      </div>
+      <div class="workflow">
+        <div class="step">
+          <div class="step-number">1</div>
+          <h3>Scrape leads</h3>
+          <p>Generate local business lists by industry and city using the same motion agencies already sell every day.</p>
+        </div>
+        <div class="step">
+          <div class="step-number">2</div>
+          <h3>Enrich and qualify</h3>
+          <p>Find emails, validate addresses, score websites, and push no-email businesses into a calling flow.</p>
+        </div>
+        <div class="step">
+          <div class="step-number">3</div>
+          <h3>Launch outreach</h3>
+          <p>Use unlimited inbox infrastructure, warmup, AI calling, Twilio softphone, and campaign sequences from one panel.</p>
+        </div>
+        <div class="step">
+          <div class="step-number">4</div>
+          <h3>Move deals and sync</h3>
+          <p>Track progress in your pipeline CRM and sync qualified opportunities into GoHighLevel when needed.</p>
+        </div>
+      </div>
+    </section>
+
+    <section id="pricing">
+      <div class="section-head">
+        <h2>Pricing that can scale without lying.</h2>
+        <p>Use the unlimited story where it makes sense — inboxes, warmup, users, workspaces — and meter the expensive stuff like leads, enrichment, and AI usage.</p>
+      </div>
+      <div class="pricing">
+        <div class="pricing-card">
+          <div class="eyebrow">Suggested launch angle</div>
+          <h3>Unlimited infrastructure. Metered expensive actions.</h3>
+          <ul class="clean">
+            <li><strong>Unlimited:</strong> inboxes, warmup, users, workspaces, campaigns, CRM access</li>
+            <li><strong>Metered:</strong> Google Places lead pulls, email discovery, validations, website scores, AI calls, rebuild jobs</li>
+            <li><strong>Agency-friendly:</strong> GoHighLevel sync, Twilio, ElevenLabs, softphone, and internal pipeline all in one stack</li>
+          </ul>
+        </div>
+        <div class="pricing-card">
+          <div class="eyebrow">Founding plan concept</div>
+          <h3>Lifetime access to the platform layer</h3>
+          <div class="price">$249</div>
+          <p style="color:var(--text-secondary);">One-time for the software layer, with monthly included usage credits and paid top-ups for the API-heavy stuff.</p>
+          <ul class="clean">
+            <li>Unlimited inboxes + warmup</li>
+            <li>Unlimited users + client workspaces</li>
+            <li>Pipeline + outreach + inbox</li>
+            <li>Monthly usage credits included</li>
+          </ul>
+        </div>
+      </div>
+    </section>
+
+    <section>
+      <div class="footer-cta panel">
+        <div class="section-head" style="margin:0 auto; text-align:center;">
+          <h2>LeadRipper is not just a cold email tool.</h2>
+          <p>It’s the outbound OS for agencies that want lead scraping, calling, pipeline management, CRM sync, and outreach in one place.</p>
+        </div>
+        <a class="btn btn-primary" href="/app">Open LeadRipper</a>
+      </div>
+    </section>
+  </main>
+</body>
+</html>
