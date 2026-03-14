@@ -49,7 +49,7 @@ exports.handler = async (event, context) => {
   }
 
   try {
-    const { ghlApiKey, ghlLocationId, ghlAutoSync, ghlPipelineId, ghlStageId, ghlIndustryPipelines, ghlDripEnabled, ghlDripInterval, resendApiKey, webhookUrl, name, company, elevenlabsApiKey, elevenlabsDefaultVoice, aiCallingEnabled, autoCallEnabled, autoCallAgentId, autoFollowupEnabled, followupAgentId, crmMode, emailSignature, calendarTimezone, calendarWorkingHours, twilioAccountSid, twilioAuthToken, twilioPhoneNumber } = JSON.parse(event.body);
+    const { ghlApiKey, ghlLocationId, ghlAutoSync, ghlPipelineId, ghlStageId, ghlIndustryPipelines, ghlDripEnabled, ghlDripInterval, resendApiKey, webhookUrl, name, company, elevenlabsApiKey, elevenlabsDefaultVoice, aiCallingEnabled, autoCallEnabled, autoCallAgentId, autoFollowupEnabled, followupAgentId, crmMode, emailSignature, calendarTimezone, calendarWorkingHours, twilioAccountSid, twilioAuthToken, twilioPhoneNumber, netlifyToken, githubToken, githubUsername } = JSON.parse(event.body);
 
     // Update user profile if provided
     if (name !== undefined || company !== undefined) {
@@ -76,7 +76,7 @@ exports.handler = async (event, context) => {
     }
 
     // Update settings if provided
-    const hasSettingsUpdate = [ghlApiKey, ghlLocationId, ghlAutoSync, ghlPipelineId, ghlStageId, ghlIndustryPipelines, ghlDripEnabled, ghlDripInterval, resendApiKey, webhookUrl, elevenlabsApiKey, elevenlabsDefaultVoice, aiCallingEnabled, autoCallEnabled, autoCallAgentId, autoFollowupEnabled, followupAgentId, crmMode, emailSignature, calendarTimezone, calendarWorkingHours, twilioAccountSid, twilioAuthToken, twilioPhoneNumber].some(v => v !== undefined);
+    const hasSettingsUpdate = [ghlApiKey, ghlLocationId, ghlAutoSync, ghlPipelineId, ghlStageId, ghlIndustryPipelines, ghlDripEnabled, ghlDripInterval, resendApiKey, webhookUrl, elevenlabsApiKey, elevenlabsDefaultVoice, aiCallingEnabled, autoCallEnabled, autoCallAgentId, autoFollowupEnabled, followupAgentId, crmMode, emailSignature, calendarTimezone, calendarWorkingHours, twilioAccountSid, twilioAuthToken, twilioPhoneNumber, netlifyToken, githubToken, githubUsername].some(v => v !== undefined);
     if (hasSettingsUpdate) {
       // First ensure settings row exists
       await pool.query(
@@ -84,6 +84,13 @@ exports.handler = async (event, context) => {
          ON CONFLICT (user_id) DO NOTHING`,
         [decoded.userId]
       );
+
+      // Auto-migrate: add deployment credential columns if they don't exist
+      await pool.query(`
+        ALTER TABLE lr_user_settings ADD COLUMN IF NOT EXISTS netlify_token TEXT;
+        ALTER TABLE lr_user_settings ADD COLUMN IF NOT EXISTS github_token TEXT;
+        ALTER TABLE lr_user_settings ADD COLUMN IF NOT EXISTS github_username VARCHAR(255);
+      `);
 
       const settingsUpdates = [];
       const settingsValues = [];
@@ -213,6 +220,21 @@ exports.handler = async (event, context) => {
         settingsValues.push(twilioPhoneNumber);
         paramIndex++;
       }
+      if (netlifyToken !== undefined) {
+        settingsUpdates.push(`netlify_token = $${paramIndex}`);
+        settingsValues.push(netlifyToken);
+        paramIndex++;
+      }
+      if (githubToken !== undefined) {
+        settingsUpdates.push(`github_token = $${paramIndex}`);
+        settingsValues.push(githubToken);
+        paramIndex++;
+      }
+      if (githubUsername !== undefined) {
+        settingsUpdates.push(`github_username = $${paramIndex}`);
+        settingsValues.push(githubUsername);
+        paramIndex++;
+      }
 
       if (settingsUpdates.length > 0) {
         settingsValues.push(decoded.userId);
@@ -277,7 +299,12 @@ exports.handler = async (event, context) => {
           calendarWorkingHours: settings.calendar_working_hours ? JSON.parse(settings.calendar_working_hours) : null,
           twilioAccountSid: settings.twilio_account_sid ? '••••••••' : null,
           twilioPhoneNumber: settings.twilio_phone_number || null,
-          hasTwilioCredentials: !!(settings.twilio_account_sid && settings.twilio_auth_token && settings.twilio_phone_number)
+          hasTwilioCredentials: !!(settings.twilio_account_sid && settings.twilio_auth_token && settings.twilio_phone_number),
+          netlifyToken: settings.netlify_token ? '••••••••' : null,
+          githubToken: settings.github_token ? '••••••••' : null,
+          githubUsername: settings.github_username || null,
+          hasNetlifyToken: !!settings.netlify_token,
+          hasGithubToken: !!settings.github_token
         }
       })
     };

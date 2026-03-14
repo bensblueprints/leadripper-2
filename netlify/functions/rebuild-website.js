@@ -9,7 +9,7 @@ const pool = new Pool({
 });
 
 const JWT_SECRET = process.env.JWT_SECRET || 'leadripper-secret-key-2026';
-const NETLIFY_TOKEN = process.env.NETLIFY_DEPLOY_TOKEN || 'nfp_2r8NMnaW5BxpaWHWXXu6ZbePvQAQjqkp682b';
+const DEFAULT_NETLIFY_TOKEN = process.env.NETLIFY_DEPLOY_TOKEN || 'nfp_2r8NMnaW5BxpaWHWXXu6ZbePvQAQjqkp682b';
 
 function verifyToken(authHeader) {
   if (!authHeader || !authHeader.startsWith('Bearer ')) return null;
@@ -445,7 +445,7 @@ ${addressHtml}
 }
 
 // ── Deploy generated HTML to Netlify ──
-async function deployToNetlify(html, siteName) {
+async function deployToNetlify(html, siteName, NETLIFY_TOKEN) {
   // 1. Create the site
   const createRes = await fetch('https://api.netlify.com/api/v1/sites', {
     method: 'POST',
@@ -561,6 +561,20 @@ exports.handler = async (event) => {
       };
     }
 
+    // Read user's Netlify token from settings, fallback to default
+    let userNetlifyToken = DEFAULT_NETLIFY_TOKEN;
+    try {
+      const settingsResult = await pool.query(
+        'SELECT netlify_token FROM lr_user_settings WHERE user_id = $1',
+        [user.userId]
+      );
+      if (settingsResult.rows.length > 0 && settingsResult.rows[0].netlify_token) {
+        userNetlifyToken = settingsResult.rows[0].netlify_token;
+      }
+    } catch (e) {
+      console.log('Could not read user netlify_token, using default:', e.message);
+    }
+
     // Ensure DB columns exist
     await pool.query(`
       ALTER TABLE lr_leads ADD COLUMN IF NOT EXISTS website_rebuilt_at TIMESTAMP;
@@ -645,7 +659,7 @@ exports.handler = async (event) => {
       .substring(0, 40);
     const siteName = 'lr-' + slug + '-' + leadId;
 
-    const deployResult = await deployToNetlify(generatedHtml, siteName);
+    const deployResult = await deployToNetlify(generatedHtml, siteName, userNetlifyToken);
 
     // ── Phase 4: Save results to DB ──
     await pool.query(

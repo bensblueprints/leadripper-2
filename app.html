@@ -3132,6 +3132,38 @@
           </div>
         </div>
 
+        <!-- Deployment Credentials -->
+        <div class="card">
+          <div class="card-header">
+            <h2 class="card-title display">🚀 Deployment Credentials</h2>
+          </div>
+          <p style="color: var(--text-secondary); margin-bottom: 1rem;">
+            Connect your Netlify and GitHub accounts to enable automated website deployments for leads.
+          </p>
+          <div class="form-group">
+            <label class="form-label">Netlify API Token</label>
+            <input type="password" class="form-input mono" id="deploy-netlify-token" placeholder="nfp_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx">
+            <small style="color: var(--text-dim); display: block; margin-top: 0.25rem;">
+              Generate at <a href="https://app.netlify.com/user/applications#personal-access-tokens" target="_blank" style="color: var(--accent);">Netlify &gt; User Settings &gt; Personal Access Tokens</a>
+            </small>
+          </div>
+          <div class="form-group">
+            <label class="form-label">GitHub Personal Access Token</label>
+            <input type="password" class="form-input mono" id="deploy-github-token" placeholder="ghp_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx">
+            <small style="color: var(--text-dim); display: block; margin-top: 0.25rem;">
+              Generate at <a href="https://github.com/settings/tokens" target="_blank" style="color: var(--accent);">GitHub &gt; Settings &gt; Developer Settings &gt; Tokens</a>
+            </small>
+          </div>
+          <div class="form-group">
+            <label class="form-label">GitHub Username</label>
+            <input type="text" class="form-input mono" id="deploy-github-username" placeholder="your-github-username">
+          </div>
+          <div style="display: flex; gap: 0.5rem; align-items: center;">
+            <button class="btn-secondary" onclick="saveDeploySettings()">Save Deployment Settings</button>
+            <span id="deploy-status" style="font-size: 0.8rem; color: var(--text-dim);"></span>
+          </div>
+        </div>
+
         <!-- API Key Card -->
         <div class="card">
           <div class="card-header">
@@ -6273,6 +6305,19 @@ I noticed {{business_name}} in {{city}} and wanted to reach out..."></textarea>
         }
         if (settings.twilioPhoneNumber) {
           document.getElementById('twilio-phone-number').value = settings.twilioPhoneNumber;
+        }
+
+        // Load deployment credentials
+        if (settings.hasNetlifyToken) {
+          document.getElementById('deploy-netlify-token').placeholder = '••••••••';
+          document.getElementById('deploy-status').textContent = 'Connected';
+          document.getElementById('deploy-status').style.color = 'var(--green)';
+        }
+        if (settings.hasGithubToken) {
+          document.getElementById('deploy-github-token').placeholder = '••••••••';
+        }
+        if (settings.githubUsername) {
+          document.getElementById('deploy-github-username').value = settings.githubUsername;
         }
 
         // Load internal CRM-specific settings if applicable
@@ -11796,6 +11841,73 @@ I noticed {{business_name}} in {{city}} and wanted to reach out..."></textarea>
         statusEl.textContent = 'Error';
         statusEl.style.color = 'var(--red)';
         showToast('Failed to save Twilio settings', 'error');
+      }
+    }
+
+    // ============================================
+    // DEPLOYMENT CREDENTIALS
+    // ============================================
+
+    async function saveDeploySettings() {
+      const netlifyToken = document.getElementById('deploy-netlify-token').value.trim();
+      const githubToken = document.getElementById('deploy-github-token').value.trim();
+      const githubUsername = document.getElementById('deploy-github-username').value.trim();
+
+      if (!netlifyToken && !githubToken && !githubUsername) {
+        showToast('Please fill in at least one deployment field', 'error');
+        return;
+      }
+
+      const statusEl = document.getElementById('deploy-status');
+      statusEl.textContent = 'Saving...';
+      statusEl.style.color = 'var(--text-dim)';
+
+      try {
+        const payload = {};
+        if (netlifyToken && netlifyToken !== '••••••••') {
+          payload.netlifyToken = netlifyToken;
+        }
+        if (githubToken && githubToken !== '••••••••') {
+          payload.githubToken = githubToken;
+        }
+        if (githubUsername) {
+          payload.githubUsername = githubUsername;
+        }
+
+        const response = await fetch(`${API_BASE}/update-settings`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${authToken}`
+          },
+          body: JSON.stringify(payload)
+        });
+
+        const result = await response.json();
+        if (result.success) {
+          statusEl.textContent = 'Saved!';
+          statusEl.style.color = 'var(--green)';
+          showToast('Deployment credentials saved successfully', 'success');
+
+          // Mask the token fields
+          if (netlifyToken && netlifyToken !== '••••••••') {
+            document.getElementById('deploy-netlify-token').value = '';
+            document.getElementById('deploy-netlify-token').placeholder = '••••••••';
+          }
+          if (githubToken && githubToken !== '••••••••') {
+            document.getElementById('deploy-github-token').value = '';
+            document.getElementById('deploy-github-token').placeholder = '••••••••';
+          }
+        } else {
+          statusEl.textContent = result.error || 'Failed';
+          statusEl.style.color = 'var(--red)';
+          showToast(result.error || 'Failed to save deployment credentials', 'error');
+        }
+      } catch (error) {
+        console.error('Save deploy settings error:', error);
+        statusEl.textContent = 'Error';
+        statusEl.style.color = 'var(--red)';
+        showToast('Failed to save deployment credentials', 'error');
       }
     }
 

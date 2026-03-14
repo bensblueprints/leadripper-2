@@ -69,7 +69,9 @@ exports.handler = async (event, context) => {
           autoFollowupEnabled: false, followupAgentId: null,
           crmMode: 'ghl', emailSignature: null,
           calendarTimezone: null, calendarWorkingHours: null,
-          twilioAccountSid: null, twilioPhoneNumber: null, hasTwilioCredentials: false
+          twilioAccountSid: null, twilioPhoneNumber: null, hasTwilioCredentials: false,
+          netlifyToken: null, githubToken: null, githubUsername: null,
+          hasNetlifyToken: false, hasGithubToken: false
         })
       };
     }
@@ -114,7 +116,12 @@ exports.handler = async (event, context) => {
         calendarWorkingHours: settings.calendar_working_hours ? JSON.parse(settings.calendar_working_hours) : null,
         twilioAccountSid: settings.twilio_account_sid ? '••••••••' : null,
         twilioPhoneNumber: settings.twilio_phone_number || null,
-        hasTwilioCredentials: !!(settings.twilio_account_sid && settings.twilio_auth_token && settings.twilio_phone_number)
+        hasTwilioCredentials: !!(settings.twilio_account_sid && settings.twilio_auth_token && settings.twilio_phone_number),
+        netlifyToken: settings.netlify_token ? '••••••••' : null,
+        githubToken: settings.github_token ? '••••••••' : null,
+        githubUsername: settings.github_username || null,
+        hasNetlifyToken: !!settings.netlify_token,
+        hasGithubToken: !!settings.github_token
       })
     };
   } catch (error) {
