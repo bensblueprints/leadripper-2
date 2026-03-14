@@ -5214,7 +5214,7 @@ Available merge tags: {{business_name}}, {{first_name}}, {{email}}, {{phone}}, {
               'Content-Type': 'application/json',
               'Authorization': `Bearer ${authToken}`
             },
-            body: JSON.stringify({ url: lead.website, leadId: lead.id })
+            body: JSON.stringify({ url: lead.website, leadId: lead.id, businessName: lead.business_name || '', address: [lead.address, lead.city, lead.state].filter(Boolean).join(', ') })
           });
 
           const data = await response.json();
@@ -5439,7 +5439,7 @@ Available merge tags: {{business_name}}, {{first_name}}, {{email}}, {{phone}}, {
             'Content-Type': 'application/json',
             'Authorization': `Bearer ${authToken}`
           },
-          body: JSON.stringify({ url: lead.website, leadId: lead.id })
+          body: JSON.stringify({ url: lead.website, leadId: lead.id, businessName: lead.business_name || '', address: [lead.address, lead.city, lead.state].filter(Boolean).join(', ') })
         });
 
         const data = await response.json();
@@ -5463,143 +5463,170 @@ Available merge tags: {{business_name}}, {{first_name}}, {{email}}, {{phone}}, {
     // Generate a PDF website analysis report
     function generateWebsiteReport(leadId) {
       const lead = leadsData.find(l => l.id === leadId);
-      if (!lead || lead.website_score == null) {
-        showToast('Score the website first', 'warning');
-        return;
-      }
+      if (!lead || lead.website_score == null) { showToast('Score the website first', 'warning'); return; }
 
-      const score = lead.website_score;
-      const grade = lead.website_grade || '?';
       const analysis = typeof lead.website_analysis === 'string' ? JSON.parse(lead.website_analysis) : lead.website_analysis;
-      const checks = analysis?.checks || {};
+      const score = analysis?.overall || lead.website_score;
+      const grade = analysis?.grade || lead.website_grade || '?';
+      const gradeLabel = analysis?.gradeLabel || '';
+      const sections = analysis?.sections || {};
+      const wd = analysis?.websiteData || {};
+      const gbp = analysis?.gbpData || {};
       const analyzedDate = lead.website_analyzed_at ? new Date(lead.website_analyzed_at).toLocaleDateString() : 'N/A';
 
-      let gradeColor = '#ff0033';
-      let gradeLabel = 'Needs a new website';
-      if (score >= 80) { gradeColor = '#00cc33'; gradeLabel = 'Good website'; }
-      else if (score >= 65) { gradeColor = '#88cc00'; gradeLabel = 'Decent - could improve'; }
-      else if (score >= 50) { gradeColor = '#ffcc00'; gradeLabel = 'Mediocre - needs work'; }
-      else if (score >= 30) { gradeColor = '#ff8800'; gradeLabel = 'Poor - needs redesign'; }
+      const gc = (s) => s >= 80 ? '#00cc33' : s >= 65 ? '#88cc00' : s >= 50 ? '#ffcc00' : s >= 30 ? '#ff8800' : '#ff0033';
+      const icon = (pass) => `<span style="display:inline-block;width:22px;height:22px;border-radius:50%;background:${pass ? '#00cc33' : '#ff0033'};color:#fff;text-align:center;line-height:22px;font-size:12px;font-weight:bold;">${pass ? '✓' : '✗'}</span>`;
 
-      const checkRows = Object.entries(checks).map(([key, check]) => `
-        <tr>
-          <td style="padding:10px 14px;border-bottom:1px solid #eee;font-size:13px;">${check.label}</td>
-          <td style="padding:10px 14px;border-bottom:1px solid #eee;text-align:center;">
-            <span style="display:inline-block;width:24px;height:24px;border-radius:50%;background:${check.pass ? '#00cc33' : '#ff0033'};color:#fff;text-align:center;line-height:24px;font-size:14px;font-weight:bold;">${check.pass ? '✓' : '✗'}</span>
-          </td>
-          <td style="padding:10px 14px;border-bottom:1px solid #eee;font-size:12px;color:#666;">${check.details || (check.pass ? 'Pass' : 'Fail')}</td>
-          <td style="padding:10px 14px;border-bottom:1px solid #eee;text-align:center;font-size:12px;color:#999;">${check.weight} pts</td>
-        </tr>
-      `).join('');
+      function checkTable(checks) {
+        if (!checks) return '';
+        return Object.entries(checks).map(([k, c]) => `
+          <tr>
+            <td style="padding:8px 12px;border-bottom:1px solid #eee;font-size:12px;">${c.label}</td>
+            <td style="padding:8px 12px;border-bottom:1px solid #eee;text-align:center;">${icon(c.pass)}</td>
+            <td style="padding:8px 12px;border-bottom:1px solid #eee;font-size:11px;color:#666;">${c.detail || (c.pass ? 'Detected' : 'Not found')}</td>
+          </tr>`).join('');
+      }
 
-      const failedChecks = Object.values(checks).filter(c => !c.pass);
-      const recommendations = failedChecks.map(c => `<li style="margin-bottom:8px;font-size:13px;">${c.label}: ${c.details || 'Not detected on the website'}</li>`).join('');
+      const allFailed = [];
+      for (const sec of Object.values(sections)) {
+        if (sec.checks) {
+          for (const c of Object.values(sec.checks)) { if (!c.pass) allFailed.push(c); }
+        }
+      }
 
-      const htmlContent = `
-<!DOCTYPE html>
-<html>
-<head>
-<meta charset="UTF-8">
-<title>Website Analysis Report - ${lead.business_name || 'Unknown'}</title>
+      const htmlContent = `<!DOCTYPE html><html><head><meta charset="UTF-8">
+<title>Online Presence Report - ${lead.business_name || 'Business'}</title>
 <style>
-  @media print { body { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; } }
-  body { font-family: 'Helvetica Neue', Arial, sans-serif; color: #222; margin: 0; padding: 0; background: #fff; }
+  @media print { body { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; } @page { margin: 0.5in; } }
+  body { font-family: 'Helvetica Neue', Arial, sans-serif; color: #222; margin: 0; padding: 0; background: #fff; font-size: 13px; line-height: 1.5; }
   .page { max-width: 800px; margin: 0 auto; padding: 40px; }
-  .header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 30px; border-bottom: 3px solid #ff3e00; padding-bottom: 20px; }
-  .logo { font-size: 24px; font-weight: 700; color: #ff3e00; }
-  .logo-sub { font-size: 11px; color: #999; margin-top: 2px; }
-  .report-date { font-size: 12px; color: #999; text-align: right; }
-  .business-name { font-size: 28px; font-weight: 700; margin-bottom: 4px; }
-  .business-url { font-size: 14px; color: #666; margin-bottom: 30px; }
-  .score-section { display: flex; align-items: center; gap: 30px; background: #f8f8f8; border-radius: 12px; padding: 24px; margin-bottom: 30px; }
-  .score-circle { width: 100px; height: 100px; border-radius: 50%; display: flex; align-items: center; justify-content: center; flex-direction: column; color: #fff; flex-shrink: 0; }
-  .score-number { font-size: 32px; font-weight: 800; line-height: 1; }
-  .score-label { font-size: 11px; opacity: 0.9; }
-  .grade-text { font-size: 22px; font-weight: 700; }
-  .grade-desc { font-size: 14px; color: #666; margin-top: 4px; }
-  table { width: 100%; border-collapse: collapse; margin-bottom: 30px; }
-  th { background: #222; color: #fff; padding: 10px 14px; text-align: left; font-size: 12px; text-transform: uppercase; letter-spacing: 0.5px; }
-  .section-title { font-size: 18px; font-weight: 700; margin-bottom: 12px; color: #222; border-left: 4px solid #ff3e00; padding-left: 12px; }
-  .cta-box { background: linear-gradient(135deg, #ff3e00, #ff6633); color: #fff; border-radius: 12px; padding: 24px; margin-top: 30px; text-align: center; }
-  .cta-box h3 { font-size: 20px; margin-bottom: 8px; }
-  .cta-box p { font-size: 14px; opacity: 0.9; margin-bottom: 0; }
-  .footer { text-align: center; margin-top: 40px; padding-top: 20px; border-top: 1px solid #eee; font-size: 11px; color: #999; }
-</style>
-</head>
-<body>
+  .hdr { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 24px; border-bottom: 3px solid #ff3e00; padding-bottom: 16px; }
+  .logo { font-size: 22px; font-weight: 800; color: #ff3e00; letter-spacing: 1px; }
+  .logo-sub { font-size: 10px; color: #999; margin-top: 2px; text-transform: uppercase; letter-spacing: 2px; }
+  .meta { font-size: 11px; color: #999; text-align: right; }
+  .biz { font-size: 24px; font-weight: 700; margin-bottom: 2px; }
+  .biz-info { font-size: 12px; color: #666; margin-bottom: 4px; }
+  .hero { display: flex; align-items: center; gap: 24px; background: linear-gradient(135deg, #f8f8f8, #f0f0f0); border-radius: 12px; padding: 20px; margin: 20px 0; }
+  .circle { width: 90px; height: 90px; border-radius: 50%; display: flex; align-items: center; justify-content: center; flex-direction: column; color: #fff; flex-shrink: 0; }
+  .circle-num { font-size: 28px; font-weight: 800; line-height: 1; }
+  .circle-lbl { font-size: 10px; opacity: 0.9; }
+  .grade-txt { font-size: 20px; font-weight: 700; }
+  .grade-sub { font-size: 13px; color: #666; margin-top: 2px; }
+  .scores-row { display: flex; gap: 12px; margin-bottom: 24px; }
+  .score-card { flex: 1; background: #f8f8f8; border-radius: 8px; padding: 14px; text-align: center; }
+  .score-card-val { font-size: 24px; font-weight: 800; }
+  .score-card-lbl { font-size: 10px; color: #999; text-transform: uppercase; letter-spacing: 1px; margin-top: 2px; }
+  .sec-title { font-size: 16px; font-weight: 700; margin: 24px 0 8px; border-left: 4px solid #ff3e00; padding-left: 10px; display: flex; align-items: center; gap: 10px; }
+  .sec-score { font-size: 13px; font-weight: 600; padding: 2px 8px; border-radius: 12px; color: #fff; }
+  table { width: 100%; border-collapse: collapse; margin-bottom: 16px; }
+  th { background: #1a1a1a; color: #fff; padding: 8px 12px; text-align: left; font-size: 10px; text-transform: uppercase; letter-spacing: 0.5px; }
+  .rec { background: #fff8f6; border: 1px solid #ffe0d6; border-radius: 8px; padding: 16px; margin: 16px 0; }
+  .rec h4 { color: #ff3e00; margin: 0 0 8px; font-size: 14px; }
+  .rec li { margin-bottom: 6px; font-size: 12px; color: #444; }
+  .gbp-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-bottom: 16px; }
+  .gbp-item { background: #f8f8f8; border-radius: 6px; padding: 10px; text-align: center; }
+  .gbp-item-lbl { font-size: 10px; color: #999; text-transform: uppercase; }
+  .gbp-item-val { font-size: 13px; font-weight: 600; margin-top: 2px; }
+  .cta { background: linear-gradient(135deg, #ff3e00, #ff6633); color: #fff; border-radius: 12px; padding: 20px; margin-top: 30px; text-align: center; }
+  .cta h3 { font-size: 18px; margin: 0 0 6px; }
+  .cta p { font-size: 13px; opacity: 0.9; margin: 0; }
+  .footer { text-align: center; margin-top: 30px; padding-top: 16px; border-top: 1px solid #eee; font-size: 10px; color: #999; }
+  .review { background: #f8f8f8; border-radius: 6px; padding: 10px; margin-bottom: 8px; }
+  .review-stars { color: #f59e0b; font-size: 14px; }
+  .review-author { font-size: 11px; color: #999; }
+  .review-text { font-size: 12px; color: #444; margin-top: 4px; }
+</style></head><body>
 <div class="page">
-  <div class="header">
-    <div>
-      <div class="logo">ADVANCED MARKETING</div>
-      <div class="logo-sub">Website Analysis Report</div>
-    </div>
-    <div class="report-date">
-      Report Date: ${analyzedDate}<br>
-      Prepared for: ${lead.business_name || 'Business Owner'}
-    </div>
+  <div class="hdr">
+    <div><div class="logo">ADVANCED MARKETING</div><div class="logo-sub">Online Presence Report</div></div>
+    <div class="meta">Report Date: ${analyzedDate}<br>Prepared for: ${lead.business_name || 'Business Owner'}</div>
   </div>
 
-  <div class="business-name">${lead.business_name || 'Unknown Business'}</div>
-  <div class="business-url">${lead.website || 'No website'}</div>
+  <div class="biz">${lead.business_name || 'Unknown Business'}</div>
+  <div class="biz-info">${[lead.address, lead.city, lead.state].filter(Boolean).join(', ') || ''}</div>
+  <div class="biz-info">${lead.phone || ''} &nbsp;|&nbsp; ${lead.website || ''}</div>
 
-  <div class="score-section">
-    <div class="score-circle" style="background:${gradeColor};">
-      <div class="score-number">${score}</div>
-      <div class="score-label">/ 100</div>
-    </div>
-    <div>
-      <div class="grade-text">Grade: ${grade}</div>
-      <div class="grade-desc">${gradeLabel}</div>
-    </div>
+  <div class="hero">
+    <div class="circle" style="background:${gc(score)};"><div class="circle-num">${score}%</div><div class="circle-lbl">Overall</div></div>
+    <div><div class="grade-txt">Grade: ${grade}</div><div class="grade-sub">${gradeLabel}</div></div>
   </div>
 
-  <div class="section-title">Detailed Analysis</div>
-  <table>
-    <thead>
-      <tr>
-        <th>Check</th>
-        <th style="text-align:center;width:60px;">Status</th>
-        <th>Details</th>
-        <th style="text-align:center;width:60px;">Weight</th>
-      </tr>
-    </thead>
-    <tbody>
-      ${checkRows}
-    </tbody>
-  </table>
+  <div class="scores-row">
+    <div class="score-card"><div class="score-card-val" style="color:${gc(sections.website?.score||0)}">${sections.website?.score||0}%</div><div class="score-card-lbl">Website</div></div>
+    <div class="score-card"><div class="score-card-val" style="color:${gc(sections.techStack?.score||0)}">${sections.techStack?.score||0}%</div><div class="score-card-lbl">Tech Stack</div></div>
+    <div class="score-card"><div class="score-card-val" style="color:${gc(sections.gbp?.score||0)}">${sections.gbp?.score||0}%</div><div class="score-card-lbl">Google Profile</div></div>
+    <div class="score-card"><div class="score-card-val" style="color:${gc(sections.reputation?.score||0)}">${sections.reputation?.score||0}%</div><div class="score-card-lbl">Reputation</div></div>
+  </div>
 
-  ${failedChecks.length > 0 ? `
-  <div class="section-title">Recommendations</div>
-  <p style="font-size:13px;color:#666;margin-bottom:12px;">Based on our analysis, here are the areas that need improvement:</p>
-  <ul style="padding-left:20px;color:#333;">
-    ${recommendations}
-  </ul>
-  ` : '<p style="color:#00cc33;font-weight:600;">All checks passed! This website meets modern standards.</p>'}
+  <!-- Website & Business Details -->
+  <div class="sec-title">Website & Business Details <span class="sec-score" style="background:${gc(sections.website?.score||0)}">${sections.website?.score||0}%</span></div>
+  <table><thead><tr><th>Check</th><th style="text-align:center;width:50px;">Status</th><th>Details</th></tr></thead>
+  <tbody>${checkTable(sections.website?.checks)}</tbody></table>
 
-  <div class="cta-box">
+  <!-- Tech Stack -->
+  <div class="sec-title">Tech Stack Analysis <span class="sec-score" style="background:${gc(sections.techStack?.score||0)}">${sections.techStack?.score||0}%</span></div>
+  <table><thead><tr><th>Check</th><th style="text-align:center;width:50px;">Status</th><th>Details</th></tr></thead>
+  <tbody>${checkTable(sections.techStack?.checks)}</tbody></table>
+
+  <!-- Google Business Profile -->
+  <div class="sec-title">Google Business Profile <span class="sec-score" style="background:${gc(sections.gbp?.score||0)}">${sections.gbp?.score||0}%</span></div>
+  ${gbp.found ? `
+  <div class="gbp-grid">
+    <div class="gbp-item">${icon(gbp.addressVerified)}<div class="gbp-item-lbl">Address</div><div class="gbp-item-val">${gbp.addressVerified ? 'Verified' : 'Missing'}</div></div>
+    <div class="gbp-item">${icon(gbp.websiteVerified)}<div class="gbp-item-lbl">Website</div><div class="gbp-item-val">${gbp.websiteVerified ? 'Verified' : 'Missing'}</div></div>
+    <div class="gbp-item">${icon(gbp.phoneVerified)}<div class="gbp-item-lbl">Phone</div><div class="gbp-item-val">${gbp.phoneVerified ? 'Verified' : 'Missing'}</div></div>
+    <div class="gbp-item">${icon(gbp.hoursVerified)}<div class="gbp-item-lbl">Hours</div><div class="gbp-item-val">${gbp.hoursVerified ? 'Verified' : 'Missing'}</div></div>
+    <div class="gbp-item">${icon(gbp.photosVerified)}<div class="gbp-item-lbl">Photos</div><div class="gbp-item-val">${gbp.photoCount || 0} photos</div></div>
+    <div class="gbp-item"><div style="font-size:20px;font-weight:800;color:${gc((gbp.rating/5)*100)}">${gbp.rating || 0}</div><div class="gbp-item-lbl">Rating</div><div class="gbp-item-val">${gbp.totalReviews || 0} reviews</div></div>
+  </div>
+  ` : '<p style="color:#ff0033;font-weight:600;">Google Business Profile not found. This business may not be listed on Google Maps.</p>'}
+
+  <!-- Online Reputation -->
+  <div class="sec-title">Online Reputation <span class="sec-score" style="background:${gc(sections.reputation?.score||0)}">${sections.reputation?.score||0}%</span></div>
+  ${gbp.found ? `
+  <div style="display:flex;gap:16px;margin-bottom:12px;">
+    <div style="flex:1;background:#f8f8f8;border-radius:8px;padding:14px;text-align:center;">
+      <div style="font-size:28px;font-weight:800;color:${gc((gbp.rating/5)*100)}">${gbp.rating || 0}</div>
+      <div style="font-size:11px;color:#999;">Google Rating</div>
+    </div>
+    <div style="flex:1;background:#f8f8f8;border-radius:8px;padding:14px;text-align:center;">
+      <div style="font-size:28px;font-weight:800;">${gbp.totalReviews || 0}</div>
+      <div style="font-size:11px;color:#999;">Total Reviews</div>
+    </div>
+  </div>
+  ${(gbp.reviews && gbp.reviews.length > 0) ? `
+    <div style="font-size:12px;font-weight:600;margin-bottom:8px;">Recent Reviews:</div>
+    ${gbp.reviews.slice(0, 3).map(r => `
+      <div class="review">
+        <div class="review-stars">${'★'.repeat(r.rating)}${'☆'.repeat(5 - r.rating)}</div>
+        <div class="review-author">${r.author || 'Anonymous'} — ${r.time || ''}</div>
+        ${r.text ? `<div class="review-text">"${r.text}"</div>` : ''}
+      </div>`).join('')}
+  ` : '<p style="font-size:12px;color:#999;">No recent reviews found.</p>'}
+  ` : '<p style="color:#999;">No reputation data available — Google Business Profile not found.</p>'}
+
+  <!-- Recommendations -->
+  ${allFailed.length > 0 ? `
+  <div class="rec">
+    <h4>Recommendations (${allFailed.length} items need attention)</h4>
+    <ul style="padding-left:18px;margin:0;">
+      ${allFailed.map(c => `<li><strong>${c.label}:</strong> ${c.detail || 'Not detected — this should be set up to improve your online presence.'}</li>`).join('')}
+    </ul>
+  </div>` : ''}
+
+  <div class="cta">
     <h3>Ready to Transform Your Online Presence?</h3>
-    <p>Advanced Marketing builds high-converting websites for local businesses.<br>
-    Most clients see a 200-300% increase in leads within the first month.</p>
-    <p style="margin-top:12px;font-size:16px;font-weight:700;">advancedmarketing.co</p>
+    <p>Advanced Marketing builds high-converting websites for local businesses.<br>Most clients see a 200-300% increase in leads within the first month.</p>
+    <p style="margin-top:10px;font-size:15px;font-weight:700;">advancedmarketing.co</p>
   </div>
+  <div class="footer">&copy; ${new Date().getFullYear()} Advanced Marketing | advancedmarketing.co | ben@advancedmarketing.co</div>
+</div></body></html>`;
 
-  <div class="footer">
-    © ${new Date().getFullYear()} Advanced Marketing | advancedmarketing.co | ben@advancedmarketing.co
-  </div>
-</div>
-</body>
-</html>`;
-
-      // Open in new window and trigger print (saves as PDF)
       const printWindow = window.open('', '_blank');
       printWindow.document.write(htmlContent);
       printWindow.document.close();
-      // Auto-trigger print dialog after content loads
-      printWindow.onload = () => {
-        setTimeout(() => printWindow.print(), 500);
-      };
-
-      showToast('PDF report opened — use Print > Save as PDF', 'success');
+      printWindow.onload = () => { setTimeout(() => printWindow.print(), 500); };
+      showToast('PDF report generated', 'success');
     }
 
     // Get action button for a lead
