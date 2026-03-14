@@ -117,8 +117,8 @@ exports.handler = async (event, context) => {
         twilioAccountSid: settings.twilio_account_sid ? '••••••••' : null,
         twilioPhoneNumber: settings.twilio_phone_number || null,
         hasTwilioCredentials: !!(settings.twilio_account_sid && settings.twilio_auth_token && settings.twilio_phone_number),
-        netlifyToken: settings.netlify_token ? '••••••••' : null,
-        githubToken: settings.github_token ? '••••••••' : null,
+        netlifyToken: settings.netlify_token ? settings.netlify_token.slice(0, 6) + '····' + settings.netlify_token.slice(-4) : null,
+        githubToken: settings.github_token ? settings.github_token.slice(0, 6) + '····' + settings.github_token.slice(-4) : null,
         githubUsername: settings.github_username || null,
         hasNetlifyToken: !!settings.netlify_token,
         hasGithubToken: !!settings.github_token

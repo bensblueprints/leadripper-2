@@ -6332,14 +6332,14 @@ I noticed {{business_name}} in {{city}} and wanted to reach out..."></textarea>
           document.getElementById('twilio-phone-number').value = settings.twilioPhoneNumber;
         }
 
-        // Load deployment credentials
-        if (settings.hasNetlifyToken) {
-          document.getElementById('deploy-netlify-token').placeholder = '••••••••';
+        // Load deployment credentials (show partial token)
+        if (settings.hasNetlifyToken && settings.netlifyToken) {
+          document.getElementById('deploy-netlify-token').placeholder = settings.netlifyToken;
           document.getElementById('deploy-status').textContent = 'Connected';
           document.getElementById('deploy-status').style.color = 'var(--green)';
         }
-        if (settings.hasGithubToken) {
-          document.getElementById('deploy-github-token').placeholder = '••••••••';
+        if (settings.hasGithubToken && settings.githubToken) {
+          document.getElementById('deploy-github-token').placeholder = settings.githubToken;
         }
         if (settings.githubUsername) {
           document.getElementById('deploy-github-username').value = settings.githubUsername;
