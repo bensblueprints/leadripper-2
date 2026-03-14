@@ -14,6 +14,10 @@
 [functions."process-sequences"]
   schedule = "*/15 * * * *"
 
+# Scheduled function for workflow wait step processing (every 5 minutes)
+[functions."process-workflow-waits"]
+  schedule = "*/5 * * * *"
+
 [[headers]]
   for = "/*"
   [headers.values]
