@@ -2528,6 +2528,37 @@
           <button class="btn-secondary" onclick="saveAutoCallSettings()">Save Auto-Call Settings</button>
         </div>
 
+        <!-- API Key Card -->
+        <div class="card">
+          <div class="card-header">
+            <h2 class="card-title display">🔑 API Access</h2>
+          </div>
+          <p style="color: var(--text-secondary); margin-bottom: 1rem;">
+            Generate an API key to access LeadRipper programmatically. Use it with any automation tool, script, or AI assistant.
+          </p>
+          <div id="api-key-container" style="margin-bottom: 1rem;">
+            <div style="text-align: center; padding: 1rem; color: var(--text-dim);">Loading...</div>
+          </div>
+          <div style="display: flex; gap: 0.5rem; flex-wrap: wrap;">
+            <button class="btn" onclick="generateApiKey()">Generate New API Key</button>
+            <button class="btn-secondary" onclick="revokeApiKey()">Revoke Key</button>
+          </div>
+          <details style="margin-top: 1rem;">
+            <summary style="cursor: pointer; color: var(--accent); font-size: 0.85rem;">API Documentation</summary>
+            <div style="margin-top: 0.75rem; font-size: 0.8rem; color: var(--text-dim); line-height: 1.8;">
+              <strong>Endpoint:</strong> <code style="background:var(--surface-elevated);padding:2px 6px;border-radius:3px;">POST https://leadripper.com/.netlify/functions/cli-api</code><br>
+              <strong>Auth:</strong> <code style="background:var(--surface-elevated);padding:2px 6px;border-radius:3px;">X-Api-Key: YOUR_KEY</code><br>
+              <strong>Body:</strong> <code style="background:var(--surface-elevated);padding:2px 6px;border-radius:3px;">{ "action": "action_name", ...params }</code><br><br>
+              <strong>Actions:</strong> stats, get_leads, search, update_lead, delete_lead, create_list, add_to_list, bulk_no_email_list, call_lead, call_list, get_call_logs, score_website, get_phone_numbers, get_agents, assign_phone<br><br>
+              <strong>Example:</strong><br>
+              <pre style="background:var(--surface-elevated);padding:8px 12px;border-radius:4px;overflow-x:auto;font-size:0.75rem;margin-top:4px;">curl -X POST https://leadripper.com/.netlify/functions/cli-api \
+  -H "Content-Type: application/json" \
+  -H "X-Api-Key: YOUR_KEY" \
+  -d '{"action":"get_leads","city":"Miami","industry":"plumbing","limit":10}'</pre>
+            </div>
+          </details>
+        </div>
+
         <!-- AI Agents Manager Card (available in all modes) -->
         <div class="card">
           <div class="card-header" style="display: flex; justify-content: space-between; align-items: center;">
@@ -4055,6 +4086,75 @@ Available merge tags: {{business_name}}, {{first_name}}, {{email}}, {{phone}}, {
     // =====================================
     // AUTO-CALL SETTINGS FUNCTIONS
     // =====================================
+
+    // =====================================
+    // API KEY MANAGEMENT
+    // =====================================
+    async function loadApiKey() {
+      const container = document.getElementById('api-key-container');
+      if (!container) return;
+      try {
+        const resp = await fetch(`${API_BASE}/cli-api`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${authToken}` },
+          body: JSON.stringify({ action: 'get_my_key' })
+        });
+        const data = await resp.json();
+        if (data.api_key) {
+          container.innerHTML = `
+            <div style="background: var(--surface-elevated); border: 1px solid var(--border-bright); border-radius: 4px; padding: 1rem;">
+              <div style="font-size: 0.75rem; color: var(--text-dim); margin-bottom: 0.25rem;">Your API Key</div>
+              <div style="display: flex; align-items: center; gap: 0.5rem;">
+                <input type="text" class="form-input mono" id="api-key-display" value="${data.api_key}" readonly style="flex: 1; font-size: 0.8rem; background: var(--bg); cursor: text;">
+                <button class="btn-mini" onclick="navigator.clipboard.writeText(document.getElementById('api-key-display').value); showToast('Copied!', 'success');">Copy</button>
+              </div>
+              <div style="font-size: 0.7rem; color: var(--text-dimmer); margin-top: 0.5rem;">
+                Created: ${data.created_at ? new Date(data.created_at).toLocaleDateString() : 'Unknown'}
+                ${data.last_used_at ? ' • Last used: ' + new Date(data.last_used_at).toLocaleDateString() : ''}
+              </div>
+            </div>`;
+        } else {
+          container.innerHTML = '<div style="color: var(--text-dim); padding: 0.5rem;">No API key generated yet. Click "Generate New API Key" to create one.</div>';
+        }
+      } catch {
+        container.innerHTML = '<div style="color: var(--text-dim); padding: 0.5rem;">No API key generated yet.</div>';
+      }
+    }
+
+    async function generateApiKey() {
+      try {
+        const resp = await fetch(`${API_BASE}/cli-api`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${authToken}` },
+          body: JSON.stringify({ action: 'generate_key' })
+        });
+        const data = await resp.json();
+        if (data.api_key) {
+          showToast('API key generated! Copy it now — it won\'t be shown in full again.', 'success');
+          loadApiKey();
+        } else {
+          showToast(data.error || 'Failed to generate key', 'error');
+        }
+      } catch (e) {
+        showToast('Failed: ' + e.message, 'error');
+      }
+    }
+
+    async function revokeApiKey() {
+      if (!confirm('Revoke your API key? Any integrations using it will stop working.')) return;
+      try {
+        const resp = await fetch(`${API_BASE}/cli-api`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${authToken}` },
+          body: JSON.stringify({ action: 'revoke_key' })
+        });
+        const data = await resp.json();
+        showToast(data.message || 'Key revoked', 'success');
+        loadApiKey();
+      } catch (e) {
+        showToast('Failed: ' + e.message, 'error');
+      }
+    }
 
     async function saveAutoCallSettings() {
       const autoCallEnabled = document.getElementById('auto-call-enabled').checked;
@@ -6006,6 +6106,7 @@ Available merge tags: {{business_name}}, {{first_name}}, {{email}}, {{phone}}, {
         // Load AI agents (available in all modes)
         loadAgents();
         populateAgentDropdowns();
+        loadApiKey();
         // Load email accounts only for internal CRM mode
         if (crmMode === 'internal') {
           loadEmailAccounts();

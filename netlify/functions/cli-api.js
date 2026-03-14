@@ -5,25 +5,95 @@ const pool = new Pool({
   ssl: { rejectUnauthorized: false }
 });
 
-const CLI_API_KEY = process.env.CLI_API_KEY || 'leadripper-cli-2026';
+const jwt = require('jsonwebtoken');
+const crypto = require('crypto');
+
+const JWT_SECRET = process.env.JWT_SECRET || 'leadripper-secret-key-2026';
 const GOOGLE_MAPS_KEY = process.env.GOOGLE_MAPS_KEY || 'AIzaSyCngyzhiymWqY3ypkY4U5znvC_m18F1srA';
 const ELEVENLABS_KEY = process.env.ELEVENLABS_API_KEY || 'sk_748454d1dce0403d4513bf8c34fc05f7453c6291e0be522e';
 const DEFAULT_PHONE_NUMBER_ID = 'phnum_5601kj25h7fzedxtvrp4ebayyp7e';
 const DEFAULT_AGENT_ID = 'agent_7501kknstm2vfw3tm82242mt8kgp';
-const ADMIN_USER_ID = 1;
 
-function auth(event) {
-  const key = event.headers['x-api-key'] || event.headers['X-Api-Key'];
-  return key === CLI_API_KEY;
+// Ensure api_keys table exists
+async function ensureApiKeysTable() {
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS lr_api_keys (
+      id SERIAL PRIMARY KEY,
+      user_id INTEGER NOT NULL,
+      api_key VARCHAR(64) NOT NULL UNIQUE,
+      created_at TIMESTAMP DEFAULT NOW(),
+      last_used_at TIMESTAMP,
+      revoked BOOLEAN DEFAULT false
+    )
+  `).catch(() => {});
+}
+
+// Auth via API key header OR JWT Bearer token
+async function auth(event) {
+  // Try API key first
+  const apiKey = event.headers['x-api-key'] || event.headers['X-Api-Key'];
+  if (apiKey) {
+    await ensureApiKeysTable();
+    const result = await pool.query(
+      'SELECT user_id FROM lr_api_keys WHERE api_key = $1 AND revoked = false',
+      [apiKey]
+    );
+    if (result.rows.length > 0) {
+      // Update last used
+      pool.query('UPDATE lr_api_keys SET last_used_at = NOW() WHERE api_key = $1', [apiKey]).catch(() => {});
+      return result.rows[0].user_id;
+    }
+    return null;
+  }
+
+  // Fallback to JWT Bearer
+  const authHeader = event.headers.authorization || '';
+  if (authHeader.startsWith('Bearer ')) {
+    try {
+      const decoded = jwt.verify(authHeader.split(' ')[1], JWT_SECRET);
+      return decoded.userId;
+    } catch {}
+  }
+
+  return null;
+}
+
+// API key management actions (require JWT auth, not API key)
+async function getMyKey(userId) {
+  await ensureApiKeysTable();
+  const result = await pool.query(
+    'SELECT api_key, created_at, last_used_at FROM lr_api_keys WHERE user_id = $1 AND revoked = false ORDER BY created_at DESC LIMIT 1',
+    [userId]
+  );
+  return result.rows[0] || { api_key: null };
+}
+
+async function generateKey(userId) {
+  await ensureApiKeysTable();
+  // Revoke any existing keys
+  await pool.query('UPDATE lr_api_keys SET revoked = true WHERE user_id = $1', [userId]);
+  // Generate new key
+  const key = 'lr_' + crypto.randomBytes(24).toString('hex');
+  const result = await pool.query(
+    'INSERT INTO lr_api_keys (user_id, api_key) VALUES ($1, $2) RETURNING api_key, created_at',
+    [userId, key]
+  );
+  return result.rows[0];
+}
+
+async function revokeKey(userId) {
+  await ensureApiKeysTable();
+  await pool.query('UPDATE lr_api_keys SET revoked = true WHERE user_id = $1', [userId]);
+  return { message: 'API key revoked' };
 }
 
 // ═══════════════════════════════════════
 // ACTIONS
 // ═══════════════════════════════════════
 
-async function getLeads({ city, industry, status, search, limit, offset }) {
+async function getLeads({ userId, city, industry, status, search, limit, offset }) {
   let query = 'SELECT * FROM lr_leads WHERE user_id = $1';
-  const values = [ADMIN_USER_ID];
+  const values = [userId];
   let idx = 2;
 
   if (city) { query += ` AND LOWER(city) = LOWER($${idx++})`; values.push(city); }
@@ -42,13 +112,13 @@ async function getLeads({ city, industry, status, search, limit, offset }) {
 
   const countResult = await pool.query(
     'SELECT COUNT(*) as total FROM lr_leads WHERE user_id = $1',
-    [ADMIN_USER_ID]
+    [userId]
   );
 
   return { leads: result.rows, total: parseInt(countResult.rows[0].total), returned: result.rows.length };
 }
 
-async function getStats() {
+async function getStats({ userId }) {
   const r = await pool.query(`
     SELECT
       COUNT(*) as total_leads,
@@ -59,11 +129,11 @@ async function getStats() {
       COUNT(DISTINCT city) as cities,
       COUNT(DISTINCT industry) as industries
     FROM lr_leads WHERE user_id = $1
-  `, [ADMIN_USER_ID]);
+  `, [userId]);
   return r.rows[0];
 }
 
-async function searchLeads({ query }) {
+async function searchLeads({ userId, query }) {
   const result = await pool.query(
     `SELECT id, business_name, phone, email, city, state, industry, website, rating, reviews,
             email_verified, ghl_synced, website_score, website_grade, contact_name
@@ -76,12 +146,12 @@ async function searchLeads({ query }) {
        phone LIKE $2
      )
      ORDER BY created_at DESC LIMIT 100`,
-    [ADMIN_USER_ID, `%${query}%`]
+    [userId, `%${query}%`]
   );
   return { leads: result.rows, count: result.rows.length };
 }
 
-async function updateLead({ leadId, email, contactName, phone, businessName, notes }) {
+async function updateLead({ userId, leadId, email, contactName, phone, businessName, notes }) {
   const updates = [];
   const values = [];
   let idx = 1;
@@ -97,47 +167,47 @@ async function updateLead({ leadId, email, contactName, phone, businessName, not
 
   if (updates.length <= 1) return { error: 'Nothing to update' };
 
-  values.push(leadId);
+  values.push(leadId, userId);
   const result = await pool.query(
-    `UPDATE lr_leads SET ${updates.join(', ')} WHERE id = $${idx} AND user_id = ${ADMIN_USER_ID} RETURNING *`,
+    `UPDATE lr_leads SET ${updates.join(', ')} WHERE id = $${idx++} AND user_id = $${idx} RETURNING *`,
     values
   );
   return { updated: result.rows[0] || null };
 }
 
-async function deleteLead({ leadId }) {
+async function deleteLead({ userId, leadId }) {
   const result = await pool.query(
     'DELETE FROM lr_leads WHERE id = $1 AND user_id = $2 RETURNING id, business_name',
-    [leadId, ADMIN_USER_ID]
+    [leadId, userId]
   );
   return { deleted: result.rows[0] || null };
 }
 
-async function createList({ name, description }) {
+async function createList({ userId, name, description }) {
   const result = await pool.query(
     'INSERT INTO lr_lead_lists (user_id, name, description, created_at, updated_at) VALUES ($1, $2, $3, NOW(), NOW()) RETURNING *',
-    [ADMIN_USER_ID, name, description || null]
+    [userId, name, description || null]
   );
   return { list: result.rows[0] };
 }
 
-async function getLists() {
+async function getLists({ userId }) {
   const result = await pool.query(
     `SELECT ll.*, COUNT(li.id)::INTEGER AS item_count
      FROM lr_lead_lists ll LEFT JOIN lr_lead_list_items li ON ll.id = li.list_id
      WHERE ll.user_id = $1 GROUP BY ll.id ORDER BY ll.created_at DESC`,
-    [ADMIN_USER_ID]
+    [userId]
   );
   return { lists: result.rows };
 }
 
-async function addToList({ listId, leadIds, filter }) {
+async function addToList({ userId, listId, leadIds, filter }) {
   let ids = leadIds || [];
 
   // If filter provided instead of explicit IDs, query matching leads
   if (filter && ids.length === 0) {
     let q = 'SELECT id FROM lr_leads WHERE user_id = $1';
-    const v = [ADMIN_USER_ID];
+    const v = [userId];
     let i = 2;
     if (filter === 'no-email') q += ' AND (email IS NULL OR email = \'\')';
     if (filter === 'has-phone') q += ' AND phone IS NOT NULL AND phone != \'\'';
@@ -163,7 +233,7 @@ async function addToList({ listId, leadIds, filter }) {
   return { added, listId };
 }
 
-async function callLead({ leadId, phoneNumber, contactName, agentId, phoneNumberId }) {
+async function callLead({ userId, leadId, phoneNumber, contactName, agentId, phoneNumberId }) {
   const phone = phoneNumber || (leadId ? (await pool.query('SELECT phone, business_name FROM lr_leads WHERE id = $1', [leadId])).rows[0]?.phone : null);
   const name = contactName || (leadId ? (await pool.query('SELECT business_name FROM lr_leads WHERE id = $1', [leadId])).rows[0]?.business_name : 'Unknown');
 
@@ -193,14 +263,14 @@ async function callLead({ leadId, phoneNumber, contactName, agentId, phoneNumber
   await pool.query(
     `INSERT INTO lr_call_logs (user_id, lead_id, agent_id, phone_number, contact_name, status, elevenlabs_conversation_id, created_at, updated_at)
      VALUES ($1, $2, $3, $4, $5, $6, $7, NOW(), NOW())`,
-    [ADMIN_USER_ID, leadId || null, agentId || DEFAULT_AGENT_ID, normalized, name,
+    [userId, leadId || null, agentId || DEFAULT_AGENT_ID, normalized, name,
      res.ok ? 'initiated' : 'failed', data.conversation_id || null]
   ).catch(() => {});
 
   return { success: res.ok, phone: normalized, response: data };
 }
 
-async function callList({ listId, agentId, phoneNumberId, delay }) {
+async function callList({ userId, listId, agentId, phoneNumberId, delay }) {
   const leadsResult = await pool.query(
     `SELECT l.id, l.business_name, l.phone, l.contact_name
      FROM lr_lead_list_items li JOIN lr_leads l ON li.lead_id = l.id
@@ -229,9 +299,9 @@ async function callList({ listId, agentId, phoneNumberId, delay }) {
   return { total: leads.length, initiated, failed, results };
 }
 
-async function getCallLogs({ limit, listId }) {
+async function getCallLogs({ userId, limit, listId }) {
   let q = 'SELECT * FROM lr_call_logs WHERE user_id = $1';
-  const v = [ADMIN_USER_ID];
+  const v = [userId];
   let i = 2;
   if (listId) { q += ` AND list_id = $${i++}`; v.push(listId); }
   q += ' ORDER BY created_at DESC';
@@ -284,12 +354,10 @@ async function assignPhone({ phoneNumberId, agentId }) {
   return await res.json();
 }
 
-async function bulkAddNoEmailToCallList() {
-  // Create list
+async function bulkAddNoEmailToCallList({ userId }) {
   const listName = 'CLI Call List - ' + new Date().toISOString().slice(0, 10);
-  const { list } = await createList({ name: listName });
-  // Add all no-email leads with phone numbers
-  const result = await addToList({ listId: list.id, filter: 'no-email-has-phone' });
+  const { list } = await createList({ userId, name: listName });
+  const result = await addToList({ userId, listId: list.id, filter: 'no-email-has-phone' });
   return { list, added: result.added };
 }
 
@@ -355,8 +423,9 @@ exports.handler = async (event) => {
 
   if (event.httpMethod === 'OPTIONS') return { statusCode: 200, headers, body: '' };
 
-  if (!auth(event)) {
-    return { statusCode: 401, headers, body: JSON.stringify({ error: 'Invalid API key. Use header: X-Api-Key' }) };
+  const userId = await auth(event);
+  if (!userId) {
+    return { statusCode: 401, headers, body: JSON.stringify({ error: 'Invalid API key or token. Use header: X-Api-Key or Authorization: Bearer <token>' }) };
   }
 
   try {
@@ -374,9 +443,17 @@ exports.handler = async (event) => {
 
     delete params.action;
 
+    // Key management actions (always available)
+    if (action === 'get_my_key') return { statusCode: 200, headers, body: JSON.stringify({ success: true, action, ...await getMyKey(userId) }) };
+    if (action === 'generate_key') return { statusCode: 200, headers, body: JSON.stringify({ success: true, action, ...await generateKey(userId) }) };
+    if (action === 'revoke_key') return { statusCode: 200, headers, body: JSON.stringify({ success: true, action, ...await revokeKey(userId) }) };
+
+    // Inject userId into params for all actions
+    params.userId = userId;
+
     const handler = ACTIONS[action];
     if (!handler) {
-      return { statusCode: 400, headers, body: JSON.stringify({ error: `Unknown action: ${action}`, available: Object.keys(ACTIONS) }) };
+      return { statusCode: 400, headers, body: JSON.stringify({ error: `Unknown action: ${action}`, available: [...Object.keys(ACTIONS), 'get_my_key', 'generate_key', 'revoke_key'] }) };
     }
 
     const result = await handler(params);
