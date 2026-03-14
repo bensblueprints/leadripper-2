@@ -1938,6 +1938,186 @@
     .sp-call-icon:hover {
       color: var(--green);
     }
+
+    /* Workflow Builder */
+    .workflow-builder {
+      position: fixed;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background: var(--bg);
+      z-index: 1000;
+      display: flex;
+      flex-direction: column;
+    }
+    .workflow-builder.hidden { display: none; }
+
+    .wf-topbar {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+      padding: 0.75rem 1rem;
+      background: var(--surface);
+      border-bottom: 1px solid var(--border);
+    }
+    .wf-name-input {
+      flex: 1;
+      background: transparent;
+      border: none;
+      color: var(--text);
+      font-size: 1.1rem;
+      font-weight: 600;
+      outline: none;
+      font-family: 'Bebas Neue', sans-serif;
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+    }
+    .wf-topbar-actions { display: flex; gap: 0.5rem; align-items: center; }
+
+    .wf-body {
+      flex: 1;
+      display: grid;
+      grid-template-columns: 240px 1fr 300px;
+      overflow: hidden;
+    }
+
+    .wf-palette {
+      background: var(--surface);
+      border-right: 1px solid var(--border);
+      overflow-y: auto;
+      padding: 0.5rem;
+    }
+    .wf-palette-section { margin-bottom: 1rem; }
+    .wf-palette-title {
+      font-size: 0.65rem;
+      font-weight: 600;
+      color: var(--text-dim);
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      padding: 0.5rem 0.5rem 0.25rem;
+    }
+    .wf-node-item {
+      padding: 0.5rem 0.75rem;
+      margin: 0.15rem 0;
+      border-radius: 4px;
+      font-size: 0.8rem;
+      cursor: grab;
+      color: var(--text);
+      transition: background 0.15s;
+    }
+    .wf-node-item:hover { background: var(--surface-elevated); }
+    .wf-node-item:active { cursor: grabbing; }
+    .wf-node-item[data-type="trigger"] { border-left: 3px solid var(--green); }
+    .wf-node-item[data-type="action"][data-action="send_email"],
+    .wf-node-item[data-type="action"][data-action="send_sms"],
+    .wf-node-item[data-type="action"][data-action="voicemail_drop"],
+    .wf-node-item[data-type="action"][data-action="ai_call"] { border-left: 3px solid var(--accent); }
+    .wf-node-item[data-type="action"][data-action="wait"],
+    .wf-node-item[data-type="action"][data-action="if_else"] { border-left: 3px solid var(--yellow); }
+    .wf-node-item[data-type="action"][data-action="add_tag"],
+    .wf-node-item[data-type="action"][data-action="remove_tag"],
+    .wf-node-item[data-type="action"][data-action="update_contact"],
+    .wf-node-item[data-type="action"][data-action="move_pipeline_stage"],
+    .wf-node-item[data-type="action"][data-action="score_website"] { border-left: 3px solid #8b5cf6; }
+    .wf-node-item[data-type="action"][data-action="webhook_out"],
+    .wf-node-item[data-type="action"][data-action="notification"] { border-left: 3px solid var(--yellow); }
+
+    .wf-canvas-wrapper {
+      overflow: auto;
+      position: relative;
+      background:
+        linear-gradient(var(--grid) 1px, transparent 1px),
+        linear-gradient(90deg, var(--grid) 1px, transparent 1px);
+      background-size: 20px 20px;
+    }
+    .wf-canvas {
+      position: relative;
+      width: 3000px;
+      height: 2000px;
+      min-height: 100%;
+    }
+
+    /* Nodes on canvas */
+    .wf-node {
+      position: absolute;
+      min-width: 180px;
+      background: var(--surface);
+      border: 2px solid var(--border);
+      border-radius: 8px;
+      padding: 0;
+      cursor: move;
+      user-select: none;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+    }
+    .wf-node.selected { border-color: var(--accent); box-shadow: 0 0 12px var(--accent-glow); }
+    .wf-node-header {
+      padding: 0.5rem 0.75rem;
+      border-radius: 6px 6px 0 0;
+      font-size: 0.7rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .wf-node-header.trigger { background: rgba(0,255,65,0.15); color: var(--green); }
+    .wf-node-header.communication { background: rgba(255,62,0,0.15); color: var(--accent); }
+    .wf-node-header.crm { background: rgba(139,92,246,0.15); color: #8b5cf6; }
+    .wf-node-header.logic { background: rgba(255,204,0,0.15); color: var(--yellow); }
+    .wf-node-body {
+      padding: 0.5rem 0.75rem;
+      font-size: 0.8rem;
+      color: var(--text);
+    }
+    .wf-node-body .wf-node-label { font-weight: 600; }
+    .wf-node-body .wf-node-desc { font-size: 0.7rem; color: var(--text-dim); margin-top: 0.15rem; }
+
+    /* Connection points */
+    .wf-port {
+      width: 12px; height: 12px;
+      border-radius: 50%;
+      background: var(--border-bright);
+      border: 2px solid var(--surface);
+      position: absolute;
+      cursor: crosshair;
+      z-index: 2;
+    }
+    .wf-port:hover { background: var(--accent); }
+    .wf-port.output { bottom: -6px; left: 50%; transform: translateX(-50%); }
+    .wf-port.input { top: -6px; left: 50%; transform: translateX(-50%); }
+    .wf-port.yes { bottom: -6px; left: 30%; transform: translateX(-50%); }
+    .wf-port.no { bottom: -6px; left: 70%; transform: translateX(-50%); }
+
+    .wf-node-delete {
+      cursor: pointer;
+      opacity: 0.5;
+      font-size: 14px;
+    }
+    .wf-node-delete:hover { opacity: 1; color: var(--red); }
+
+    .wf-properties {
+      background: var(--surface);
+      border-left: 1px solid var(--border);
+      overflow-y: auto;
+      padding: 1rem;
+    }
+
+    .form-textarea {
+      width: 100%;
+      padding: 0.75rem;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      color: var(--text);
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.8rem;
+      resize: vertical;
+      transition: all 0.3s;
+    }
+    .form-textarea:focus {
+      outline: none;
+      border-color: var(--accent);
+      box-shadow: 0 0 0 1px var(--accent);
+    }
+
   </style>
 </head>
 <body>
@@ -2046,6 +2226,10 @@
         <div class="nav-item" data-section="ai-calling">
           <span class="nav-icon">🤖</span>
           <span>AI Calling</span>
+        </div>
+        <div class="nav-item" data-section="workflows">
+          <span class="nav-icon">⚡</span>
+          <span>Workflows</span>
         </div>
         <div class="nav-item" data-section="subscription">
           <span class="nav-icon">💳</span>
@@ -3679,7 +3863,101 @@ I noticed {{business_name}} in {{city}} and wanted to reach out..."></textarea>
           </div>
         </div>
       </section>
+
+      <!-- Workflows Section -->
+      <section id="workflows-section" class="section">
+        <div class="header">
+          <div class="header-top">
+            <div>
+              <h1 class="page-title display">WORKFLOWS</h1>
+              <p class="page-subtitle mono">Visual automation builder</p>
+            </div>
+            <div class="header-actions">
+              <button class="btn" onclick="openWorkflowBuilder()">+ New Workflow</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Workflow list -->
+        <div id="workflows-list-container">
+          <p style="color: var(--text-dim); text-align: center; padding: 2rem;">Loading workflows...</p>
+        </div>
+      </section>
     </main>
+  </div>
+
+  <!-- Workflow Builder Overlay -->
+  <div id="workflow-builder" class="workflow-builder hidden">
+    <!-- Top bar -->
+    <div class="wf-topbar">
+      <button class="btn-mini" onclick="closeWorkflowBuilder()">&#8592; Back</button>
+      <input type="text" id="wf-name" placeholder="Workflow Name" class="wf-name-input">
+      <div class="wf-topbar-actions">
+        <span id="wf-status-badge" class="status-badge pending">Draft</span>
+        <button class="btn-secondary" onclick="saveWorkflow()" style="width:auto;padding:0.4rem 1rem;">Save</button>
+        <button class="btn" onclick="activateWorkflow()" style="width:auto;padding:0.4rem 1rem;">Activate</button>
+      </div>
+    </div>
+
+    <div class="wf-body">
+      <!-- Left: Node Palette -->
+      <div class="wf-palette">
+        <div class="wf-palette-section">
+          <div class="wf-palette-title">TRIGGERS</div>
+          <div class="wf-node-item" draggable="true" data-type="trigger" data-action="contact_created">Contact Created</div>
+          <div class="wf-node-item" draggable="true" data-type="trigger" data-action="contact_updated">Contact Updated</div>
+          <div class="wf-node-item" draggable="true" data-type="trigger" data-action="tag_added">Tag Added</div>
+          <div class="wf-node-item" draggable="true" data-type="trigger" data-action="tag_removed">Tag Removed</div>
+          <div class="wf-node-item" draggable="true" data-type="trigger" data-action="pipeline_stage_changed">Pipeline Stage Changed</div>
+          <div class="wf-node-item" draggable="true" data-type="trigger" data-action="email_opened">Email Opened</div>
+          <div class="wf-node-item" draggable="true" data-type="trigger" data-action="email_replied">Email Replied</div>
+          <div class="wf-node-item" draggable="true" data-type="trigger" data-action="email_bounced">Email Bounced</div>
+          <div class="wf-node-item" draggable="true" data-type="trigger" data-action="call_completed">Call Completed</div>
+          <div class="wf-node-item" draggable="true" data-type="trigger" data-action="webhook">Inbound Webhook</div>
+          <div class="wf-node-item" draggable="true" data-type="trigger" data-action="manual">Manual Trigger</div>
+          <div class="wf-node-item" draggable="true" data-type="trigger" data-action="scheduler">Scheduler</div>
+        </div>
+
+        <div class="wf-palette-section">
+          <div class="wf-palette-title">COMMUNICATION</div>
+          <div class="wf-node-item" draggable="true" data-type="action" data-action="send_email">Send Email</div>
+          <div class="wf-node-item" draggable="true" data-type="action" data-action="send_sms">Send SMS</div>
+          <div class="wf-node-item" draggable="true" data-type="action" data-action="voicemail_drop">Voicemail Drop</div>
+          <div class="wf-node-item" draggable="true" data-type="action" data-action="ai_call">AI Call</div>
+        </div>
+
+        <div class="wf-palette-section">
+          <div class="wf-palette-title">CRM</div>
+          <div class="wf-node-item" draggable="true" data-type="action" data-action="add_tag">Add Tag</div>
+          <div class="wf-node-item" draggable="true" data-type="action" data-action="remove_tag">Remove Tag</div>
+          <div class="wf-node-item" draggable="true" data-type="action" data-action="update_contact">Update Contact</div>
+          <div class="wf-node-item" draggable="true" data-type="action" data-action="move_pipeline_stage">Move Pipeline Stage</div>
+          <div class="wf-node-item" draggable="true" data-type="action" data-action="score_website">Score Website</div>
+        </div>
+
+        <div class="wf-palette-section">
+          <div class="wf-palette-title">LOGIC</div>
+          <div class="wf-node-item" draggable="true" data-type="action" data-action="wait">Wait / Delay</div>
+          <div class="wf-node-item" draggable="true" data-type="action" data-action="if_else">If / Else</div>
+          <div class="wf-node-item" draggable="true" data-type="action" data-action="webhook_out">Send Webhook</div>
+          <div class="wf-node-item" draggable="true" data-type="action" data-action="notification">Internal Notification</div>
+        </div>
+      </div>
+
+      <!-- Center: Canvas -->
+      <div class="wf-canvas-wrapper">
+        <div class="wf-canvas" id="wf-canvas">
+          <!-- Nodes and connections rendered here -->
+        </div>
+      </div>
+
+      <!-- Right: Properties Panel -->
+      <div class="wf-properties" id="wf-properties">
+        <div style="text-align: center; padding: 2rem; color: var(--text-dim);">
+          Select a node to configure
+        </div>
+      </div>
+    </div>
   </div>
 
   <!-- Deal Modal -->
@@ -6942,6 +7220,8 @@ I noticed {{business_name}} in {{city}} and wanted to reach out..."></textarea>
         if (crmMode === 'internal') {
           loadEmailAccounts();
         }
+      } else if (section === 'workflows') {
+        loadWorkflows();
       }
     }
 
@@ -9331,6 +9611,598 @@ I noticed {{business_name}} in {{city}} and wanted to reach out..."></textarea>
         });
       } catch (e) {
         // Silent fail - not critical
+      }
+    }
+
+    // ===== WORKFLOW BUILDER =====
+    let wfNodes = [];
+    let wfEdges = [];
+    let wfSelectedNode = null;
+    let wfDraggingNode = null;
+    let wfConnecting = null;
+    let wfCurrentWorkflowId = null;
+    let wfNodeIdCounter = 0;
+    let wfDragDropInitialized = false;
+
+    const ACTION_LABELS = {
+      contact_created: 'Contact Created',
+      contact_updated: 'Contact Updated',
+      tag_added: 'Tag Added',
+      tag_removed: 'Tag Removed',
+      pipeline_stage_changed: 'Stage Changed',
+      email_opened: 'Email Opened',
+      email_replied: 'Email Replied',
+      email_bounced: 'Email Bounced',
+      call_completed: 'Call Completed',
+      webhook: 'Inbound Webhook',
+      manual: 'Manual Trigger',
+      scheduler: 'Scheduler',
+      send_email: 'Send Email',
+      send_sms: 'Send SMS',
+      voicemail_drop: 'Voicemail Drop',
+      ai_call: 'AI Call',
+      add_tag: 'Add Tag',
+      remove_tag: 'Remove Tag',
+      update_contact: 'Update Contact',
+      move_pipeline_stage: 'Move Stage',
+      score_website: 'Score Website',
+      wait: 'Wait / Delay',
+      if_else: 'If / Else',
+      webhook_out: 'Send Webhook',
+      notification: 'Notification',
+    };
+
+    function getNodeCategory(action) {
+      if (['contact_created','contact_updated','tag_added','tag_removed','pipeline_stage_changed',
+           'email_opened','email_replied','email_bounced','call_completed','webhook','manual','scheduler'].includes(action)) return 'trigger';
+      if (['send_email','send_sms','voicemail_drop','ai_call'].includes(action)) return 'communication';
+      if (['add_tag','remove_tag','update_contact','move_pipeline_stage','score_website'].includes(action)) return 'crm';
+      return 'logic';
+    }
+
+    function openWorkflowBuilder(workflowId) {
+      wfNodes = [];
+      wfEdges = [];
+      wfSelectedNode = null;
+      wfCurrentWorkflowId = workflowId || null;
+      wfNodeIdCounter = 0;
+      document.getElementById('wf-name').value = '';
+      document.getElementById('wf-status-badge').textContent = 'Draft';
+      document.getElementById('wf-status-badge').className = 'status-badge pending';
+      document.getElementById('wf-properties').innerHTML = '<div style="text-align:center;padding:2rem;color:var(--text-dim);">Select a node to configure</div>';
+
+      if (workflowId) {
+        loadWorkflowData(workflowId);
+      }
+
+      document.getElementById('workflow-builder').classList.remove('hidden');
+      renderWfCanvas();
+      initWorkflowDragDrop();
+    }
+
+    function closeWorkflowBuilder() {
+      document.getElementById('workflow-builder').classList.add('hidden');
+      loadWorkflows();
+    }
+
+    async function loadWorkflowData(id) {
+      try {
+        const resp = await fetch(`${API_BASE}/workflows?id=${id}`, {
+          headers: { 'Authorization': `Bearer ${authToken}` }
+        });
+        const data = await resp.json();
+        if (data.success && data.workflow) {
+          const wf = data.workflow;
+          document.getElementById('wf-name').value = wf.name || '';
+          wfNodes = wf.nodes || [];
+          wfEdges = wf.edges || [];
+          wfNodeIdCounter = wfNodes.length;
+          const badge = document.getElementById('wf-status-badge');
+          badge.textContent = wf.status;
+          badge.className = 'status-badge ' + (wf.status === 'active' ? 'synced' : wf.status === 'paused' ? 'ready' : 'pending');
+          renderWfCanvas();
+        }
+      } catch (e) {
+        showToast('Failed to load workflow', 'error');
+      }
+    }
+
+    function renderWfCanvas() {
+      const canvas = document.getElementById('wf-canvas');
+      canvas.innerHTML = '';
+
+      // Render SVG for connections
+      const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+      svg.style.position = 'absolute';
+      svg.style.top = '0';
+      svg.style.left = '0';
+      svg.style.width = '100%';
+      svg.style.height = '100%';
+      svg.style.pointerEvents = 'none';
+      svg.id = 'wf-connections';
+
+      for (const edge of wfEdges) {
+        const sourceNode = wfNodes.find(n => n.id === edge.source);
+        const targetNode = wfNodes.find(n => n.id === edge.target);
+        if (!sourceNode || !targetNode) continue;
+
+        const sx = sourceNode.position.x + 90;
+        const sy = sourceNode.position.y + 80;
+        const tx = targetNode.position.x + 90;
+        const ty = targetNode.position.y;
+
+        const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+        const midY = (sy + ty) / 2;
+        path.setAttribute('d', `M${sx},${sy} C${sx},${midY} ${tx},${midY} ${tx},${ty}`);
+        path.setAttribute('stroke', edge.sourceHandle === 'no' ? '#ff0033' : '#444');
+        path.setAttribute('stroke-width', '2');
+        path.setAttribute('fill', 'none');
+        const arrow = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+        arrow.setAttribute('cx', tx);
+        arrow.setAttribute('cy', ty);
+        arrow.setAttribute('r', '4');
+        arrow.setAttribute('fill', edge.sourceHandle === 'no' ? '#ff0033' : '#444');
+        svg.appendChild(path);
+        svg.appendChild(arrow);
+      }
+      canvas.appendChild(svg);
+
+      // Render nodes
+      for (const node of wfNodes) {
+        const cat = getNodeCategory(node.action);
+        const el = document.createElement('div');
+        el.className = 'wf-node' + (wfSelectedNode === node.id ? ' selected' : '');
+        el.id = 'wf-node-' + node.id;
+        el.style.left = node.position.x + 'px';
+        el.style.top = node.position.y + 'px';
+
+        const configSummary = getNodeConfigSummary(node);
+
+        el.innerHTML = `
+          <div class="wf-node-header ${cat}">
+            <span>${cat.toUpperCase()}</span>
+            <span class="wf-node-delete" onclick="event.stopPropagation();deleteWfNode('${node.id}')">&times;</span>
+          </div>
+          <div class="wf-node-body">
+            <div class="wf-node-label">${ACTION_LABELS[node.action] || node.action}</div>
+            ${configSummary ? `<div class="wf-node-desc">${configSummary}</div>` : ''}
+          </div>
+          <div class="wf-port input" data-node="${node.id}" data-port="input"></div>
+          ${node.action === 'if_else' ? `
+            <div class="wf-port yes" data-node="${node.id}" data-port="yes" title="Yes"></div>
+            <div class="wf-port no" data-node="${node.id}" data-port="no" title="No"></div>
+          ` : `
+            <div class="wf-port output" data-node="${node.id}" data-port="output"></div>
+          `}
+        `;
+
+        // Click to select & start dragging
+        el.addEventListener('mousedown', (e) => {
+          if (e.target.classList.contains('wf-port') || e.target.classList.contains('wf-node-delete')) return;
+          wfSelectedNode = node.id;
+          wfDraggingNode = { id: node.id, startX: e.clientX, startY: e.clientY, origX: node.position.x, origY: node.position.y };
+          renderWfCanvas();
+          showNodeProperties(node);
+        });
+
+        canvas.appendChild(el);
+      }
+
+      // Port click handlers for connections
+      canvas.querySelectorAll('.wf-port').forEach(port => {
+        port.addEventListener('mousedown', (e) => {
+          e.stopPropagation();
+          const nodeId = port.dataset.node;
+          const portType = port.dataset.port;
+
+          if (portType === 'input') {
+            if (wfConnecting) {
+              // Don't connect a node to itself
+              if (wfConnecting.nodeId === nodeId) { wfConnecting = null; return; }
+              wfEdges.push({
+                id: 'e' + Date.now(),
+                source: wfConnecting.nodeId,
+                target: nodeId,
+                sourceHandle: wfConnecting.port,
+                targetHandle: 'input'
+              });
+              wfConnecting = null;
+              renderWfCanvas();
+            }
+          } else {
+            wfConnecting = { nodeId, port: portType };
+            showToast('Click an input port (top) on another node to connect', 'info');
+          }
+        });
+      });
+    }
+
+    function getNodeConfigSummary(node) {
+      const c = node.config || {};
+      switch (node.action) {
+        case 'send_email': return c.subject ? `Subject: ${c.subject.substring(0, 30)}...` : '';
+        case 'send_sms': return c.message ? `"${c.message.substring(0, 30)}..."` : '';
+        case 'wait': return c.duration ? `${c.duration} ${c.unit || 'hours'}` : '';
+        case 'if_else': return c.field ? `${c.field} ${c.operator} ${c.value}` : '';
+        case 'add_tag': case 'remove_tag': return c.tag || '';
+        case 'voicemail_drop': return c.message ? `"${c.message.substring(0, 25)}..."` : '';
+        case 'ai_call': return 'Outbound AI agent call';
+        case 'webhook_out': return c.url ? c.url.substring(0, 30) : '';
+        case 'scheduler': return c.cron || c.interval || '';
+        default: return '';
+      }
+    }
+
+    function deleteWfNode(nodeId) {
+      wfNodes = wfNodes.filter(n => n.id !== nodeId);
+      wfEdges = wfEdges.filter(e => e.source !== nodeId && e.target !== nodeId);
+      if (wfSelectedNode === nodeId) {
+        wfSelectedNode = null;
+        document.getElementById('wf-properties').innerHTML = '<div style="text-align:center;padding:2rem;color:var(--text-dim);">Select a node to configure</div>';
+      }
+      renderWfCanvas();
+    }
+
+    function showNodeProperties(node) {
+      const panel = document.getElementById('wf-properties');
+      const c = node.config || {};
+
+      let html = `<h3 style="font-family:'Bebas Neue';letter-spacing:0.05em;margin-bottom:1rem;">${ACTION_LABELS[node.action] || node.action}</h3>`;
+
+      switch (node.action) {
+        case 'send_email':
+          html += wfFormGroup('Subject', `<input type="text" class="form-input" id="wfp-subject" value="${escapeHtml(c.subject||'')}" onchange="updateNodeConfig('${node.id}','subject',this.value)">`);
+          html += wfFormGroup('Body', `<textarea class="form-textarea" rows="6" id="wfp-body" onchange="updateNodeConfig('${node.id}','body',this.value)">${escapeHtml(c.body||'')}</textarea>`);
+          html += `<div style="display:flex;flex-wrap:wrap;gap:0.2rem;margin-bottom:0.5rem;">
+            ${['{{first_name}}','{{business_name}}','{{city}}','{{industry}}'].map(t =>
+              `<button class="btn-mini" style="font-size:0.55rem;padding:1px 4px;" onclick="insertIntoWfField('wfp-body','${t}')">${t}</button>`
+            ).join('')}
+          </div>`;
+          break;
+
+        case 'send_sms':
+          html += wfFormGroup('Message', `<textarea class="form-textarea" rows="4" onchange="updateNodeConfig('${node.id}','message',this.value)">${escapeHtml(c.message||'')}</textarea>`);
+          html += wfFormGroup('From Number', `<input type="text" class="form-input" value="${escapeHtml(c.from_number||'')}" placeholder="+1..." onchange="updateNodeConfig('${node.id}','from_number',this.value)">`);
+          break;
+
+        case 'voicemail_drop':
+          html += wfFormGroup('Message', `<textarea class="form-textarea" rows="4" onchange="updateNodeConfig('${node.id}','message',this.value)">${escapeHtml(c.message||'')}</textarea>`);
+          break;
+
+        case 'ai_call':
+          html += wfFormGroup('Agent ID', `<input type="text" class="form-input mono" value="${escapeHtml(c.agent_id||'')}" placeholder="agent_xxx" onchange="updateNodeConfig('${node.id}','agent_id',this.value)">`);
+          html += wfFormGroup('Phone Number ID', `<input type="text" class="form-input mono" value="${escapeHtml(c.phone_number_id||'')}" placeholder="phnum_xxx" onchange="updateNodeConfig('${node.id}','phone_number_id',this.value)">`);
+          break;
+
+        case 'wait':
+          html += wfFormGroup('Duration', `<input type="number" class="form-input" value="${c.duration||1}" min="1" onchange="updateNodeConfig('${node.id}','duration',parseInt(this.value))">`);
+          html += wfFormGroup('Unit', `<select class="filter-select" onchange="updateNodeConfig('${node.id}','unit',this.value)">
+            <option value="minutes" ${c.unit==='minutes'?'selected':''}>Minutes</option>
+            <option value="hours" ${c.unit==='hours'||!c.unit?'selected':''}>Hours</option>
+            <option value="days" ${c.unit==='days'?'selected':''}>Days</option>
+          </select>`);
+          break;
+
+        case 'if_else':
+          html += wfFormGroup('Field', `<select class="filter-select" onchange="updateNodeConfig('${node.id}','field',this.value)">
+            <option value="">Select field...</option>
+            <option value="email" ${c.field==='email'?'selected':''}>Has Email</option>
+            <option value="phone" ${c.field==='phone'?'selected':''}>Has Phone</option>
+            <option value="city" ${c.field==='city'?'selected':''}>City</option>
+            <option value="industry" ${c.field==='industry'?'selected':''}>Industry</option>
+            <option value="website_score" ${c.field==='website_score'?'selected':''}>Website Score</option>
+            <option value="email_verified" ${c.field==='email_verified'?'selected':''}>Email Verified</option>
+            <option value="tag" ${c.field==='tag'?'selected':''}>Has Tag</option>
+          </select>`);
+          html += wfFormGroup('Operator', `<select class="filter-select" onchange="updateNodeConfig('${node.id}','operator',this.value)">
+            <option value="exists" ${c.operator==='exists'?'selected':''}>Exists / Is True</option>
+            <option value="not_exists" ${c.operator==='not_exists'?'selected':''}>Does Not Exist / Is False</option>
+            <option value="equals" ${c.operator==='equals'?'selected':''}>Equals</option>
+            <option value="not_equals" ${c.operator==='not_equals'?'selected':''}>Does Not Equal</option>
+            <option value="greater_than" ${c.operator==='greater_than'?'selected':''}>Greater Than</option>
+            <option value="less_than" ${c.operator==='less_than'?'selected':''}>Less Than</option>
+            <option value="contains" ${c.operator==='contains'?'selected':''}>Contains</option>
+          </select>`);
+          html += wfFormGroup('Value', `<input type="text" class="form-input" value="${escapeHtml(c.value||'')}" placeholder="Value to compare" onchange="updateNodeConfig('${node.id}','value',this.value)">`);
+          break;
+
+        case 'add_tag': case 'remove_tag':
+          html += wfFormGroup('Tag', `<input type="text" class="form-input" value="${escapeHtml(c.tag||'')}" placeholder="Tag name" onchange="updateNodeConfig('${node.id}','tag',this.value)">`);
+          break;
+
+        case 'update_contact':
+          html += wfFormGroup('Field', `<select class="filter-select" onchange="updateNodeConfig('${node.id}','field',this.value)">
+            <option value="email" ${c.field==='email'?'selected':''}>Email</option>
+            <option value="phone" ${c.field==='phone'?'selected':''}>Phone</option>
+            <option value="business_name" ${c.field==='business_name'?'selected':''}>Business Name</option>
+            <option value="city" ${c.field==='city'?'selected':''}>City</option>
+            <option value="industry" ${c.field==='industry'?'selected':''}>Industry</option>
+            <option value="contact_name" ${c.field==='contact_name'?'selected':''}>Contact Name</option>
+          </select>`);
+          html += wfFormGroup('Value', `<input type="text" class="form-input" value="${escapeHtml(c.value||'')}" onchange="updateNodeConfig('${node.id}','value',this.value)">`);
+          break;
+
+        case 'move_pipeline_stage':
+          html += wfFormGroup('Pipeline', `<input type="text" class="form-input" value="${escapeHtml(c.pipeline||'')}" placeholder="Pipeline name" onchange="updateNodeConfig('${node.id}','pipeline',this.value)">`);
+          html += wfFormGroup('Stage', `<input type="text" class="form-input" value="${escapeHtml(c.stage||'')}" placeholder="Stage name" onchange="updateNodeConfig('${node.id}','stage',this.value)">`);
+          break;
+
+        case 'score_website':
+          html += '<p style="color:var(--text-dim);font-size:0.8rem;">Automatically scores the contact\'s website using the built-in analyzer.</p>';
+          break;
+
+        case 'webhook_out':
+          html += wfFormGroup('URL', `<input type="text" class="form-input mono" value="${escapeHtml(c.url||'')}" placeholder="https://..." onchange="updateNodeConfig('${node.id}','url',this.value)">`);
+          html += wfFormGroup('Method', `<select class="filter-select" onchange="updateNodeConfig('${node.id}','method',this.value)">
+            <option value="POST" ${c.method==='POST'||!c.method?'selected':''}>POST</option>
+            <option value="GET" ${c.method==='GET'?'selected':''}>GET</option>
+            <option value="PUT" ${c.method==='PUT'?'selected':''}>PUT</option>
+          </select>`);
+          break;
+
+        case 'notification':
+          html += wfFormGroup('Message', `<textarea class="form-textarea" rows="3" onchange="updateNodeConfig('${node.id}','message',this.value)">${escapeHtml(c.message||'')}</textarea>`);
+          html += wfFormGroup('Send to Email', `<input type="text" class="form-input" value="${escapeHtml(c.email||'')}" placeholder="admin@company.com" onchange="updateNodeConfig('${node.id}','email',this.value)">`);
+          break;
+
+        case 'scheduler':
+          html += wfFormGroup('Run Every', `<select class="filter-select" onchange="updateNodeConfig('${node.id}','interval',this.value)">
+            <option value="hourly" ${c.interval==='hourly'?'selected':''}>Every Hour</option>
+            <option value="daily" ${c.interval==='daily'||!c.interval?'selected':''}>Every Day</option>
+            <option value="weekly" ${c.interval==='weekly'?'selected':''}>Every Week</option>
+          </select>`);
+          html += wfFormGroup('At Hour (0-23)', `<input type="number" class="form-input" value="${c.hour||9}" min="0" max="23" onchange="updateNodeConfig('${node.id}','hour',parseInt(this.value))">`);
+          break;
+
+        case 'tag_added': case 'tag_removed':
+          html += wfFormGroup('Tag', `<input type="text" class="form-input" value="${escapeHtml(c.tag||'')}" placeholder="Tag name to watch" onchange="updateNodeConfig('${node.id}','tag',this.value)">`);
+          break;
+
+        case 'pipeline_stage_changed':
+          html += wfFormGroup('Pipeline', `<input type="text" class="form-input" value="${escapeHtml(c.pipeline||'')}" placeholder="Pipeline name" onchange="updateNodeConfig('${node.id}','pipeline',this.value)">`);
+          html += wfFormGroup('Stage', `<input type="text" class="form-input" value="${escapeHtml(c.stage||'')}" placeholder="Stage name (optional)" onchange="updateNodeConfig('${node.id}','stage',this.value)">`);
+          break;
+
+        case 'webhook':
+          html += '<p style="color:var(--text-dim);font-size:0.8rem;">This workflow will be triggered by an inbound webhook POST request. The webhook URL will be generated after saving.</p>';
+          break;
+
+        default:
+          html += '<p style="color:var(--text-dim);font-size:0.8rem;">No configuration needed for this node.</p>';
+      }
+
+      panel.innerHTML = html;
+    }
+
+    function wfFormGroup(label, input) {
+      return `<div class="form-group"><label class="form-label">${label}</label>${input}</div>`;
+    }
+
+    function updateNodeConfig(nodeId, key, value) {
+      const node = wfNodes.find(n => n.id === nodeId);
+      if (!node) return;
+      if (!node.config) node.config = {};
+      node.config[key] = value;
+      renderWfCanvas();
+    }
+
+    function insertIntoWfField(fieldId, text) {
+      const el = document.getElementById(fieldId);
+      if (!el) return;
+      const s = el.selectionStart || el.value.length;
+      el.value = el.value.slice(0, s) + text + el.value.slice(el.selectionEnd || s);
+      el.focus();
+      const configKey = fieldId.includes('subject') ? 'subject' : fieldId.includes('body') ? 'body' : 'message';
+      updateNodeConfig(wfSelectedNode, configKey, el.value);
+    }
+
+    // Drag & Drop from palette to canvas
+    function initWorkflowDragDrop() {
+      if (wfDragDropInitialized) return;
+      wfDragDropInitialized = true;
+
+      const canvasWrapper = document.querySelector('.wf-canvas-wrapper');
+      if (!canvasWrapper) return;
+
+      canvasWrapper.addEventListener('dragover', (e) => {
+        e.preventDefault();
+        e.dataTransfer.dropEffect = 'copy';
+      });
+
+      canvasWrapper.addEventListener('drop', (e) => {
+        e.preventDefault();
+        const type = e.dataTransfer.getData('type');
+        const action = e.dataTransfer.getData('action');
+        if (!action) return;
+
+        const rect = canvasWrapper.getBoundingClientRect();
+        const x = e.clientX - rect.left + canvasWrapper.scrollLeft;
+        const y = e.clientY - rect.top + canvasWrapper.scrollTop;
+
+        const node = {
+          id: 'n' + (++wfNodeIdCounter),
+          type: type,
+          action: action,
+          position: { x: Math.round(x / 20) * 20, y: Math.round(y / 20) * 20 },
+          config: {}
+        };
+        wfNodes.push(node);
+        wfSelectedNode = node.id;
+        renderWfCanvas();
+        showNodeProperties(node);
+      });
+
+      // Palette drag start
+      document.querySelectorAll('.wf-node-item').forEach(item => {
+        item.addEventListener('dragstart', (e) => {
+          e.dataTransfer.setData('type', item.dataset.type);
+          e.dataTransfer.setData('action', item.dataset.action);
+        });
+      });
+
+      // Node dragging on canvas
+      document.addEventListener('mousemove', (e) => {
+        if (!wfDraggingNode) return;
+        const node = wfNodes.find(n => n.id === wfDraggingNode.id);
+        if (!node) return;
+        const dx = e.clientX - wfDraggingNode.startX;
+        const dy = e.clientY - wfDraggingNode.startY;
+        node.position.x = Math.max(0, Math.round((wfDraggingNode.origX + dx) / 20) * 20);
+        node.position.y = Math.max(0, Math.round((wfDraggingNode.origY + dy) / 20) * 20);
+        const el = document.getElementById('wf-node-' + node.id);
+        if (el) {
+          el.style.left = node.position.x + 'px';
+          el.style.top = node.position.y + 'px';
+        }
+        renderWfConnections();
+      });
+
+      document.addEventListener('mouseup', () => {
+        if (wfDraggingNode) {
+          wfDraggingNode = null;
+          renderWfCanvas();
+        }
+      });
+    }
+
+    function renderWfConnections() {
+      const svg = document.getElementById('wf-connections');
+      if (!svg) return;
+      svg.innerHTML = '';
+      for (const edge of wfEdges) {
+        const sourceNode = wfNodes.find(n => n.id === edge.source);
+        const targetNode = wfNodes.find(n => n.id === edge.target);
+        if (!sourceNode || !targetNode) continue;
+        const sx = sourceNode.position.x + 90;
+        const sy = sourceNode.position.y + 80;
+        const tx = targetNode.position.x + 90;
+        const ty = targetNode.position.y;
+        const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+        const midY = (sy + ty) / 2;
+        path.setAttribute('d', `M${sx},${sy} C${sx},${midY} ${tx},${midY} ${tx},${ty}`);
+        path.setAttribute('stroke', edge.sourceHandle === 'no' ? '#ff0033' : '#444');
+        path.setAttribute('stroke-width', '2');
+        path.setAttribute('fill', 'none');
+        svg.appendChild(path);
+      }
+    }
+
+    async function saveWorkflow() {
+      const name = document.getElementById('wf-name').value.trim();
+      if (!name) { showToast('Enter a workflow name', 'error'); return; }
+
+      const triggerNode = wfNodes.find(n => n.type === 'trigger');
+      if (!triggerNode) { showToast('Add a trigger to start the workflow', 'error'); return; }
+
+      const payload = {
+        name,
+        trigger_type: triggerNode.action,
+        trigger_config: triggerNode.config || {},
+        nodes: wfNodes,
+        edges: wfEdges,
+      };
+
+      if (wfCurrentWorkflowId) payload.id = wfCurrentWorkflowId;
+
+      try {
+        const resp = await fetch(`${API_BASE}/workflows`, {
+          method: wfCurrentWorkflowId ? 'PUT' : 'POST',
+          headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${authToken}` },
+          body: JSON.stringify(payload)
+        });
+        const data = await resp.json();
+        if (data.success) {
+          wfCurrentWorkflowId = data.workflow?.id || wfCurrentWorkflowId;
+          showToast('Workflow saved', 'success');
+        } else {
+          showToast(data.error || 'Failed to save', 'error');
+        }
+      } catch (e) {
+        showToast('Failed to save workflow', 'error');
+      }
+    }
+
+    async function activateWorkflow() {
+      if (!wfCurrentWorkflowId) {
+        await saveWorkflow();
+        if (!wfCurrentWorkflowId) return;
+      }
+
+      try {
+        const resp = await fetch(`${API_BASE}/workflows`, {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${authToken}` },
+          body: JSON.stringify({ id: wfCurrentWorkflowId, status: 'active' })
+        });
+        const data = await resp.json();
+        if (data.success) {
+          const badge = document.getElementById('wf-status-badge');
+          badge.textContent = 'Active';
+          badge.className = 'status-badge synced';
+          showToast('Workflow activated!', 'success');
+        }
+      } catch (e) {
+        showToast('Failed to activate', 'error');
+      }
+    }
+
+    async function loadWorkflows() {
+      const container = document.getElementById('workflows-list-container');
+      if (!container) return;
+
+      try {
+        const resp = await fetch(`${API_BASE}/workflows`, {
+          headers: { 'Authorization': `Bearer ${authToken}` }
+        });
+        const data = await resp.json();
+        const workflows = data.workflows || [];
+
+        if (workflows.length === 0) {
+          container.innerHTML = '<div style="text-align:center;padding:3rem;color:var(--text-dim);">No workflows yet. Click "+ New Workflow" to build your first automation.</div>';
+          return;
+        }
+
+        container.innerHTML = workflows.map(wf => {
+          const statusBadge = wf.status === 'active' ? '<span class="status-badge synced">Active</span>'
+            : wf.status === 'paused' ? '<span class="status-badge ready">Paused</span>'
+            : '<span class="status-badge pending">Draft</span>';
+          const stats = wf.stats || {};
+          return `
+            <div class="card" style="margin-bottom: 0.75rem; cursor: pointer;" onclick="openWorkflowBuilder(${wf.id})">
+              <div style="display:flex;justify-content:space-between;align-items:center;">
+                <div>
+                  <div style="font-weight:600;display:flex;align-items:center;gap:0.5rem;">
+                    ${escapeHtml(wf.name)} ${statusBadge}
+                  </div>
+                  <div style="font-size:0.75rem;color:var(--text-dim);margin-top:0.25rem;">
+                    Trigger: ${ACTION_LABELS[wf.trigger_type] || wf.trigger_type} &bull; ${(wf.nodes||[]).length} nodes
+                    ${stats.enrolled ? ` &bull; ${stats.enrolled} enrolled` : ''}
+                  </div>
+                </div>
+                <div style="display:flex;gap:0.5rem;">
+                  <button class="btn-mini" onclick="event.stopPropagation();deleteWorkflow(${wf.id})">Delete</button>
+                </div>
+              </div>
+            </div>
+          `;
+        }).join('');
+      } catch (e) {
+        container.innerHTML = '<div style="color:var(--red);padding:1rem;">Failed to load workflows</div>';
+      }
+    }
+
+    async function deleteWorkflow(id) {
+      if (!confirm('Delete this workflow?')) return;
+      try {
+        await fetch(`${API_BASE}/workflows`, {
+          method: 'DELETE',
+          headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${authToken}` },
+          body: JSON.stringify({ id })
+        });
+        showToast('Workflow deleted', 'success');
+        loadWorkflows();
+      } catch (e) {
+        showToast('Failed to delete', 'error');
       }
     }
 
