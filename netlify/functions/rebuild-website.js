@@ -74,52 +74,66 @@ exports.handler = async (event) => {
     }
     if (issues.length === 0) issues.push('outdated design', 'needs modernization');
 
-    // Determine the app's base URL for callbacks
-    const appBaseUrl = `https://${event.headers.host || 'leadripper2.netlify.app'}`;
-    const callbackUrl = `${appBaseUrl}/.netlify/functions/rebuild-callback`;
+    const callbackUrl = 'https://leadripper.com/.netlify/functions/rebuild-callback';
+    const NETLIFY_TOKEN = 'nfp_2r8NMnaW5BxpaWHWXXu6ZbePvQAQjqkp682b';
+    const siteSlug = `lr-${(business_name || 'site').replace(/[^a-zA-Z0-9]/g, '-').toLowerCase().slice(0, 30)}-${leadId}`;
 
-    // Send webhook to OpenClaw gateway to trigger the lead-rebuilder skill
     const openclawPayload = {
-      message: `lead-rebuild: Rebuild the website for ${business_name}. Their current site is ${url}.
+      message: `Build a new website for "${business_name}".
 
-Use the lead-rebuilder skill to:
-1. Scrape their current website at ${url}
-2. Build a beautiful new modern website with Tailwind CSS using their original content
-3. Run QA sub-agents to check all links, images, and content accuracy
-4. Email the preview to ${contact_email} (${contact_name}) via himalaya
-5. Trigger the AI calling agent to call ${contact_phone || 'N/A'} and tell them to check their email for their free website redesign preview
+TASK:
+1. Fetch their current website at ${url} and extract all content (business name, services, about text, phone, address, testimonials, images)
+2. Build a complete, beautiful, modern single-page website using Tailwind CSS CDN with their extracted content
+3. The site must be mobile-responsive, professional, and conversion-focused with CTAs
+4. Deploy the finished HTML to Netlify using their API
+
+NETLIFY DEPLOYMENT:
+- API Token: ${NETLIFY_TOKEN}
+- Site name: ${siteSlug}
+
+Step 1 - Create site:
+POST https://api.netlify.com/api/v1/sites
+Authorization: Bearer ${NETLIFY_TOKEN}
+Content-Type: application/json
+Body: {"name": "${siteSlug}"}
+
+Step 2 - Deploy (after creating, use the site_id from response):
+POST https://api.netlify.com/api/v1/sites/{site_id}/deploys
+Authorization: Bearer ${NETLIFY_TOKEN}
+Content-Type: application/json
+Body: {"files": {"/index.html": "<sha1-of-html>"}}
+
+Step 3 - Upload the HTML file:
+PUT https://api.netlify.com/api/v1/deploys/{deploy_id}/files/index.html
+Authorization: Bearer ${NETLIFY_TOKEN}
+Content-Type: application/octet-stream
+Body: <the full HTML content>
+
+The deployed URL will be: https://${siteSlug}.netlify.app
+
+AFTER DEPLOYING, send a callback to save the URL:
+POST ${callbackUrl}
+Authorization: Bearer ${OPENCLAW_HOOKS_TOKEN}
+Content-Type: application/json
+Body: {"lead_id":${leadId},"phase":"complete","status":"complete","progress_pct":100,"message":"Website built and deployed","preview_url":"https://${siteSlug}.netlify.app","new_website_url":"https://${siteSlug}.netlify.app"}
+
+Also send progress callbacks during the build:
+- Start: {"lead_id":${leadId},"phase":"scrape","status":"in_progress","progress_pct":10,"message":"Scraping website..."}
+- Building: {"lead_id":${leadId},"phase":"rebuild","status":"in_progress","progress_pct":40,"message":"Building new website..."}
+- Deploying: {"lead_id":${leadId},"phase":"deploy","status":"in_progress","progress_pct":80,"message":"Deploying to Netlify..."}
 
 Lead details:
 - Business: ${business_name}
 - Website: ${url}
-- Email: ${contact_email}
-- Phone: ${contact_phone || 'N/A'}
-- Contact: ${contact_name}
 - Lead ID: ${leadId}
-- Current Score: ${website_score || 'N/A'}/100 (${website_grade || 'N/A'})
+- Score: ${website_score || 'N/A'}/100 (${website_grade || 'N/A'})
 - Issues: ${issues.join(', ')}
+${contact_email ? '- Email: ' + contact_email : ''}
+${contact_phone ? '- Phone: ' + contact_phone : ''}
+${contact_name ? '- Contact: ' + contact_name : ''}
 
-IMPORTANT — Progress Callback:
-After EACH phase completes, you MUST send a progress update by running:
-curl -X POST "${callbackUrl}" -H "Authorization: Bearer ${OPENCLAW_HOOKS_TOKEN}" -H "Content-Type: application/json" -d '<JSON>'
-
-Use these payloads for each phase:
-- Scraping started: {"lead_id":${leadId},"phase":"scrape","status":"in_progress","progress_pct":10,"message":"Scraping original website..."}
-- Scraping done: {"lead_id":${leadId},"phase":"scrape","status":"complete","progress_pct":20,"message":"Site scraped successfully"}
-- Rebuilding started: {"lead_id":${leadId},"phase":"rebuild","status":"in_progress","progress_pct":25,"message":"AI is building your new website..."}
-- Rebuilding done: {"lead_id":${leadId},"phase":"rebuild","status":"complete","progress_pct":50,"message":"New website built"}
-- QA testing started: {"lead_id":${leadId},"phase":"qa","status":"in_progress","progress_pct":55,"message":"QA agents testing links, images & content..."}
-- QA testing done: {"lead_id":${leadId},"phase":"qa","status":"complete","progress_pct":70,"message":"QA passed"}
-- Fixing issues (if any): {"lead_id":${leadId},"phase":"fix","status":"in_progress","progress_pct":75,"message":"Fixing QA issues..."}
-- Deploying preview: {"lead_id":${leadId},"phase":"deploy","status":"in_progress","progress_pct":80,"message":"Deploying preview site..."}
-- Deploy done: {"lead_id":${leadId},"phase":"deploy","status":"complete","progress_pct":85,"message":"Preview ready","preview_url":"<URL>"}
-- Emailing customer: {"lead_id":${leadId},"phase":"email","status":"in_progress","progress_pct":90,"message":"Emailing preview to customer..."}
-- Email sent: {"lead_id":${leadId},"phase":"email","status":"complete","progress_pct":95,"message":"Email sent to ${contact_email}"}
-- Calling customer: {"lead_id":${leadId},"phase":"call","status":"in_progress","progress_pct":97,"message":"AI calling customer..."}
-- ALL DONE: {"lead_id":${leadId},"phase":"complete","status":"complete","progress_pct":100,"message":"Pipeline complete!","new_website_url":"<PREVIEW_URL>"}
-
-You MUST call the callback at each step. This updates the LeadRipper dashboard in real-time.`,
-      name: `rebuild-${business_name.replace(/[^a-zA-Z0-9]/g, '-').toLowerCase()}`,
+DO NOT email or call the customer. Just build, deploy, and callback.`,
+      name: `rebuild-${siteSlug}`,
       deliver: true,
       channel: "telegram"
     };
