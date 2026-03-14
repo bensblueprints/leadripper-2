@@ -44,7 +44,7 @@ exports.handler = async (event, context) => {
       const offset = parseInt(params.offset) || 0;
 
       const result = await pool.query(
-        `SELECT id, user_id, account_id, to_email, to_name, subject, body,
+        `SELECT id, user_id, email_account_id, to_email, to_name, subject, body,
                 status, sent_at, opened_at
          FROM lr_sent_emails WHERE user_id = $1 ORDER BY sent_at DESC
          LIMIT $2 OFFSET $3`,
@@ -143,7 +143,7 @@ exports.handler = async (event, context) => {
         // Record the failed email
         await pool.query(
           `INSERT INTO lr_sent_emails
-            (user_id, account_id, to_email, to_name, subject, body, status, sent_at)
+            (user_id, email_account_id, to_email, to_name, subject, body, status, sent_at)
            VALUES ($1, $2, $3, $4, $5, $6, $7, NOW())`,
           [userId, accountId, toEmail, toName || null, finalSubject, finalBody, status]
         );
@@ -160,7 +160,7 @@ exports.handler = async (event, context) => {
       // Record the sent email
       const sentResult = await pool.query(
         `INSERT INTO lr_sent_emails
-          (user_id, account_id, to_email, to_name, subject, body, status, sent_at)
+          (user_id, email_account_id, to_email, to_name, subject, body, status, sent_at)
          VALUES ($1, $2, $3, $4, $5, $6, $7, NOW()) RETURNING *`,
         [userId, accountId, toEmail, toName || null, finalSubject, finalBody, status]
       );
@@ -171,7 +171,7 @@ exports.handler = async (event, context) => {
           try {
             await pool.query(
               `INSERT INTO lr_sent_emails
-                (user_id, account_id, lead_id, to_email, to_name, subject, body, status, sent_at)
+                (user_id, email_account_id, lead_id, to_email, to_name, subject, body, status, sent_at)
                VALUES ($1, $2, $3, $4, $5, $6, $7, $8, NOW())`,
               [userId, accountId, leadId, toEmail, toName || null, finalSubject, finalBody, status]
             );
