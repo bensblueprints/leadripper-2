@@ -3226,9 +3226,26 @@
                 <label class="form-label">Email Body</label>
                 <textarea id="outreach-body" class="form-textarea" rows="8" placeholder="Hi {{first_name}},
 
-I noticed {{business_name}} in {{city}} and wanted to reach out...
+I noticed {{business_name}} in {{city}} and wanted to reach out..."></textarea>
+              </div>
 
-Available merge tags: {{business_name}}, {{first_name}}, {{email}}, {{phone}}, {{website}}, {{city}}, {{industry}}, {{address}}"></textarea>
+              <!-- Shortcodes Reference -->
+              <div style="background: var(--surface); border: 1px solid var(--border); border-radius: 6px; padding: 0.75rem; margin-bottom: 1rem;">
+                <div style="font-size: 0.7rem; font-weight: 600; color: var(--text-dim); margin-bottom: 0.5rem; text-transform: uppercase; letter-spacing: 0.5px;">Merge Tags (click to insert)</div>
+                <div style="display: flex; flex-wrap: wrap; gap: 0.35rem;" id="merge-tag-buttons">
+                  <button type="button" class="btn-mini" onclick="insertMergeTag('{{first_name}}')" style="font-size:0.65rem;padding:2px 6px;font-family:'JetBrains Mono',monospace;">{{first_name}}</button>
+                  <button type="button" class="btn-mini" onclick="insertMergeTag('{{business_name}}')" style="font-size:0.65rem;padding:2px 6px;font-family:'JetBrains Mono',monospace;">{{business_name}}</button>
+                  <button type="button" class="btn-mini" onclick="insertMergeTag('{{email}}')" style="font-size:0.65rem;padding:2px 6px;font-family:'JetBrains Mono',monospace;">{{email}}</button>
+                  <button type="button" class="btn-mini" onclick="insertMergeTag('{{phone}}')" style="font-size:0.65rem;padding:2px 6px;font-family:'JetBrains Mono',monospace;">{{phone}}</button>
+                  <button type="button" class="btn-mini" onclick="insertMergeTag('{{website}}')" style="font-size:0.65rem;padding:2px 6px;font-family:'JetBrains Mono',monospace;">{{website}}</button>
+                  <button type="button" class="btn-mini" onclick="insertMergeTag('{{city}}')" style="font-size:0.65rem;padding:2px 6px;font-family:'JetBrains Mono',monospace;">{{city}}</button>
+                  <button type="button" class="btn-mini" onclick="insertMergeTag('{{state}}')" style="font-size:0.65rem;padding:2px 6px;font-family:'JetBrains Mono',monospace;">{{state}}</button>
+                  <button type="button" class="btn-mini" onclick="insertMergeTag('{{industry}}')" style="font-size:0.65rem;padding:2px 6px;font-family:'JetBrains Mono',monospace;">{{industry}}</button>
+                  <button type="button" class="btn-mini" onclick="insertMergeTag('{{address}}')" style="font-size:0.65rem;padding:2px 6px;font-family:'JetBrains Mono',monospace;">{{address}}</button>
+                  <button type="button" class="btn-mini" onclick="insertMergeTag('{{rating}}')" style="font-size:0.65rem;padding:2px 6px;font-family:'JetBrains Mono',monospace;">{{rating}}</button>
+                  <button type="button" class="btn-mini" onclick="insertMergeTag('{{reviews}}')" style="font-size:0.65rem;padding:2px 6px;font-family:'JetBrains Mono',monospace;">{{reviews}}</button>
+                  <button type="button" class="btn-mini" onclick="insertMergeTag('{{unsubscribe}}')" style="font-size:0.65rem;padding:2px 6px;font-family:'JetBrains Mono',monospace;color:var(--red);">{{unsubscribe}}</button>
+                </div>
               </div>
 
               <!-- Spam Score Result -->
@@ -8227,11 +8244,13 @@ Available merge tags: {{business_name}}, {{first_name}}, {{email}}, {{phone}}, {
 
       container.innerHTML = emailTemplates.map(t => `
         <div style="display: flex; justify-content: space-between; align-items: center; padding: 1rem; border-bottom: 1px solid var(--border);">
-          <div>
+          <div style="flex:1;min-width:0;">
             <strong>${escapeHtml(t.name)}</strong>
-            <div style="color: var(--text-dim); font-size: 0.85rem;">${escapeHtml(t.subject || '')}</div>
+            <div style="color: var(--text-dim); font-size: 0.85rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${escapeHtml(t.subject || '')}</div>
+            <div style="color: var(--text-dimmer); font-size: 0.75rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 400px;">${escapeHtml((t.body || '').substring(0, 80))}${(t.body?.length > 80 ? '...' : '')}</div>
           </div>
-          <div style="display: flex; gap: 0.5rem;">
+          <div style="display: flex; gap: 0.5rem; flex-shrink:0;">
+            <button class="btn-mini" onclick="useTemplate(${t.id})">Use</button>
             <button class="btn-mini" onclick="editTemplate(${t.id})">Edit</button>
             <button class="btn-mini" style="color: var(--red);" onclick="deleteTemplate(${t.id})">Delete</button>
           </div>
@@ -8272,17 +8291,93 @@ Available merge tags: {{business_name}}, {{first_name}}, {{email}}, {{phone}}, {
     }
 
     // Open new template modal
-    function openNewTemplateModal() {
-      const name = prompt('Template Name:');
-      if (!name) return;
+    function insertMergeTag(tag) {
+      // Insert into whichever field was last focused (subject or body)
+      const body = document.getElementById('outreach-body');
+      const subject = document.getElementById('outreach-subject');
+      const tmplBody = document.getElementById('tmpl-body');
+      const tmplSubject = document.getElementById('tmpl-subject');
+      // Try template modal fields first, then compose fields
+      const target = (tmplBody && document.activeElement === tmplBody) ? tmplBody
+        : (tmplSubject && document.activeElement === tmplSubject) ? tmplSubject
+        : (document.activeElement === subject) ? subject
+        : body || subject;
+      if (!target) return;
+      const start = target.selectionStart || target.value.length;
+      const end = target.selectionEnd || target.value.length;
+      target.value = target.value.slice(0, start) + tag + target.value.slice(end);
+      target.focus();
+      target.setSelectionRange(start + tag.length, start + tag.length);
+    }
 
-      const subject = prompt('Email Subject (use {{business_name}}, {{first_name}}, etc.):');
-      if (subject === null) return;
+    function openNewTemplateModal(editId) {
+      const existing = editId ? emailTemplates.find(t => t.id == editId) : null;
+      const root = document.getElementById('modal-root');
+      root.innerHTML = `<div class="modal-overlay" id="modal-overlay" onclick="if(event.target.id==='modal-overlay')this.innerHTML=''">
+        <div class="modal" style="max-width:600px;">
+          <h3>${existing ? 'Edit' : 'New'} Email Template</h3>
+          <div class="form-group">
+            <label class="form-label">Template Name</label>
+            <input type="text" class="form-input" id="tmpl-name" value="${escapeHtml(existing?.name || '')}" placeholder="e.g. Cold Outreach - Plumbers">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Subject Line</label>
+            <input type="text" class="form-input" id="tmpl-subject" value="${escapeHtml(existing?.subject || '')}" placeholder="Hi {{first_name}}, quick question about {{business_name}}">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Email Body</label>
+            <textarea class="form-textarea" id="tmpl-body" rows="12" placeholder="Hi {{first_name}},\n\nI noticed {{business_name}} in {{city}}...">${escapeHtml(existing?.body || '')}</textarea>
+          </div>
+          <div style="background: var(--surface); border: 1px solid var(--border); border-radius: 6px; padding: 0.5rem; margin-bottom: 1rem;">
+            <div style="font-size: 0.65rem; color: var(--text-dim); margin-bottom: 0.35rem; text-transform: uppercase;">Click to insert merge tag</div>
+            <div style="display: flex; flex-wrap: wrap; gap: 0.25rem;">
+              <button type="button" class="btn-mini" onclick="insertMergeTag('{{first_name}}')" style="font-size:0.6rem;padding:1px 5px;font-family:'JetBrains Mono',monospace;">{{first_name}}</button>
+              <button type="button" class="btn-mini" onclick="insertMergeTag('{{business_name}}')" style="font-size:0.6rem;padding:1px 5px;font-family:'JetBrains Mono',monospace;">{{business_name}}</button>
+              <button type="button" class="btn-mini" onclick="insertMergeTag('{{email}}')" style="font-size:0.6rem;padding:1px 5px;font-family:'JetBrains Mono',monospace;">{{email}}</button>
+              <button type="button" class="btn-mini" onclick="insertMergeTag('{{phone}}')" style="font-size:0.6rem;padding:1px 5px;font-family:'JetBrains Mono',monospace;">{{phone}}</button>
+              <button type="button" class="btn-mini" onclick="insertMergeTag('{{website}}')" style="font-size:0.6rem;padding:1px 5px;font-family:'JetBrains Mono',monospace;">{{website}}</button>
+              <button type="button" class="btn-mini" onclick="insertMergeTag('{{city}}')" style="font-size:0.6rem;padding:1px 5px;font-family:'JetBrains Mono',monospace;">{{city}}</button>
+              <button type="button" class="btn-mini" onclick="insertMergeTag('{{state}}')" style="font-size:0.6rem;padding:1px 5px;font-family:'JetBrains Mono',monospace;">{{state}}</button>
+              <button type="button" class="btn-mini" onclick="insertMergeTag('{{industry}}')" style="font-size:0.6rem;padding:1px 5px;font-family:'JetBrains Mono',monospace;">{{industry}}</button>
+              <button type="button" class="btn-mini" onclick="insertMergeTag('{{address}}')" style="font-size:0.6rem;padding:1px 5px;font-family:'JetBrains Mono',monospace;">{{address}}</button>
+              <button type="button" class="btn-mini" onclick="insertMergeTag('{{unsubscribe}}')" style="font-size:0.6rem;padding:1px 5px;font-family:'JetBrains Mono',monospace;color:var(--red);">{{unsubscribe}}</button>
+            </div>
+          </div>
+          <div style="display: flex; gap: 0.5rem; justify-content: flex-end;">
+            <button class="btn-secondary" onclick="document.getElementById('modal-root').innerHTML=''">Cancel</button>
+            <button class="btn" onclick="saveTemplateFromModal(${editId || 'null'})">${existing ? 'Update' : 'Save'} Template</button>
+          </div>
+        </div>
+      </div>`;
+      document.getElementById('tmpl-name').focus();
+    }
 
-      const body = prompt('Email Body:');
-      if (body === null) return;
+    async function saveTemplateFromModal(editId) {
+      const name = document.getElementById('tmpl-name').value.trim();
+      const subject = document.getElementById('tmpl-subject').value.trim();
+      const body = document.getElementById('tmpl-body').value.trim();
+      if (!name) { showToast('Enter a template name', 'error'); return; }
+      if (!subject) { showToast('Enter a subject line', 'error'); return; }
+      if (!body) { showToast('Enter email body', 'error'); return; }
 
-      createEmailTemplate(name, subject, body);
+      try {
+        const payload = editId ? { id: editId, name, subject, body } : { name, subject, body };
+        const response = await fetch(`${API_BASE}/email-templates`, {
+          method: editId ? 'PUT' : 'POST',
+          headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${authToken}` },
+          body: JSON.stringify(payload)
+        });
+        if (response.ok) {
+          showToast(editId ? 'Template updated' : 'Template saved', 'success');
+          document.getElementById('modal-root').innerHTML = '';
+          await loadEmailTemplates();
+        } else {
+          const data = await response.json();
+          showToast(data.error || 'Failed to save template', 'error');
+        }
+      } catch (error) {
+        showToast('Failed to save template', 'error');
+      }
     }
 
     // Create email template
@@ -8332,15 +8427,19 @@ Available merge tags: {{business_name}}, {{first_name}}, {{email}}, {{phone}}, {
       }
     }
 
-    // Edit template
+    // Edit template - opens the modal
     function editTemplate(id) {
+      openNewTemplateModal(id);
+    }
+
+    // Use template - loads into compose area
+    function useTemplate(id) {
       const template = emailTemplates.find(t => t.id == id);
       if (!template) return;
-
       document.getElementById('outreach-template').value = id;
       document.getElementById('outreach-subject').value = template.subject || '';
       document.getElementById('outreach-body').value = template.body || '';
-      showToast('Template loaded for editing', 'info');
+      showToast('Template loaded into compose', 'success');
     }
 
     // ============================================

@@ -102,6 +102,23 @@ exports.handler = async (event, context) => {
     }
   }
 
+  // PUT - Update template (alias for POST with id)
+  if (event.httpMethod === 'PUT') {
+    try {
+      const { id, name, subject, body: templateBody } = JSON.parse(event.body);
+      if (!id) return { statusCode: 400, headers, body: JSON.stringify({ error: 'Template ID required' }) };
+      if (!name || !subject) return { statusCode: 400, headers, body: JSON.stringify({ error: 'Name and subject required' }) };
+      const result = await pool.query(
+        'UPDATE lr_email_templates SET name=$1, subject=$2, body=$3, updated_at=NOW() WHERE id=$4 AND user_id=$5 RETURNING *',
+        [name, subject, templateBody || '', id, userId]
+      );
+      if (result.rows.length === 0) return { statusCode: 404, headers, body: JSON.stringify({ error: 'Template not found' }) };
+      return { statusCode: 200, headers, body: JSON.stringify({ success: true, template: result.rows[0] }) };
+    } catch (error) {
+      return { statusCode: 500, headers, body: JSON.stringify({ error: error.message }) };
+    }
+  }
+
   // DELETE - Delete template
   if (event.httpMethod === 'DELETE') {
     try {
