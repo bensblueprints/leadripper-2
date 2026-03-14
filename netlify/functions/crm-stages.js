@@ -17,6 +17,24 @@ function verifyToken(authHeader) {
   }
 }
 
+// Ensure the position column exists (handles tables created before migration)
+let positionColumnEnsured = false;
+async function ensurePositionColumn() {
+  if (positionColumnEnsured) return;
+  try {
+    await pool.query(`
+      ALTER TABLE lr_crm_stages ADD COLUMN IF NOT EXISTS position INTEGER DEFAULT 0
+    `);
+    await pool.query(`
+      ALTER TABLE lr_crm_stages ADD COLUMN IF NOT EXISTS color VARCHAR(20) DEFAULT '#4a9eff'
+    `);
+    positionColumnEnsured = true;
+  } catch (e) {
+    console.error('ensurePositionColumn error (non-fatal):', e.message);
+    positionColumnEnsured = true; // Don't retry on error
+  }
+}
+
 exports.handler = async (event, context) => {
   const headers = {
     'Access-Control-Allow-Origin': '*',
@@ -32,6 +50,9 @@ exports.handler = async (event, context) => {
   if (!decoded) {
     return { statusCode: 401, headers, body: JSON.stringify({ error: 'Unauthorized' }) };
   }
+
+  // Ensure position column exists before any query
+  await ensurePositionColumn();
 
   // GET - List stages for a pipeline
   if (event.httpMethod === 'GET') {

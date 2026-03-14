@@ -17,6 +17,63 @@ function verifyToken(authHeader) {
   }
 }
 
+// Auto-create workflow tables if they don't exist
+let tablesEnsured = false;
+async function ensureWorkflowTables() {
+  if (tablesEnsured) return;
+  try {
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS lr_workflows (
+        id BIGSERIAL PRIMARY KEY,
+        user_id BIGINT NOT NULL,
+        name VARCHAR(255) NOT NULL,
+        description TEXT,
+        status VARCHAR(20) DEFAULT 'draft',
+        trigger_type VARCHAR(50) NOT NULL,
+        trigger_config JSONB DEFAULT '{}',
+        nodes JSONB DEFAULT '[]',
+        edges JSONB DEFAULT '[]',
+        settings JSONB DEFAULT '{}',
+        stats JSONB DEFAULT '{"enrolled": 0, "completed": 0, "active": 0}',
+        created_at TIMESTAMPTZ DEFAULT NOW(),
+        updated_at TIMESTAMPTZ DEFAULT NOW()
+      )
+    `);
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS lr_workflow_executions (
+        id BIGSERIAL PRIMARY KEY,
+        workflow_id BIGINT NOT NULL,
+        user_id BIGINT NOT NULL,
+        contact_id BIGINT,
+        status VARCHAR(20) DEFAULT 'running',
+        current_node VARCHAR(50),
+        execution_data JSONB DEFAULT '{}',
+        started_at TIMESTAMPTZ DEFAULT NOW(),
+        completed_at TIMESTAMPTZ,
+        next_action_at TIMESTAMPTZ,
+        error TEXT
+      )
+    `);
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS lr_workflow_logs (
+        id BIGSERIAL PRIMARY KEY,
+        execution_id BIGINT NOT NULL,
+        node_id VARCHAR(50),
+        action_type VARCHAR(50),
+        status VARCHAR(20),
+        input_data JSONB,
+        output_data JSONB,
+        error TEXT,
+        created_at TIMESTAMPTZ DEFAULT NOW()
+      )
+    `);
+    tablesEnsured = true;
+  } catch (e) {
+    console.error('ensureWorkflowTables error (non-fatal):', e.message);
+    tablesEnsured = true;
+  }
+}
+
 exports.handler = async (event, context) => {
   const headers = {
     'Access-Control-Allow-Origin': '*',
@@ -33,6 +90,9 @@ exports.handler = async (event, context) => {
   if (!decoded) {
     return { statusCode: 401, headers, body: JSON.stringify({ error: 'Unauthorized' }) };
   }
+
+  // Ensure workflow tables exist
+  await ensureWorkflowTables();
 
   const userId = decoded.userId;
 
