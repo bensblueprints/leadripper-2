@@ -313,6 +313,7 @@ exports.handler = async (event, context) => {
           email_validation_date = NOW(),
           is_disposable = $5,
           is_role_based = $6,
+          email_scrape_attempted = true,
           updated_at = NOW()
          WHERE id = $7`,
         [scrapedEmail, isVerified, emailScore, warnings, isDisposable, isRoleBased, leadId]
@@ -335,6 +336,9 @@ exports.handler = async (event, context) => {
         })
       };
     }
+
+    // Mark as attempted even when no email found
+    await pool.query('UPDATE lr_leads SET email_scrape_attempted = true, updated_at = NOW() WHERE id = $1', [leadId]).catch(() => {});
 
     // Try to generate possible emails based on domain
     const domain = extractDomain(lead.website);

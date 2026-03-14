@@ -69,7 +69,7 @@ exports.handler = async (event, context) => {
              website_score, website_grade, website_analysis, website_analyzed_at,
              website_rebuilt_at, rebuild_phase, rebuild_status, rebuild_progress,
              rebuild_message, rebuild_preview_url, rebuilt_website_url, rebuild_updated_at,
-             tags, contact_name
+             tags, contact_name, email_scrape_attempted
       FROM lr_leads WHERE user_id = $1
     `;
     const values = [decoded.userId];

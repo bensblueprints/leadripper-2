@@ -6705,14 +6705,17 @@ I noticed {{business_name}} in {{city}} and wanted to reach out..."></textarea>
         const data = await response.json();
 
         if (response.ok && data.email) {
-          // Update the lead in our local data
           const lead = leadsData.find(l => l.id === leadId);
           if (lead) {
             lead.email = data.email;
+            lead.email_scrape_attempted = true;
           }
           showToast('Email found: ' + data.email, 'success');
           renderLeadsTable();
         } else {
+          // Mark as attempted even if no email found
+          const lead = leadsData.find(l => l.id === leadId);
+          if (lead) lead.email_scrape_attempted = true;
           showToast(data.error || 'No email found', 'error');
           if (btn) {
             btn.innerHTML = 'Scrape Email';
@@ -7251,7 +7254,7 @@ I noticed {{business_name}} in {{city}} and wanted to reach out..."></textarea>
           });
           if (!resp.ok) throw new Error('HTTP ' + resp.status);
           const batch = await resp.json();
-          const filtered = (batch.leads || []).filter(l => !l.email && l.website);
+          const filtered = (batch.leads || []).filter(l => !l.email && l.website && !l.email_scrape_attempted);
           leadsToScrape = leadsToScrape.concat(filtered);
           if (!batch.leads || batch.leads.length < batchSize) break;
           offset += batchSize;
@@ -7262,7 +7265,7 @@ I noticed {{business_name}} in {{city}} and wanted to reach out..."></textarea>
       }
 
       if (leadsToScrape.length === 0) {
-        showToast('All leads already have emails (or no website to scrape)!', 'info');
+        showToast('All leads have been scraped already! (Use individual scrape to retry specific leads)', 'info');
         return;
       }
 
