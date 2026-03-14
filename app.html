@@ -6718,11 +6718,6 @@ I noticed {{business_name}} in {{city}} and wanted to reach out..."></textarea>
         return;
       }
 
-      if (!lead.email) {
-        showToast('Lead needs an email before rebuilding', 'error');
-        return;
-      }
-
       if (!lead.website) {
         showToast('Lead has no website URL to rebuild', 'error');
         return;
