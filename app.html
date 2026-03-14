@@ -3131,6 +3131,14 @@
             <div class="stat-label">Open Rate</div>
           </div>
           <div class="stat-card">
+            <div class="stat-value mono" id="stat-click-rate">0%</div>
+            <div class="stat-label">Click Rate</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-value mono" id="stat-reply-rate">0%</div>
+            <div class="stat-label">Reply Rate</div>
+          </div>
+          <div class="stat-card">
             <div class="stat-value mono" id="stat-sent-today">0</div>
             <div class="stat-label">Sent Today</div>
           </div>
@@ -3269,6 +3277,171 @@ Available merge tags: {{business_name}}, {{first_name}}, {{email}}, {{phone}}, {
                 </tr>
               </tbody>
             </table>
+          </div>
+        </div>
+
+        <!-- Deliverability Sub-section -->
+        <div style="margin-top: 2rem;">
+          <h2 class="display" style="font-size: 1.5rem; margin-bottom: 1.5rem; color: var(--text);">DELIVERABILITY</h2>
+
+          <!-- Email Warmup Card -->
+          <div class="card">
+            <div class="card-header" style="display: flex; align-items: center; justify-content: space-between;">
+              <h2 class="card-title display">Email Warmup</h2>
+              <span style="font-size: 0.75rem; color: var(--text-dim);">Gradually increase sending reputation</span>
+            </div>
+
+            <div style="padding: 0 1.5rem 1.5rem;">
+              <div class="form-group">
+                <label class="form-label">Select Email Account</label>
+                <select id="warmup-account-select" class="filter-select" onchange="loadWarmupStatus()">
+                  <option value="">Choose an account...</option>
+                </select>
+              </div>
+
+              <div id="warmup-status-panel" style="display: none;">
+                <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 1rem; margin-bottom: 1.5rem;">
+                  <div style="background: var(--surface); border: 1px solid var(--border); border-radius: 8px; padding: 1rem; text-align: center;">
+                    <div style="font-size: 1.75rem; font-weight: bold; color: var(--accent);" id="warmup-current-day">0</div>
+                    <div style="color: var(--text-dim); font-size: 0.8rem;">Warmup Day</div>
+                  </div>
+                  <div style="background: var(--surface); border: 1px solid var(--border); border-radius: 8px; padding: 1rem; text-align: center;">
+                    <div style="font-size: 1.75rem; font-weight: bold; color: var(--accent);" id="warmup-today-sent">0</div>
+                    <div style="color: var(--text-dim); font-size: 0.8rem;">Sent Today</div>
+                  </div>
+                  <div style="background: var(--surface); border: 1px solid var(--border); border-radius: 8px; padding: 1rem; text-align: center;">
+                    <div style="font-size: 1.75rem; font-weight: bold; color: var(--accent);" id="warmup-today-target">0</div>
+                    <div style="color: var(--text-dim); font-size: 0.8rem;">Daily Target</div>
+                  </div>
+                </div>
+
+                <!-- Warmup Progress Bar -->
+                <div style="margin-bottom: 1.5rem;">
+                  <div style="display: flex; justify-content: space-between; margin-bottom: 0.35rem;">
+                    <span style="font-size: 0.8rem; color: var(--text-dim);">Daily Progress</span>
+                    <span style="font-size: 0.8rem; color: var(--text-dim);" id="warmup-progress-label">0%</span>
+                  </div>
+                  <div style="background: var(--surface); border: 1px solid var(--border); border-radius: 4px; height: 8px; overflow: hidden;">
+                    <div id="warmup-progress-bar" style="background: var(--accent); height: 100%; width: 0%; transition: width 0.4s ease; border-radius: 4px;"></div>
+                  </div>
+                </div>
+
+                <!-- Warmup Ramp Visualization -->
+                <div style="margin-bottom: 1.5rem; background: var(--surface); border: 1px solid var(--border); border-radius: 8px; padding: 1rem;">
+                  <div style="font-size: 0.8rem; color: var(--text-dim); margin-bottom: 0.5rem;">Warmup Ramp Schedule</div>
+                  <div id="warmup-ramp-viz" style="display: flex; align-items: flex-end; gap: 3px; height: 60px;"></div>
+                </div>
+
+                <!-- Controls -->
+                <div style="display: flex; gap: 1rem; align-items: center; margin-bottom: 1.5rem;">
+                  <button id="warmup-toggle-btn" class="btn" onclick="toggleWarmup()" style="min-width: 160px;">
+                    Start Warmup
+                  </button>
+                  <button class="btn-secondary" onclick="triggerWarmupNow()" id="warmup-trigger-btn" style="display: none;">
+                    Send Batch Now
+                  </button>
+                  <div style="flex: 1;"></div>
+                  <div style="display: flex; align-items: center; gap: 0.5rem;">
+                    <label class="form-label" style="margin: 0; font-size: 0.8rem;">Ramp +</label>
+                    <input type="number" id="warmup-ramp-increment" class="form-input" value="2" min="1" max="10" style="width: 60px; font-size: 0.85rem;">
+                    <label class="form-label" style="margin: 0; font-size: 0.8rem;">/day, max</label>
+                    <input type="number" id="warmup-max-daily" class="form-input" value="40" min="5" max="100" style="width: 65px; font-size: 0.85rem;">
+                  </div>
+                </div>
+
+                <!-- Warmup Activity Log -->
+                <div style="max-height: 200px; overflow-y: auto; border: 1px solid var(--border); border-radius: 8px;">
+                  <table style="width: 100%; font-size: 0.8rem;">
+                    <thead>
+                      <tr>
+                        <th style="padding: 0.5rem; text-align: left;">Action</th>
+                        <th style="padding: 0.5rem; text-align: left;">To</th>
+                        <th style="padding: 0.5rem; text-align: left;">Subject</th>
+                        <th style="padding: 0.5rem; text-align: left;">Time</th>
+                      </tr>
+                    </thead>
+                    <tbody id="warmup-log-body">
+                      <tr>
+                        <td colspan="4" style="text-align: center; color: var(--text-dim); padding: 1rem;">No warmup activity yet</td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Domain Health Card -->
+          <div class="card">
+            <div class="card-header" style="display: flex; align-items: center; justify-content: space-between;">
+              <h2 class="card-title display">Domain Health</h2>
+              <span style="font-size: 0.75rem; color: var(--text-dim);">SPF, DKIM, DMARC & Blacklist Check</span>
+            </div>
+
+            <div style="padding: 0 1.5rem 1.5rem;">
+              <div style="display: flex; gap: 1rem; align-items: flex-end; margin-bottom: 1.5rem;">
+                <div class="form-group" style="flex: 1; margin-bottom: 0;">
+                  <label class="form-label">Domain to Check</label>
+                  <input type="text" id="deliverability-domain" class="form-input" placeholder="example.com">
+                </div>
+                <button class="btn" onclick="checkDomainHealth()" id="check-domain-btn" style="margin-bottom: 0;">
+                  Check Domain Health
+                </button>
+              </div>
+
+              <div id="domain-health-results" style="display: none;">
+                <!-- Score Overview -->
+                <div style="display: grid; grid-template-columns: auto 1fr; gap: 2rem; margin-bottom: 1.5rem; align-items: center;">
+                  <div style="text-align: center;">
+                    <div id="domain-health-score" style="font-size: 3.5rem; font-weight: bold; line-height: 1;"></div>
+                    <div id="domain-health-grade" style="font-size: 1.25rem; font-weight: 600; margin-top: 0.25rem;"></div>
+                    <div style="font-size: 0.75rem; color: var(--text-dim);">Deliverability Score</div>
+                  </div>
+                  <div>
+                    <!-- Authentication Checks -->
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem;">
+                      <div id="check-spf" style="background: var(--surface); border: 1px solid var(--border); border-radius: 8px; padding: 0.75rem;">
+                        <div style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.25rem;">
+                          <span id="check-spf-icon" style="font-size: 1.1rem;"></span>
+                          <strong style="font-size: 0.9rem;">SPF</strong>
+                        </div>
+                        <div id="check-spf-detail" style="font-size: 0.75rem; color: var(--text-dim);"></div>
+                      </div>
+                      <div id="check-dkim" style="background: var(--surface); border: 1px solid var(--border); border-radius: 8px; padding: 0.75rem;">
+                        <div style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.25rem;">
+                          <span id="check-dkim-icon" style="font-size: 1.1rem;"></span>
+                          <strong style="font-size: 0.9rem;">DKIM</strong>
+                        </div>
+                        <div id="check-dkim-detail" style="font-size: 0.75rem; color: var(--text-dim);"></div>
+                      </div>
+                      <div id="check-dmarc" style="background: var(--surface); border: 1px solid var(--border); border-radius: 8px; padding: 0.75rem;">
+                        <div style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.25rem;">
+                          <span id="check-dmarc-icon" style="font-size: 1.1rem;"></span>
+                          <strong style="font-size: 0.9rem;">DMARC</strong>
+                        </div>
+                        <div id="check-dmarc-detail" style="font-size: 0.75rem; color: var(--text-dim);"></div>
+                      </div>
+                      <div id="check-mx" style="background: var(--surface); border: 1px solid var(--border); border-radius: 8px; padding: 0.75rem;">
+                        <div style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.25rem;">
+                          <span id="check-mx-icon" style="font-size: 1.1rem;"></span>
+                          <strong style="font-size: 0.9rem;">MX Records</strong>
+                        </div>
+                        <div id="check-mx-detail" style="font-size: 0.75rem; color: var(--text-dim);"></div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Blacklist Results -->
+                <div style="margin-top: 1rem;">
+                  <h3 style="font-size: 0.9rem; color: var(--text-dim); margin-bottom: 0.75rem;">Blacklist Status</h3>
+                  <div id="blacklist-results" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 0.5rem;"></div>
+                  <div id="blacklist-no-ips" style="display: none; color: var(--text-dim); font-size: 0.85rem; padding: 0.75rem; background: var(--surface); border-radius: 8px; text-align: center;">
+                    No public IPs found for this domain to check against blacklists.
+                  </div>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
       </section>
@@ -7689,7 +7862,8 @@ Available merge tags: {{business_name}}, {{first_name}}, {{email}}, {{phone}}, {
         loadEmailTemplates(),
         loadEmailAccountsForOutreach(),
         loadSentEmails(),
-        updateOutreachCount()
+        updateOutreachCount(),
+        populateWarmupAccountDropdown()
       ]);
     }
 
@@ -8936,6 +9110,327 @@ Available merge tags: {{business_name}}, {{first_name}}, {{email}}, {{phone}}, {
         statusEl.textContent = 'Error';
         statusEl.style.color = 'var(--red)';
         showToast('Failed to save Twilio settings', 'error');
+      }
+    }
+
+    // ============================================
+    // EMAIL WARMUP & DELIVERABILITY FUNCTIONS
+    // ============================================
+
+    let warmupStatus = null;
+
+    async function populateWarmupAccountDropdown() {
+      try {
+        const response = await fetch(`${API_BASE}/email-accounts`, {
+          headers: { 'Authorization': `Bearer ${authToken}` }
+        });
+        if (response.ok) {
+          const data = await response.json();
+          const accounts = data.accounts || [];
+          const select = document.getElementById('warmup-account-select');
+          if (select) {
+            select.innerHTML = '<option value="">Choose an account...</option>' +
+              accounts.map(a => `<option value="${a.id}">${escapeHtml(a.email_address)} (${a.provider || 'imap'})</option>`).join('');
+          }
+
+          // Auto-populate domain input from first account's email domain
+          if (accounts.length > 0) {
+            const domainInput = document.getElementById('deliverability-domain');
+            if (domainInput && !domainInput.value) {
+              const emailDomain = accounts[0].email_address.split('@')[1];
+              if (emailDomain) domainInput.value = emailDomain;
+            }
+          }
+        }
+      } catch (error) {
+        console.error('Failed to populate warmup dropdown:', error);
+      }
+    }
+
+    async function loadWarmupStatus() {
+      const accountId = document.getElementById('warmup-account-select').value;
+      const panel = document.getElementById('warmup-status-panel');
+
+      if (!accountId) {
+        panel.style.display = 'none';
+        return;
+      }
+
+      panel.style.display = 'block';
+
+      try {
+        const response = await fetch(`${API_BASE}/email-warmup`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${authToken}`
+          },
+          body: JSON.stringify({ accountId: parseInt(accountId), action: 'status' })
+        });
+
+        if (response.ok) {
+          const data = await response.json();
+          warmupStatus = data.settings;
+          updateWarmupUI(data.settings, data.log || []);
+        }
+      } catch (error) {
+        console.error('Failed to load warmup status:', error);
+      }
+    }
+
+    function updateWarmupUI(settings, log) {
+      const day = settings.current_day || 0;
+      const todaySent = settings.today_sent || 0;
+      const todayTarget = settings.today_target || 0;
+      const enabled = settings.enabled || false;
+      const rampIncrement = settings.ramp_increment || 2;
+      const maxDaily = settings.max_daily || 40;
+
+      document.getElementById('warmup-current-day').textContent = day;
+      document.getElementById('warmup-today-sent').textContent = todaySent;
+      document.getElementById('warmup-today-target').textContent = todayTarget;
+
+      // Progress bar
+      const progress = todayTarget > 0 ? Math.min(Math.round((todaySent / todayTarget) * 100), 100) : 0;
+      document.getElementById('warmup-progress-bar').style.width = progress + '%';
+      document.getElementById('warmup-progress-label').textContent = progress + '%';
+
+      // Toggle button state
+      const toggleBtn = document.getElementById('warmup-toggle-btn');
+      const triggerBtn = document.getElementById('warmup-trigger-btn');
+      if (enabled) {
+        toggleBtn.textContent = 'Stop Warmup';
+        toggleBtn.style.background = 'var(--red, #ef4444)';
+        toggleBtn.style.borderColor = 'var(--red, #ef4444)';
+        triggerBtn.style.display = 'inline-block';
+      } else {
+        toggleBtn.textContent = 'Start Warmup';
+        toggleBtn.style.background = '';
+        toggleBtn.style.borderColor = '';
+        triggerBtn.style.display = 'none';
+      }
+
+      // Ramp settings inputs
+      document.getElementById('warmup-ramp-increment').value = rampIncrement;
+      document.getElementById('warmup-max-daily').value = maxDaily;
+
+      // Ramp visualization
+      const vizContainer = document.getElementById('warmup-ramp-viz');
+      const totalDays = Math.ceil(maxDaily / rampIncrement);
+      let vizHTML = '';
+      for (let d = 1; d <= Math.min(totalDays, 20); d++) {
+        const dayVolume = Math.min(rampIncrement * d, maxDaily);
+        const heightPct = (dayVolume / maxDaily) * 100;
+        const isToday = d === (day + 1);
+        const isPast = d <= day;
+        const color = isToday ? 'var(--accent)' : isPast ? 'var(--green, #22c55e)' : 'var(--border)';
+        vizHTML += `<div title="Day ${d}: ${dayVolume} emails" style="flex: 1; min-width: 8px; height: ${heightPct}%; background: ${color}; border-radius: 2px 2px 0 0; cursor: default;"></div>`;
+      }
+      vizContainer.innerHTML = vizHTML;
+
+      // Activity log
+      const logBody = document.getElementById('warmup-log-body');
+      if (log.length === 0) {
+        logBody.innerHTML = '<tr><td colspan="4" style="text-align: center; color: var(--text-dim); padding: 1rem;">No warmup activity yet</td></tr>';
+      } else {
+        logBody.innerHTML = log.map(entry => {
+          const actionColor = entry.action === 'sent' ? 'var(--accent)' : entry.action === 'opened' ? 'var(--green, #22c55e)' : 'var(--yellow, #eab308)';
+          const timeStr = new Date(entry.created_at).toLocaleString();
+          return `<tr>
+            <td style="padding: 0.4rem 0.5rem;"><span style="color: ${actionColor}; font-weight: 600; text-transform: uppercase;">${escapeHtml(entry.action)}</span></td>
+            <td style="padding: 0.4rem 0.5rem; max-width: 150px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${escapeHtml(entry.to_email || '')}</td>
+            <td style="padding: 0.4rem 0.5rem; max-width: 180px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${escapeHtml(entry.subject || '')}</td>
+            <td style="padding: 0.4rem 0.5rem; white-space: nowrap;">${timeStr}</td>
+          </tr>`;
+        }).join('');
+      }
+    }
+
+    async function toggleWarmup() {
+      const accountId = document.getElementById('warmup-account-select').value;
+      if (!accountId) {
+        showToast('Please select an email account', 'error');
+        return;
+      }
+
+      const isEnabled = warmupStatus && warmupStatus.enabled;
+      const action = isEnabled ? 'stop' : 'start';
+
+      const rampIncrement = parseInt(document.getElementById('warmup-ramp-increment').value) || 2;
+      const maxDaily = parseInt(document.getElementById('warmup-max-daily').value) || 40;
+
+      try {
+        const response = await fetch(`${API_BASE}/email-warmup`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${authToken}`
+          },
+          body: JSON.stringify({
+            accountId: parseInt(accountId),
+            action,
+            settings: { rampIncrement, maxDaily }
+          })
+        });
+
+        if (response.ok) {
+          showToast(action === 'start' ? 'Warmup started! Emails will ramp up gradually.' : 'Warmup stopped.', 'success');
+          await loadWarmupStatus();
+        } else {
+          const data = await response.json();
+          showToast(data.error || 'Failed to update warmup', 'error');
+        }
+      } catch (error) {
+        showToast('Failed to update warmup', 'error');
+      }
+    }
+
+    async function triggerWarmupNow() {
+      const accountId = document.getElementById('warmup-account-select').value;
+      if (!accountId) return;
+
+      const btn = document.getElementById('warmup-trigger-btn');
+      btn.textContent = 'Sending...';
+      btn.disabled = true;
+
+      try {
+        const response = await fetch(`${API_BASE}/email-warmup`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${authToken}`
+          },
+          body: JSON.stringify({ accountId: parseInt(accountId), action: 'trigger' })
+        });
+
+        const data = await response.json();
+        if (response.ok) {
+          showToast(data.message || 'Warmup batch sent', 'success');
+          await loadWarmupStatus();
+        } else {
+          showToast(data.error || 'Failed to trigger warmup', 'error');
+        }
+      } catch (error) {
+        showToast('Failed to trigger warmup', 'error');
+      } finally {
+        btn.textContent = 'Send Batch Now';
+        btn.disabled = false;
+      }
+    }
+
+    // ============================================
+    // DOMAIN HEALTH CHECK
+    // ============================================
+
+    async function checkDomainHealth() {
+      const domain = document.getElementById('deliverability-domain').value.trim();
+      if (!domain) {
+        showToast('Please enter a domain to check', 'error');
+        return;
+      }
+
+      const btn = document.getElementById('check-domain-btn');
+      btn.textContent = 'Checking...';
+      btn.disabled = true;
+
+      try {
+        const response = await fetch(`${API_BASE}/check-deliverability`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${authToken}`
+          },
+          body: JSON.stringify({ domain })
+        });
+
+        const data = await response.json();
+
+        if (response.ok && data.success) {
+          renderDomainHealthResults(data);
+        } else {
+          showToast(data.error || 'Failed to check domain health', 'error');
+        }
+      } catch (error) {
+        showToast('Failed to check domain health', 'error');
+      } finally {
+        btn.textContent = 'Check Domain Health';
+        btn.disabled = false;
+      }
+    }
+
+    function renderDomainHealthResults(data) {
+      const resultsDiv = document.getElementById('domain-health-results');
+      resultsDiv.style.display = 'block';
+
+      // Score and grade
+      const scoreEl = document.getElementById('domain-health-score');
+      const gradeEl = document.getElementById('domain-health-grade');
+
+      const score = data.score || 0;
+      const grade = data.grade || 'F';
+
+      let scoreColor;
+      if (score >= 80) scoreColor = 'var(--green, #22c55e)';
+      else if (score >= 60) scoreColor = 'var(--yellow, #eab308)';
+      else if (score >= 40) scoreColor = 'var(--orange, #f97316)';
+      else scoreColor = 'var(--red, #ef4444)';
+
+      scoreEl.textContent = score;
+      scoreEl.style.color = scoreColor;
+      gradeEl.textContent = `Grade: ${grade}`;
+      gradeEl.style.color = scoreColor;
+
+      // SPF
+      const spf = data.checks.spf;
+      document.getElementById('check-spf-icon').textContent = spf.valid ? '\u2713' : '\u2717';
+      document.getElementById('check-spf-icon').style.color = spf.valid ? 'var(--green, #22c55e)' : 'var(--red, #ef4444)';
+      document.getElementById('check-spf-detail').textContent = spf.details;
+
+      // DKIM
+      const dkim = data.checks.dkim;
+      document.getElementById('check-dkim-icon').textContent = dkim.valid ? '\u2713' : '\u2717';
+      document.getElementById('check-dkim-icon').style.color = dkim.valid ? 'var(--green, #22c55e)' : 'var(--red, #ef4444)';
+      document.getElementById('check-dkim-detail').textContent = dkim.details;
+
+      // DMARC
+      const dmarc = data.checks.dmarc;
+      document.getElementById('check-dmarc-icon').textContent = dmarc.valid ? '\u2713' : '\u2717';
+      document.getElementById('check-dmarc-icon').style.color = dmarc.valid ? 'var(--green, #22c55e)' : 'var(--red, #ef4444)';
+      document.getElementById('check-dmarc-detail').textContent = dmarc.details + (dmarc.policy ? ` (${dmarc.policy})` : '');
+
+      // MX
+      const mx = data.checks.mx;
+      document.getElementById('check-mx-icon').textContent = mx.exists ? '\u2713' : '\u2717';
+      document.getElementById('check-mx-icon').style.color = mx.exists ? 'var(--green, #22c55e)' : 'var(--red, #ef4444)';
+      document.getElementById('check-mx-detail').textContent = mx.details;
+
+      // Blacklists
+      const blacklistContainer = document.getElementById('blacklist-results');
+      const noIpsDiv = document.getElementById('blacklist-no-ips');
+      const blacklists = data.blacklists || [];
+
+      if (blacklists.length === 0) {
+        blacklistContainer.innerHTML = '';
+        noIpsDiv.style.display = 'block';
+      } else {
+        noIpsDiv.style.display = 'none';
+        blacklistContainer.innerHTML = blacklists.map(bl => {
+          const listed = bl.listed;
+          const bgColor = listed ? 'rgba(239, 68, 68, 0.1)' : 'var(--surface)';
+          const borderColor = listed ? 'rgba(239, 68, 68, 0.3)' : 'var(--border)';
+          const icon = listed ? '\u2717' : '\u2713';
+          const iconColor = listed ? 'var(--red, #ef4444)' : 'var(--green, #22c55e)';
+          const statusText = listed ? 'LISTED' : 'Clean';
+
+          return `<div style="background: ${bgColor}; border: 1px solid ${borderColor}; border-radius: 6px; padding: 0.6rem 0.75rem; display: flex; align-items: center; gap: 0.5rem;">
+            <span style="color: ${iconColor}; font-size: 1rem; font-weight: bold;">${icon}</span>
+            <div style="flex: 1;">
+              <div style="font-size: 0.8rem; font-weight: 600;">${escapeHtml(bl.dnsbl)}</div>
+              <div style="font-size: 0.7rem; color: var(--text-dim);">${escapeHtml(bl.ip)}</div>
+            </div>
+            <span style="font-size: 0.7rem; font-weight: 600; color: ${iconColor};">${statusText}</span>
+          </div>`;
+        }).join('');
       }
     }
   </script>

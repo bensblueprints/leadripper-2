@@ -6,6 +6,14 @@
 [functions."process-ghl-queue"]
   schedule = "*/5 * * * *"
 
+# Scheduled function for email warmup processing (every hour)
+[functions."process-warmup"]
+  schedule = "0 * * * *"
+
+# Scheduled function for email sequence processing (every 15 minutes)
+[functions."process-sequences"]
+  schedule = "*/15 * * * *"
+
 [[headers]]
   for = "/*"
   [headers.values]
