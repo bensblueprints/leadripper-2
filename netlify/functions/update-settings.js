@@ -49,7 +49,7 @@ exports.handler = async (event, context) => {
   }
 
   try {
-    const { ghlApiKey, ghlLocationId, ghlAutoSync, ghlPipelineId, ghlStageId, ghlIndustryPipelines, ghlDripEnabled, ghlDripInterval, resendApiKey, webhookUrl, name, company } = JSON.parse(event.body);
+    const { ghlApiKey, ghlLocationId, ghlAutoSync, ghlPipelineId, ghlStageId, ghlIndustryPipelines, ghlDripEnabled, ghlDripInterval, resendApiKey, webhookUrl, name, company, elevenlabsApiKey, elevenlabsDefaultVoice, aiCallingEnabled, autoCallEnabled, autoCallAgentId, autoFollowupEnabled, followupAgentId, crmMode, emailSignature, calendarTimezone, calendarWorkingHours } = JSON.parse(event.body);
 
     // Update user profile if provided
     if (name !== undefined || company !== undefined) {
@@ -76,7 +76,8 @@ exports.handler = async (event, context) => {
     }
 
     // Update settings if provided
-    if (ghlApiKey !== undefined || ghlLocationId !== undefined || ghlAutoSync !== undefined || ghlPipelineId !== undefined || ghlStageId !== undefined || ghlIndustryPipelines !== undefined || ghlDripEnabled !== undefined || ghlDripInterval !== undefined || resendApiKey !== undefined || webhookUrl !== undefined) {
+    const hasSettingsUpdate = [ghlApiKey, ghlLocationId, ghlAutoSync, ghlPipelineId, ghlStageId, ghlIndustryPipelines, ghlDripEnabled, ghlDripInterval, resendApiKey, webhookUrl, elevenlabsApiKey, elevenlabsDefaultVoice, aiCallingEnabled, autoCallEnabled, autoCallAgentId, autoFollowupEnabled, followupAgentId, crmMode, emailSignature, calendarTimezone, calendarWorkingHours].some(v => v !== undefined);
+    if (hasSettingsUpdate) {
       // First ensure settings row exists
       await pool.query(
         `INSERT INTO lr_user_settings (user_id, created_at, updated_at) VALUES ($1, NOW(), NOW())
@@ -138,6 +139,61 @@ exports.handler = async (event, context) => {
         settingsValues.push(ghlDripInterval);
         paramIndex++;
       }
+      if (elevenlabsApiKey !== undefined) {
+        settingsUpdates.push(`elevenlabs_api_key = $${paramIndex}`);
+        settingsValues.push(elevenlabsApiKey);
+        paramIndex++;
+      }
+      if (elevenlabsDefaultVoice !== undefined) {
+        settingsUpdates.push(`elevenlabs_default_voice = $${paramIndex}`);
+        settingsValues.push(elevenlabsDefaultVoice);
+        paramIndex++;
+      }
+      if (aiCallingEnabled !== undefined) {
+        settingsUpdates.push(`ai_calling_enabled = $${paramIndex}`);
+        settingsValues.push(aiCallingEnabled);
+        paramIndex++;
+      }
+      if (autoCallEnabled !== undefined) {
+        settingsUpdates.push(`auto_call_enabled = $${paramIndex}`);
+        settingsValues.push(autoCallEnabled);
+        paramIndex++;
+      }
+      if (autoCallAgentId !== undefined) {
+        settingsUpdates.push(`auto_call_agent_id = $${paramIndex}`);
+        settingsValues.push(autoCallAgentId);
+        paramIndex++;
+      }
+      if (autoFollowupEnabled !== undefined) {
+        settingsUpdates.push(`auto_followup_enabled = $${paramIndex}`);
+        settingsValues.push(autoFollowupEnabled);
+        paramIndex++;
+      }
+      if (followupAgentId !== undefined) {
+        settingsUpdates.push(`followup_agent_id = $${paramIndex}`);
+        settingsValues.push(followupAgentId);
+        paramIndex++;
+      }
+      if (crmMode !== undefined) {
+        settingsUpdates.push(`crm_mode = $${paramIndex}`);
+        settingsValues.push(crmMode);
+        paramIndex++;
+      }
+      if (emailSignature !== undefined) {
+        settingsUpdates.push(`email_signature = $${paramIndex}`);
+        settingsValues.push(emailSignature);
+        paramIndex++;
+      }
+      if (calendarTimezone !== undefined) {
+        settingsUpdates.push(`calendar_timezone = $${paramIndex}`);
+        settingsValues.push(calendarTimezone);
+        paramIndex++;
+      }
+      if (calendarWorkingHours !== undefined) {
+        settingsUpdates.push(`calendar_working_hours = $${paramIndex}`);
+        settingsValues.push(JSON.stringify(calendarWorkingHours));
+        paramIndex++;
+      }
 
       if (settingsUpdates.length > 0) {
         settingsValues.push(decoded.userId);
@@ -154,7 +210,7 @@ exports.handler = async (event, context) => {
       [decoded.userId]
     );
     const settingsResult = await pool.query(
-      'SELECT ghl_api_key, ghl_location_id, ghl_auto_sync, ghl_pipeline_id, ghl_stage_id, ghl_industry_pipelines, ghl_drip_enabled, ghl_drip_interval, resend_api_key, webhook_url FROM lr_user_settings WHERE user_id = $1',
+      'SELECT * FROM lr_user_settings WHERE user_id = $1',
       [decoded.userId]
     );
 
@@ -188,7 +244,18 @@ exports.handler = async (event, context) => {
           resendApiKey: settings.resend_api_key ? '••••••••' : null,
           webhookUrl: settings.webhook_url,
           hasGhlKey: !!settings.ghl_api_key,
-          hasResendKey: !!settings.resend_api_key
+          hasResendKey: !!settings.resend_api_key,
+          elevenlabsApiKey: settings.elevenlabs_api_key || null,
+          elevenlabsDefaultVoice: settings.elevenlabs_default_voice || null,
+          aiCallingEnabled: settings.ai_calling_enabled || false,
+          autoCallEnabled: settings.auto_call_enabled || false,
+          autoCallAgentId: settings.auto_call_agent_id || null,
+          autoFollowupEnabled: settings.auto_followup_enabled || false,
+          followupAgentId: settings.followup_agent_id || null,
+          crmMode: settings.crm_mode || 'ghl',
+          emailSignature: settings.email_signature || null,
+          calendarTimezone: settings.calendar_timezone || null,
+          calendarWorkingHours: settings.calendar_working_hours ? JSON.parse(settings.calendar_working_hours) : null
         }
       })
     };

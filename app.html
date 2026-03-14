@@ -2392,12 +2392,13 @@
           </p>
           <div class="form-group">
             <label class="form-label">ElevenLabs API Key</label>
-            <input type="password" class="form-input mono" id="elevenlabs-api-key" placeholder="Enter your ElevenLabs API key">
+            <input type="password" class="form-input mono" id="elevenlabs-api-key" placeholder="Enter your ElevenLabs API key" onchange="loadElevenLabsVoices()">
+            <button class="btn-secondary" style="margin-top: 0.5rem; font-size: 0.8rem;" onclick="loadElevenLabsVoices()">Load Voices</button>
           </div>
           <div class="form-group">
             <label class="form-label">Default Voice</label>
             <select class="form-input mono" id="elevenlabs-voice">
-              <option value="">-- Connect API to load voices --</option>
+              <option value="">-- Enter API key and click Load Voices --</option>
             </select>
           </div>
           <div class="form-group">
@@ -3682,6 +3683,65 @@ Available merge tags: {{business_name}}, {{first_name}}, {{email}}, {{phone}}, {
     // CRM SETTINGS FUNCTIONS
     // =====================================
 
+    async function loadElevenLabsVoicesWithKey(apiKey, selectedVoice) {
+      if (!apiKey || apiKey.startsWith('••')) return;
+      const select = document.getElementById('elevenlabs-voice');
+      try {
+        const response = await fetch('https://api.elevenlabs.io/v1/voices', {
+          headers: { 'xi-api-key': apiKey }
+        });
+        if (!response.ok) return;
+        const data = await response.json();
+        const voices = data.voices || [];
+        let html = '<option value="">-- Select a voice --</option>';
+        voices.forEach(v => {
+          const selected = v.voice_id === selectedVoice ? ' selected' : '';
+          const label = v.labels ? Object.values(v.labels).filter(Boolean).join(', ') : '';
+          html += `<option value="${v.voice_id}"${selected}>${v.name}${label ? ' (' + label + ')' : ''}</option>`;
+        });
+        select.innerHTML = html;
+      } catch (e) {
+        console.error('Auto-load voices failed:', e);
+      }
+    }
+
+    async function loadElevenLabsVoices() {
+      const apiKey = document.getElementById('elevenlabs-api-key').value.trim();
+      if (!apiKey || apiKey === '••••••••') {
+        showToast('Enter your ElevenLabs API key first', 'warning');
+        return;
+      }
+
+      const select = document.getElementById('elevenlabs-voice');
+      const currentValue = select.value;
+      select.innerHTML = '<option value="">Loading voices...</option>';
+
+      try {
+        const response = await fetch('https://api.elevenlabs.io/v1/voices', {
+          headers: { 'xi-api-key': apiKey }
+        });
+
+        if (!response.ok) {
+          throw new Error('Invalid API key or ElevenLabs API error');
+        }
+
+        const data = await response.json();
+        const voices = data.voices || [];
+
+        let html = '<option value="">-- Select a voice --</option>';
+        voices.forEach(v => {
+          const selected = v.voice_id === currentValue ? ' selected' : '';
+          const label = v.labels ? Object.values(v.labels).filter(Boolean).join(', ') : '';
+          html += `<option value="${v.voice_id}"${selected}>${v.name}${label ? ' (' + label + ')' : ''}</option>`;
+        });
+        select.innerHTML = html;
+        showToast(`Loaded ${voices.length} voices`, 'success');
+      } catch (error) {
+        select.innerHTML = '<option value="">-- Failed to load voices --</option>';
+        showToast('Failed to load voices: ' + error.message, 'error');
+      }
+    }
+
     async function saveElevenlabsSettings() {
       const apiKey = document.getElementById('elevenlabs-api-key').value;
       const voice = document.getElementById('elevenlabs-voice').value;
@@ -4451,8 +4511,10 @@ Available merge tags: {{business_name}}, {{first_name}}, {{email}}, {{phone}}, {
         // Load ElevenLabs and AI Calling settings (available in ALL modes)
         if (settings.elevenlabsApiKey) {
           document.getElementById('elevenlabs-api-key').value = settings.elevenlabsApiKey;
+          // Auto-load voices from ElevenLabs API
+          loadElevenLabsVoicesWithKey(settings.elevenlabsApiKey, settings.elevenlabsDefaultVoice);
         }
-        if (settings.elevenlabsDefaultVoice) {
+        if (settings.elevenlabsDefaultVoice && !settings.elevenlabsApiKey) {
           document.getElementById('elevenlabs-voice').value = settings.elevenlabsDefaultVoice;
         }
         document.getElementById('ai-calling-enabled').checked = settings.aiCallingEnabled || false;

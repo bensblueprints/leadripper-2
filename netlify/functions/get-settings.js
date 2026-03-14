@@ -50,8 +50,7 @@ exports.handler = async (event, context) => {
 
   try {
     const result = await pool.query(
-      `SELECT ghl_api_key, ghl_location_id, ghl_auto_sync, ghl_pipeline_id, ghl_stage_id, ghl_industry_pipelines, ghl_drip_enabled, ghl_drip_interval, resend_api_key, webhook_url
-       FROM lr_user_settings WHERE user_id = $1`,
+      `SELECT * FROM lr_user_settings WHERE user_id = $1`,
       [decoded.userId]
     );
 
@@ -60,18 +59,16 @@ exports.handler = async (event, context) => {
         statusCode: 200,
         headers,
         body: JSON.stringify({
-          ghl_api_key: null,
-          ghl_location_id: null,
-          ghl_auto_sync: false,
-          ghl_pipeline_id: null,
-          ghl_stage_id: null,
-          ghl_industry_pipelines: {},
-          ghl_drip_enabled: false,
-          ghl_drip_interval: 15,
-          resend_api_key: null,
-          webhook_url: null,
-          hasGhlKey: false,
-          hasResendKey: false
+          ghl_api_key: null, ghl_location_id: null, ghl_auto_sync: false,
+          ghl_pipeline_id: null, ghl_stage_id: null, ghl_industry_pipelines: {},
+          ghl_drip_enabled: false, ghl_drip_interval: 15,
+          resend_api_key: null, webhook_url: null,
+          hasGhlKey: false, hasResendKey: false,
+          elevenlabsApiKey: null, elevenlabsDefaultVoice: null,
+          aiCallingEnabled: false, autoCallEnabled: false, autoCallAgentId: null,
+          autoFollowupEnabled: false, followupAgentId: null,
+          crmMode: 'ghl', emailSignature: null,
+          calendarTimezone: null, calendarWorkingHours: null
         })
       };
     }
@@ -102,7 +99,18 @@ exports.handler = async (event, context) => {
         resend_api_key: settings.resend_api_key ? '••••••••' : null,
         webhook_url: settings.webhook_url,
         hasGhlKey: !!settings.ghl_api_key,
-        hasResendKey: !!settings.resend_api_key
+        hasResendKey: !!settings.resend_api_key,
+        elevenlabsApiKey: settings.elevenlabs_api_key || null,
+        elevenlabsDefaultVoice: settings.elevenlabs_default_voice || null,
+        aiCallingEnabled: settings.ai_calling_enabled || false,
+        autoCallEnabled: settings.auto_call_enabled || false,
+        autoCallAgentId: settings.auto_call_agent_id || null,
+        autoFollowupEnabled: settings.auto_followup_enabled || false,
+        followupAgentId: settings.followup_agent_id || null,
+        crmMode: settings.crm_mode || 'ghl',
+        emailSignature: settings.email_signature || null,
+        calendarTimezone: settings.calendar_timezone || null,
+        calendarWorkingHours: settings.calendar_working_hours ? JSON.parse(settings.calendar_working_hours) : null
       })
     };
   } catch (error) {
