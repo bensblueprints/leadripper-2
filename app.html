@@ -4238,9 +4238,8 @@ Available merge tags: {{business_name}}, {{first_name}}, {{email}}, {{phone}}, {
         // Build a map of agent_id -> phone number for quick lookup
         const agentToPhone = {};
         phoneNumbers.forEach(p => {
-          if (p.agent_id) {
-            agentToPhone[p.agent_id] = p;
-          }
+          const aid = p.assigned_agent?.agent_id || p.agent_id;
+          if (aid) agentToPhone[aid] = p;
         });
 
         // Get current outbound agent from localStorage
@@ -4251,40 +4250,51 @@ Available merge tags: {{business_name}}, {{first_name}}, {{email}}, {{phone}}, {
           if (phoneNumbers.length === 0) {
             phoneContainer.innerHTML = '<div style="text-align: center; padding: 2rem; color: var(--text-dim);">No phone numbers found in your ElevenLabs account.</div>';
           } else {
+            // Check verification status from localStorage
+            const verifiedPhones = JSON.parse(localStorage.getItem('verified_phones') || '{}');
+
             phoneContainer.innerHTML = phoneNumbers.map(phone => {
               const phoneId = phone.phone_number_id || phone.id;
               const phoneLabel = phone.label || phone.name || 'Unlabeled';
               const phoneNum = phone.phone_number || phone.number || 'Unknown';
-              const assignedAgentId = phone.agent_id || '';
+              const assignedAgentId = phone.assigned_agent?.agent_id || phone.agent_id || '';
+              const assignedAgentName = phone.assigned_agent?.agent_name || '';
               const assignedAgent = agents.find(a => a.agent_id === assignedAgentId);
-              const assignedName = assignedAgent ? assignedAgent.name : '';
-              const supportsInbound = phone.capabilities?.inbound !== false;
-              const supportsOutbound = phone.capabilities?.outbound !== false;
+              const assignedName = assignedAgent?.name || assignedAgentName || '';
+              const supportsInbound = phone.supports_inbound !== false;
+              const supportsOutbound = phone.supports_outbound !== false;
+              const provider = phone.provider || 'unknown';
+              const isVerified = verifiedPhones[phoneId] === true;
+              const isFailed = verifiedPhones[phoneId] === false;
 
               const agentOptions = agents.map(a =>
                 `<option value="${a.agent_id}" ${a.agent_id === assignedAgentId ? 'selected' : ''}>${a.name || 'Unnamed'}</option>`
               ).join('');
 
               return `
-                <div style="display: flex; align-items: center; justify-content: space-between; padding: 1rem; background: var(--surface); border: 1px solid var(--border); border-radius: 4px; margin-bottom: 0.5rem; flex-wrap: wrap; gap: 0.75rem;">
-                  <div style="min-width: 200px;">
-                    <div style="font-weight: 600; display: flex; align-items: center; gap: 0.5rem;">
+                <div style="display: flex; align-items: center; justify-content: space-between; padding: 1rem; background: var(--surface); border: 1px solid ${isVerified ? 'var(--green)' : isFailed ? 'var(--red)' : 'var(--border)'}; border-radius: 4px; margin-bottom: 0.5rem; flex-wrap: wrap; gap: 0.75rem;">
+                  <div style="min-width: 220px;">
+                    <div style="font-weight: 600; display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap;">
                       ${phoneLabel}
                       ${assignedAgentId ? '<span class="status-badge synced">Assigned</span>' : '<span class="status-badge pending">Unassigned</span>'}
+                      ${isVerified ? '<span class="status-badge ready" style="background:rgba(0,255,65,0.15);color:#00ff41;">Verified</span>'
+                        : isFailed ? '<span class="status-badge" style="background:rgba(255,0,51,0.15);color:#ff0033;">Not Verified</span>'
+                        : '<span class="status-badge" style="background:rgba(255,204,0,0.15);color:#ffcc00;">Unverified</span>'}
                     </div>
                     <div style="font-size: 0.85rem; color: var(--text); margin-top: 0.25rem; font-family: 'JetBrains Mono', monospace;">${phoneNum}</div>
-                    <div style="font-size: 0.7rem; color: var(--text-dim); margin-top: 0.25rem;">
-                      ${supportsInbound ? '<span style="color: var(--green);">Inbound</span>' : '<span style="color: var(--text-dimmer);">No Inbound</span>'}
-                      &nbsp;/&nbsp;
-                      ${supportsOutbound ? '<span style="color: var(--green);">Outbound</span>' : '<span style="color: var(--text-dimmer);">No Outbound</span>'}
+                    <div style="font-size: 0.7rem; color: var(--text-dim); margin-top: 0.25rem; display: flex; gap: 0.75rem; flex-wrap: wrap;">
+                      <span>Provider: <strong>${provider}</strong></span>
+                      <span>${supportsInbound ? '<span style="color: var(--green);">✓ Inbound</span>' : '<span style="color: var(--text-dimmer);">✗ Inbound</span>'}</span>
+                      <span>${supportsOutbound ? '<span style="color: var(--green);">✓ Outbound</span>' : '<span style="color: var(--text-dimmer);">✗ Outbound</span>'}</span>
                     </div>
-                    ${assignedName ? `<div style="font-size: 0.7rem; color: var(--accent); margin-top: 0.25rem;">Assigned to: ${assignedName}</div>` : ''}
+                    ${assignedName ? `<div style="font-size: 0.7rem; color: var(--accent); margin-top: 0.25rem;">Agent: ${assignedName}</div>` : ''}
                   </div>
-                  <div style="display: flex; align-items: center; gap: 0.5rem;">
+                  <div style="display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap;">
                     <select class="form-input mono" style="width: auto; min-width: 200px; padding: 0.5rem 0.75rem; font-size: 0.8rem;" onchange="assignPhoneToAgent('${phoneId}', this.value)">
                       <option value="">-- Unassign --</option>
                       ${agentOptions}
                     </select>
+                    <button class="btn-mini" onclick="verifyPhoneNumber('${phoneId}', '${phoneNum}', '${assignedAgentId}')" style="font-size: 0.7rem;" title="Test outbound call to verify this number works">Verify</button>
                   </div>
                 </div>
               `;
@@ -4373,6 +4383,53 @@ Available merge tags: {{business_name}}, {{first_name}}, {{email}}, {{phone}}, {
       showToast(`Outbound agent set to: ${agentName}`, 'success');
       // Re-render to update the UI
       loadElevenLabsAgents();
+    }
+
+    async function verifyPhoneNumber(phoneNumberId, phoneNumber, assignedAgentId) {
+      if (!assignedAgentId) {
+        showToast('Assign an agent to this number first', 'warning');
+        return;
+      }
+
+      const apiKey = await getElevenLabsApiKey();
+      if (!apiKey) { showToast('ElevenLabs API key not found', 'error'); return; }
+
+      // Use the user's own phone number for verification test
+      const testNumber = prompt('Enter YOUR phone number to receive a test call (E.164 format, e.g. +1234567890):');
+      if (!testNumber) return;
+
+      showToast(`Calling ${testNumber} from ${phoneNumber} to verify...`, 'info');
+
+      try {
+        const res = await fetch('https://api.elevenlabs.io/v1/convai/twilio/outbound-call', {
+          method: 'POST',
+          headers: { 'xi-api-key': apiKey, 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            agent_id: assignedAgentId,
+            agent_phone_number_id: phoneNumberId,
+            to_number: testNumber,
+            conversation_initiation_client_data: { customer_name: 'Verification Test' }
+          })
+        });
+        const data = await res.json();
+
+        const verified = {};
+        try { Object.assign(verified, JSON.parse(localStorage.getItem('verified_phones') || '{}')); } catch {}
+
+        if (res.ok && data.success !== false && !data.message?.includes('not yet verified')) {
+          verified[phoneNumberId] = true;
+          localStorage.setItem('verified_phones', JSON.stringify(verified));
+          showToast(`${phoneNumber} is VERIFIED — test call initiated!`, 'success');
+        } else {
+          verified[phoneNumberId] = false;
+          localStorage.setItem('verified_phones', JSON.stringify(verified));
+          const errMsg = data.message || data.detail || JSON.stringify(data);
+          showToast(`${phoneNumber} FAILED verification: ${errMsg}`, 'error');
+        }
+        loadElevenLabsAgents();
+      } catch (e) {
+        showToast('Verification error: ' + e.message, 'error');
+      }
     }
 
     async function openAgentModal(agentId = null) {
