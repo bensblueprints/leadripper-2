@@ -63,14 +63,51 @@ exports.handler = async (event) => {
       SELECT * FROM to_delete
     `, [userId]);
 
-    const duplicates = result.rows;
+    const phoneDupes = result.rows;
+
+    // Phase 2: Find duplicates by business name for leads WITHOUT phone numbers
+    const nameResult = await pool.query(`
+      WITH no_phone AS (
+        SELECT id, business_name, phone, email, city, state, website, contact_name,
+               LOWER(TRIM(business_name)) as name_key,
+               (CASE WHEN email IS NOT NULL AND email != '' THEN 1 ELSE 0 END +
+                CASE WHEN website IS NOT NULL AND website != '' THEN 1 ELSE 0 END +
+                CASE WHEN contact_name IS NOT NULL AND contact_name != '' THEN 1 ELSE 0 END +
+                CASE WHEN phone IS NOT NULL AND phone != '' THEN 1 ELSE 0 END +
+                CASE WHEN city IS NOT NULL AND city != '' THEN 1 ELSE 0 END) as data_score
+        FROM lr_leads
+        WHERE user_id = $1
+      ),
+      name_dupes AS (
+        SELECT name_key, COUNT(*) as cnt
+        FROM no_phone
+        WHERE name_key IS NOT NULL AND name_key != ''
+        GROUP BY name_key
+        HAVING COUNT(*) > 1
+      ),
+      name_to_delete AS (
+        SELECT n.id, n.business_name, n.phone, n.city
+        FROM no_phone n
+        JOIN name_dupes d ON n.name_key = d.name_key
+        WHERE n.id NOT IN (
+          SELECT DISTINCT ON (n2.name_key) n2.id
+          FROM no_phone n2
+          JOIN name_dupes d2 ON n2.name_key = d2.name_key
+          ORDER BY n2.name_key, n2.data_score DESC, n2.id ASC
+        )
+      )
+      SELECT * FROM name_to_delete
+    `, [userId]);
+
+    const nameDupes = nameResult.rows;
+    const duplicates = [...phoneDupes, ...nameDupes];
 
     if (duplicates.length === 0) {
       return { statusCode: 200, headers, body: JSON.stringify({ success: true, removed: 0, message: 'No duplicates found' }) };
     }
 
-    // Delete the duplicates
-    const ids = duplicates.map(d => d.id);
+    // Delete all duplicates
+    const ids = [...new Set(duplicates.map(d => d.id))];
     await pool.query('DELETE FROM lr_leads WHERE id = ANY($1) AND user_id = $2', [ids, userId]);
 
     return {
@@ -78,8 +115,10 @@ exports.handler = async (event) => {
       headers,
       body: JSON.stringify({
         success: true,
-        removed: duplicates.length,
-        message: `Removed ${duplicates.length} duplicate leads (kept the version with most data)`,
+        removed: ids.length,
+        phoneDupes: phoneDupes.length,
+        nameDupes: nameDupes.length,
+        message: `Removed ${ids.length} duplicates (${phoneDupes.length} by phone, ${nameDupes.length} by name)`,
         examples: duplicates.slice(0, 10).map(d => ({ id: d.id, name: d.business_name, phone: d.phone, city: d.city }))
       })
     };

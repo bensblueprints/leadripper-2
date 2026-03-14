@@ -56,7 +56,9 @@ exports.handler = async (event, context) => {
       for (const lead of leads) {
         try {
           const phone = lead.phone || '';
-          // Skip if phone already exists for this user (normalize: digits only, last 10)
+          const bizName = (lead.business_name || lead.name || '').trim();
+
+          // Skip if phone already exists for this user
           if (phone) {
             const digits = phone.replace(/\D/g, '');
             const last10 = digits.slice(-10);
@@ -70,6 +72,24 @@ exports.handler = async (event, context) => {
                 continue;
               }
             }
+          }
+
+          // Skip leads with no phone — also check by business name to avoid dupes
+          if (!phone && bizName) {
+            const nameExists = await pool.query(
+              `SELECT id FROM lr_leads WHERE user_id = $1 AND LOWER(TRIM(business_name)) = LOWER($2) LIMIT 1`,
+              [userId, bizName]
+            );
+            if (nameExists.rows.length > 0) {
+              skippedCount++;
+              continue;
+            }
+          }
+
+          // Skip completely empty leads (no phone and no name)
+          if (!phone && !bizName) {
+            skippedCount++;
+            continue;
           }
 
           await pool.query(
