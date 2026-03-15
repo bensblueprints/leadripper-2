@@ -7180,15 +7180,18 @@ I noticed {{business_name}} in {{city}} and wanted to reach out..."></textarea>
 
         const data = await response.json();
 
-        if (response.ok) {
+        if (response.status === 402) {
+          showInsufficientCreditsToast(data.required || 10, data.balance || 0);
+        } else if (response.ok) {
           lead.website_rebuilt_at = new Date().toISOString();
           lead.rebuild_status = 'in_progress';
           lead.rebuild_phase = 'initialized';
           lead.rebuild_progress = 5;
           lead.rebuild_message = 'Pipeline launched — starting scrape...';
-          showToast(`🏗️ AI rebuild pipeline launched for ${lead.business_name}!`, 'success');
+          showToast(`AI rebuild pipeline launched for ${lead.business_name}!`, 'success');
           startRebuildPolling(lead.id);
           renderLeadsTable();
+          loadCredits();
         } else {
           showToast(data.error || 'Failed to launch rebuild pipeline', 'error');
           if (btn) {
@@ -8688,6 +8691,16 @@ I noticed {{business_name}} in {{city}} and wanted to reach out..."></textarea>
 
       const industry = document.getElementById('industry-input').value;
       const maxResults = parseInt(document.getElementById('max-results-input').value);
+
+      // Credit cost estimate
+      const estimatedLeads = selectedCities.length * Math.min(maxResults || 50, 20);
+      const estimatedCredits = estimatedLeads * 2;
+      if (creditBalance < estimatedCredits) {
+        showInsufficientCreditsToast(estimatedCredits, creditBalance);
+        return;
+      }
+      if (!confirm(`Estimated cost: ~${estimatedCredits} credits for ~${estimatedLeads} leads.\nYou have ${creditBalance} credits.\n\nContinue?`)) return;
+
       const btn = document.getElementById('scrape-submit-btn');
       const btnText = document.getElementById('scrape-btn-text');
 
@@ -11235,7 +11248,10 @@ I noticed {{business_name}} in {{city}} and wanted to reach out..."></textarea>
               })
             });
             const callResult = await callResp.json();
-            if (callResult.success) {
+            if (callResp.status === 402) {
+              showInsufficientCreditsToast(callResult.required || 5, callResult.balance || 0);
+              break; // Stop calling if no credits
+            } else if (callResult.success) {
               initiated++;
             } else {
               failed++;

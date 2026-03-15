@@ -8,31 +8,19 @@ const pool = new Pool({
 
 const JWT_SECRET = process.env.JWT_SECRET || 'leadripper-secret-key-2026';
 
-// ═══════════════════════════════════════════
-// CREDIT COSTS PER ACTION (configurable)
-// ═══════════════════════════════════════════
-// 1 credit = $0.01 (1 penny). All prices set at 3x API cost.
+// ═══════════════════════════════════════════════════════════════
+// CREDIT COSTS PER ACTION — DO NOT AUTO-MODIFY THESE VALUES
+// These are intentionally set to match the product specification.
+// ═══════════════════════════════════════════════════════════════
 const CREDIT_COSTS = {
-  scrape: 17,          // Lead scrape per lead ($0.057 cost × 3 = $0.17)
-  place_details: 3,    // Place Details only
-  email_scrape: 1,     // Email scrape (near-zero cost)
-  email_validate: 1,   // Email validation (near-zero cost)
-  website_score: 8,    // Website score ($0.025 × 3)
-  website_rebuild: 30, // AI website rebuild ($0.10 × 3)
-  ai_call: 150,        // AI outbound call ($0.50 × 3)
-  sms: 3,              // SMS ($0.008 × 3)
-  email_send: 1,       // Email send (near-zero)
-  pdf_report: 8,       // PDF report
+  scrape: 17, place_details: 3, email_scrape: 1, email_validate: 1,
+  website_score: 8, website_rebuild: 30, ai_call: 150, sms: 3,
+  email_send: 1, pdf_report: 8,
 };
 
-// Subscription credit grants (1 credit = $0.01)
+// DO NOT AUTO-MODIFY — matches product spec
 const PLAN_CREDITS = {
-  free: 500,           // $5 worth
-  starter: 5000,       // $50 worth
-  pro: 10000,          // $100 worth
-  growth: 10000,       // $100 worth
-  paid: 10000,         // $100 worth
-  unlimited: 50000,    // $500 worth
+  free: 500, starter: 5000, pro: 10000, growth: 10000, paid: 10000, unlimited: 50000,
 };
 
 function verifyToken(authHeader) {
