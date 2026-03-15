@@ -1,11 +1,10 @@
-const { createClient } = require('@supabase/supabase-js');
+const { Pool } = require('pg');
 const jwt = require('jsonwebtoken');
 
-// Supabase client
-const supabase = createClient(
-  process.env.SUPABASE_URL || 'https://eyaitfxwjhsrizsbqcem.supabase.co',
-  process.env.SUPABASE_SERVICE_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImV5YWl0Znh3amhzcml6c2JxY2VtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzAzODk0NDYsImV4cCI6MjA4NTk2NTQ0Nn0.xihzbULV2wrhX3JvB8ZER98wUKPlwX2xzEBuYrJVDNA'
-);
+const pool = new Pool({
+  connectionString: process.env.DATABASE_URL || "postgresql://neondb_owner:npg_sK7M4EbyDBiz@ep-aged-river-ah63sktg-pooler.c-3.us-east-1.aws.neon.tech/neondb?sslmode=require",
+  ssl: { rejectUnauthorized: false }
+});
 
 const JWT_SECRET = process.env.JWT_SECRET || 'leadripper-secret-key-2026';
 
@@ -42,90 +41,60 @@ exports.handler = async (event, context) => {
   }
 
   try {
-    // Get user info using Supabase
-    const { data: userData, error: userError } = await supabase
-      .from('lr_users')
-      .select('id, email, name, company, plan, leads_used, leads_limit')
-      .eq('id', decoded.userId)
-      .single();
+    // Get user info
+    const userResult = await pool.query(
+      'SELECT id, email, name, company, plan, leads_used, leads_limit FROM lr_users WHERE id = $1',
+      [decoded.userId]
+    );
 
-    if (userError) {
-      console.error('Error getting user:', userError);
-      throw new Error('Failed to get user info');
+    if (userResult.rows.length === 0) {
+      return {
+        statusCode: 404,
+        headers,
+        body: JSON.stringify({ error: 'User not found' })
+      };
     }
 
-    const user = userData;
+    const user = userResult.rows[0];
 
-    // Get total leads using Supabase
-    const { count: totalLeads, error: leadsError } = await supabase
-      .from('lr_leads')
-      .select('*', { count: 'exact', head: true })
-      .eq('user_id', decoded.userId);
+    // Get total leads
+    const totalResult = await pool.query(
+      'SELECT COUNT(*) as total FROM lr_leads WHERE user_id = $1',
+      [decoded.userId]
+    );
+    const totalLeads = parseInt(totalResult.rows[0].total) || 0;
 
-    if (leadsError) {
-      console.error('Error counting leads:', leadsError);
-    }
+    // Get synced leads
+    const syncedResult = await pool.query(
+      "SELECT COUNT(*) as total FROM lr_leads WHERE user_id = $1 AND ghl_synced = true",
+      [decoded.userId]
+    );
+    const syncedLeads = parseInt(syncedResult.rows[0].total) || 0;
 
-    // Get synced leads using Supabase
-    const { count: syncedLeads, error: syncedError } = await supabase
-      .from('lr_leads')
-      .select('*', { count: 'exact', head: true })
-      .eq('user_id', decoded.userId)
-      .eq('synced_to_ghl', true);
+    // Get scraped cities count
+    const citiesResult = await pool.query(
+      'SELECT COUNT(DISTINCT city) as total FROM lr_leads WHERE user_id = $1 AND city IS NOT NULL',
+      [decoded.userId]
+    );
+    const citiesScraped = parseInt(citiesResult.rows[0].total) || 0;
 
-    if (syncedError) {
-      console.error('Error counting synced leads:', syncedError);
-    }
+    // Get recent activity (last 7 days)
+    const activityResult = await pool.query(
+      `SELECT DATE(created_at) as date, COUNT(*) as count
+       FROM lr_leads WHERE user_id = $1 AND created_at >= NOW() - INTERVAL '7 days'
+       GROUP BY DATE(created_at) ORDER BY date DESC`,
+      [decoded.userId]
+    );
+    const activity = activityResult.rows.map(r => ({ date: r.date, count: parseInt(r.count) }));
 
-    // Get scraped cities count using Supabase
-    const { data: citiesData, error: citiesError } = await supabase
-      .from('lr_leads')
-      .select('city')
-      .eq('user_id', decoded.userId)
-      .not('city', 'is', null);
-
-    const citiesScraped = citiesData ? new Set(citiesData.map(row => row.city)).size : 0;
-
-    // Get recent activity (last 7 days) - Note: Supabase doesn't support GROUP BY directly in REST API
-    // We'll fetch the data and process it in JavaScript
-    const sevenDaysAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString();
-    const { data: recentLeads, error: activityError } = await supabase
-      .from('lr_leads')
-      .select('scraped_at')
-      .eq('user_id', decoded.userId)
-      .gte('scraped_at', sevenDaysAgo)
-      .order('scraped_at', { ascending: false });
-
-    // Process activity data
-    const activityMap = {};
-    if (recentLeads) {
-      recentLeads.forEach(lead => {
-        const date = new Date(lead.scraped_at).toISOString().split('T')[0];
-        activityMap[date] = (activityMap[date] || 0) + 1;
-      });
-    }
-    const activity = Object.entries(activityMap).map(([date, count]) => ({ date, count }));
-
-    // Get top industries - fetch and process in JavaScript
-    const { data: leadsWithIndustry, error: industriesError } = await supabase
-      .from('lr_leads')
-      .select('category')
-      .eq('user_id', decoded.userId)
-      .not('category', 'is', null)
-      .neq('category', '');
-
-    // Process industries data
-    const industryMap = {};
-    if (leadsWithIndustry) {
-      leadsWithIndustry.forEach(lead => {
-        const industry = lead.category;
-        industryMap[industry] = (industryMap[industry] || 0) + 1;
-      });
-    }
-    const topIndustries = Object.entries(industryMap)
-      .map(([industry, count]) => ({ industry, count }))
-      .sort((a, b) => b.count - a.count)
-      .slice(0, 5);
+    // Get top industries
+    const industriesResult = await pool.query(
+      `SELECT industry, COUNT(*) as count FROM lr_leads
+       WHERE user_id = $1 AND industry IS NOT NULL AND industry != ''
+       GROUP BY industry ORDER BY count DESC LIMIT 5`,
+      [decoded.userId]
+    );
+    const topIndustries = industriesResult.rows.map(r => ({ industry: r.industry, count: parseInt(r.count) }));
 
     return {
       statusCode: 200,
@@ -142,13 +111,13 @@ exports.handler = async (event, context) => {
           leadsLimit: user.leads_limit
         },
         stats: {
-          totalLeads: totalLeads || 0,
-          syncedLeads: syncedLeads || 0,
-          citiesScraped: citiesScraped,
-          leadsRemaining: user.leads_limit - user.leads_used
+          totalLeads,
+          syncedLeads,
+          citiesScraped,
+          leadsRemaining: user.leads_limit === -1 ? -1 : (user.leads_limit - user.leads_used)
         },
-        activity: activity,
-        topIndustries: topIndustries
+        activity,
+        topIndustries
       })
     };
   } catch (error) {
