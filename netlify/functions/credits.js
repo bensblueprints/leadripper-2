@@ -11,8 +11,47 @@ const JWT_SECRET = process.env.JWT_SECRET || 'leadripper-secret-key-2026';
 // Credit costs per action
 /* eslint-disable */
 // @formatter:off
-const CREDIT_COSTS = { scrape: 25, place_details: 3, email_scrape: 1, email_validate: 1, website_score: 8, website_rebuild: 30, ai_call: 150, sms: 3, email_send: 1, pdf_report: 8 };
-const PLAN_CREDITS = { free: 500, starter: 5000, pro: 10000, growth: 10000, paid: 10000, unlimited: 50000 };
+// 1 credit = $0.01
+const CREDIT_COSTS = {
+  scrape: 25, place_details: 3,
+  email_scrape: 1, email_validate: 2,  // email scrape free on all plans, validation costs 2
+  website_score: 8, website_rebuild: 30,
+  ai_call: 150, sms: 3, email_send: 1, pdf_report: 8
+};
+
+// Monthly credit grants by plan
+const PLAN_CREDITS = {
+  free: 500, starter: 5000, pro: 10000, growth: 10000, paid: 10000, unlimited: 50000
+};
+
+// Lifetime plans — one-time purchase, monthly email allowances
+// Email scraping is FREE on all plans
+const LIFETIME_PLANS = {
+  starter_lifetime: {
+    name: 'Starter Lifetime',
+    price: 250,
+    emails_per_month: 10000,
+    email_scrape_free: true,
+    email_validate_free: false,
+    description: '10,000 email sends/month + free email scraping'
+  },
+  pro_lifetime: {
+    name: 'Pro Lifetime',
+    price: 450,
+    emails_per_month: 100000,
+    email_scrape_free: true,
+    email_validate_free: true,
+    description: '100,000 email sends/month + free email scraping & validation'
+  },
+  enterprise_lifetime: {
+    name: 'Enterprise Lifetime',
+    price: 900,
+    emails_per_month: 500000,
+    email_scrape_free: true,
+    email_validate_free: true,
+    description: '500,000 email sends/month + free email scraping & validation'
+  }
+};
 // @formatter:on
 /* eslint-enable */
 
@@ -127,7 +166,8 @@ exports.handler = async (event) => {
           transactions: txResult.rows,
           total_transactions: parseInt(countResult.rows[0].total),
           costs: CREDIT_COSTS,
-          plan_credits: PLAN_CREDITS
+          plan_credits: PLAN_CREDITS,
+          lifetime_plans: LIFETIME_PLANS
         })
       };
     } catch (error) {
@@ -174,7 +214,29 @@ exports.handler = async (event) => {
       }
 
       if (action === 'get_costs') {
-        return { statusCode: 200, headers, body: JSON.stringify({ success: true, costs: CREDIT_COSTS, plan_credits: PLAN_CREDITS }) };
+        return { statusCode: 200, headers, body: JSON.stringify({ success: true, costs: CREDIT_COSTS, plan_credits: PLAN_CREDITS, lifetime_plans: LIFETIME_PLANS }) };
+      }
+
+      if (action === 'activate_lifetime') {
+        const planKey = body.plan;
+        const plan = LIFETIME_PLANS[planKey];
+        if (!plan) return { statusCode: 400, headers, body: JSON.stringify({ error: 'Invalid plan. Options: ' + Object.keys(LIFETIME_PLANS).join(', ') }) };
+
+        // Add lifetime plan columns if needed
+        await pool.query(`
+          ALTER TABLE lr_users ADD COLUMN IF NOT EXISTS lifetime_plan VARCHAR(50);
+          ALTER TABLE lr_users ADD COLUMN IF NOT EXISTS emails_per_month INTEGER DEFAULT 0;
+          ALTER TABLE lr_users ADD COLUMN IF NOT EXISTS emails_sent_this_month INTEGER DEFAULT 0;
+          ALTER TABLE lr_users ADD COLUMN IF NOT EXISTS lifetime_activated_at TIMESTAMP;
+        `).catch(() => {});
+
+        // Activate the plan
+        await pool.query(
+          `UPDATE lr_users SET lifetime_plan = $1, emails_per_month = $2, emails_sent_this_month = 0, lifetime_activated_at = NOW(), updated_at = NOW() WHERE id = $3`,
+          [planKey, plan.emails_per_month, userId]
+        );
+
+        return { statusCode: 200, headers, body: JSON.stringify({ success: true, plan: planKey, name: plan.name, emails_per_month: plan.emails_per_month, message: `Activated ${plan.name} — ${plan.emails_per_month.toLocaleString()} emails/month` }) };
       }
 
       return { statusCode: 400, headers, body: JSON.stringify({ error: `Unknown action: ${action}` }) };
@@ -192,3 +254,4 @@ exports.addCredits = addCredits;
 exports.getBalance = getBalance;
 exports.CREDIT_COSTS = CREDIT_COSTS;
 exports.PLAN_CREDITS = PLAN_CREDITS;
+exports.LIFETIME_PLANS = LIFETIME_PLANS;

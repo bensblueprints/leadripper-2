@@ -226,10 +226,15 @@ exports.handler = async (event, context) => {
       };
     }
 
-    // Check credits
-    const creditCheck = await spendCredits(decoded.userId, CREDIT_COSTS.email_scrape, 'email_scrape', `Email scrape for lead #${leadId}`, String(leadId));
-    if (!creditCheck.success) {
-      return { statusCode: 402, headers, body: JSON.stringify({ error: 'Insufficient credits', balance: creditCheck.balance, required: CREDIT_COSTS.email_scrape }) };
+    // Check if user has lifetime plan (email scraping is free on lifetime)
+    const userPlan = await pool.query('SELECT lifetime_plan FROM lr_users WHERE id = $1', [decoded.userId]).catch(() => ({ rows: [] }));
+    const hasLifetime = !!userPlan.rows[0]?.lifetime_plan;
+
+    if (!hasLifetime && CREDIT_COSTS.email_scrape > 0) {
+      const creditCheck = await spendCredits(decoded.userId, CREDIT_COSTS.email_scrape, 'email_scrape', `Email scrape for lead #${leadId}`, String(leadId));
+      if (!creditCheck.success) {
+        return { statusCode: 402, headers, body: JSON.stringify({ error: 'Insufficient credits', balance: creditCheck.balance, required: CREDIT_COSTS.email_scrape }) };
+      }
     }
 
     // Get the lead

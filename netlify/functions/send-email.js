@@ -161,10 +161,27 @@ exports.handler = async (event, context) => {
         return { statusCode: 400, headers, body: JSON.stringify({ error: 'accountId, toEmail, and subject are required' }) };
       }
 
-      // Check credits
-      const creditCheck = await spendCredits(userId, CREDIT_COSTS.email_send, 'email_send', `Email to ${toEmail}`, campaignId ? String(campaignId) : null);
-      if (!creditCheck.success) {
-        return { statusCode: 402, headers, body: JSON.stringify({ error: 'Insufficient credits', balance: creditCheck.balance, required: CREDIT_COSTS.email_send }) };
+      // Check if user has a lifetime plan with email allowance
+      const userPlan = await pool.query(
+        'SELECT lifetime_plan, emails_per_month, emails_sent_this_month FROM lr_users WHERE id = $1', [userId]
+      ).catch(() => ({ rows: [] }));
+      const hasLifetime = userPlan.rows[0]?.lifetime_plan && userPlan.rows[0]?.emails_per_month > 0;
+
+      if (hasLifetime) {
+        // Check monthly email limit
+        const sent = userPlan.rows[0].emails_sent_this_month || 0;
+        const limit = userPlan.rows[0].emails_per_month;
+        if (sent >= limit) {
+          return { statusCode: 402, headers, body: JSON.stringify({ error: `Monthly email limit reached (${sent}/${limit}). Upgrade your plan for more sends.` }) };
+        }
+        // Increment counter
+        await pool.query('UPDATE lr_users SET emails_sent_this_month = emails_sent_this_month + 1 WHERE id = $1', [userId]).catch(() => {});
+      } else {
+        // No lifetime plan — use credits
+        const creditCheck = await spendCredits(userId, CREDIT_COSTS.email_send, 'email_send', `Email to ${toEmail}`, campaignId ? String(campaignId) : null);
+        if (!creditCheck.success) {
+          return { statusCode: 402, headers, body: JSON.stringify({ error: 'Insufficient credits', balance: creditCheck.balance, required: CREDIT_COSTS.email_send }) };
+        }
       }
 
       // Look up email account credentials
