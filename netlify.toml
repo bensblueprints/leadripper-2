@@ -59,5 +59,25 @@
 
 [[redirects]]
   from = "/setup-guide"
-  to = "/setup-guide.html"
+  to = "/setup.html"
+  status = 200
+
+[[redirects]]
+  from = "/setup"
+  to = "/setup.html"
+  status = 200
+
+[[redirects]]
+  from = "/agency"
+  to = "/agency.html"
+  status = 200
+
+[[redirects]]
+  from = "/terms"
+  to = "/terms.html"
+  status = 200
+
+[[redirects]]
+  from = "/privacy"
+  to = "/privacy.html"
   status = 200
