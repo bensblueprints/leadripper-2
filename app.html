@@ -3283,30 +3283,29 @@
           </div>
 
           <!-- Buy Credits -->
-          <h3 style="color: var(--text); font-size: 0.95rem; margin-bottom: 0.75rem;">Buy Credits</h3>
+          <h3 style="color: var(--text); font-size: 0.95rem; margin-bottom: 0.5rem;">Buy Credits <span style="font-size:0.7rem;color:var(--text-dim);font-weight:normal;">1 credit = 1¢</span></h3>
           <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 0.75rem; margin-bottom: 1.5rem;">
-            <div class="credit-package" onclick="purchaseCredits(100, 10)" style="text-align: center; padding: 1rem; background: var(--surface-elevated); border: 1px solid var(--border); border-radius: 6px; cursor: pointer; transition: border-color 0.2s;">
-              <div class="mono" style="font-size: 1.3rem; font-weight: 700; color: var(--accent);">100</div>
+            <div class="credit-package" onclick="purchaseCredits(1000, 10)" style="text-align: center; padding: 1rem; background: var(--surface-elevated); border: 1px solid var(--border); border-radius: 6px; cursor: pointer; transition: border-color 0.2s;">
+              <div class="mono" style="font-size: 1.3rem; font-weight: 700; color: var(--accent);">1,000</div>
               <div style="font-size: 0.75rem; color: var(--text-dim); margin: 0.25rem 0;">credits</div>
               <div class="mono" style="font-size: 1rem; font-weight: 600; color: var(--green);">$10</div>
             </div>
-            <div class="credit-package" onclick="purchaseCredits(500, 40)" style="text-align: center; padding: 1rem; background: var(--surface-elevated); border: 1px solid var(--border); border-radius: 6px; cursor: pointer; transition: border-color 0.2s;">
-              <div class="mono" style="font-size: 1.3rem; font-weight: 700; color: var(--accent);">500</div>
-              <div style="font-size: 0.75rem; color: var(--text-dim); margin: 0.25rem 0;">credits</div>
-              <div class="mono" style="font-size: 1rem; font-weight: 600; color: var(--green);">$40</div>
-              <div style="font-size: 0.65rem; color: var(--yellow); margin-top: 0.25rem;">SAVE 20%</div>
-            </div>
-            <div class="credit-package" onclick="purchaseCredits(1000, 70)" style="text-align: center; padding: 1rem; background: var(--surface-elevated); border: 1px solid var(--accent-glow); border-radius: 6px; cursor: pointer; transition: border-color 0.2s;">
-              <div class="mono" style="font-size: 1.3rem; font-weight: 700; color: var(--accent);">1,000</div>
-              <div style="font-size: 0.75rem; color: var(--text-dim); margin: 0.25rem 0;">credits</div>
-              <div class="mono" style="font-size: 1rem; font-weight: 600; color: var(--green);">$70</div>
-              <div style="font-size: 0.65rem; color: var(--yellow); margin-top: 0.25rem;">BEST VALUE</div>
-            </div>
-            <div class="credit-package" onclick="purchaseCredits(5000, 300)" style="text-align: center; padding: 1rem; background: var(--surface-elevated); border: 1px solid var(--border); border-radius: 6px; cursor: pointer; transition: border-color 0.2s;">
+            <div class="credit-package" onclick="purchaseCredits(5000, 50)" style="text-align: center; padding: 1rem; background: var(--surface-elevated); border: 1px solid var(--border); border-radius: 6px; cursor: pointer; transition: border-color 0.2s;">
               <div class="mono" style="font-size: 1.3rem; font-weight: 700; color: var(--accent);">5,000</div>
               <div style="font-size: 0.75rem; color: var(--text-dim); margin: 0.25rem 0;">credits</div>
-              <div class="mono" style="font-size: 1rem; font-weight: 600; color: var(--green);">$300</div>
-              <div style="font-size: 0.65rem; color: var(--yellow); margin-top: 0.25rem;">SAVE 40%</div>
+              <div class="mono" style="font-size: 1rem; font-weight: 600; color: var(--green);">$50</div>
+            </div>
+            <div class="credit-package" onclick="purchaseCredits(10000, 100)" style="text-align: center; padding: 1rem; background: var(--surface-elevated); border: 1px solid var(--accent-glow); border-radius: 6px; cursor: pointer; transition: border-color 0.2s;">
+              <div class="mono" style="font-size: 1.3rem; font-weight: 700; color: var(--accent);">10,000</div>
+              <div style="font-size: 0.75rem; color: var(--text-dim); margin: 0.25rem 0;">credits</div>
+              <div class="mono" style="font-size: 1rem; font-weight: 600; color: var(--green);">$100</div>
+              <div style="font-size: 0.65rem; color: var(--yellow); margin-top: 0.25rem;">POPULAR</div>
+            </div>
+            <div class="credit-package" onclick="purchaseCredits(50000, 500)" style="text-align: center; padding: 1rem; background: var(--surface-elevated); border: 1px solid var(--border); border-radius: 6px; cursor: pointer; transition: border-color 0.2s;">
+              <div class="mono" style="font-size: 1.3rem; font-weight: 700; color: var(--accent);">50,000</div>
+              <div style="font-size: 0.75rem; color: var(--text-dim); margin: 0.25rem 0;">credits</div>
+              <div class="mono" style="font-size: 1rem; font-weight: 600; color: var(--green);">$500</div>
+              <div style="font-size: 0.65rem; color: var(--yellow); margin-top: 0.25rem;">BEST VALUE</div>
             </div>
           </div>
 
@@ -3321,15 +3320,15 @@
                 </tr>
               </thead>
               <tbody id="credit-costs-table">
-                <tr style="border-bottom: 1px solid var(--border);"><td style="padding: 0.4rem 0.5rem;">Lead Scrape (per lead)</td><td style="text-align: right; padding: 0.4rem 0.5rem;" class="mono">2</td></tr>
-                <tr style="border-bottom: 1px solid var(--border);"><td style="padding: 0.4rem 0.5rem;">Email Scrape (per lead)</td><td style="text-align: right; padding: 0.4rem 0.5rem;" class="mono">1</td></tr>
-                <tr style="border-bottom: 1px solid var(--border);"><td style="padding: 0.4rem 0.5rem;">Email Validation</td><td style="text-align: right; padding: 0.4rem 0.5rem;" class="mono">1</td></tr>
-                <tr style="border-bottom: 1px solid var(--border);"><td style="padding: 0.4rem 0.5rem;">Website Score</td><td style="text-align: right; padding: 0.4rem 0.5rem;" class="mono">2</td></tr>
-                <tr style="border-bottom: 1px solid var(--border);"><td style="padding: 0.4rem 0.5rem;">Website Rebuild</td><td style="text-align: right; padding: 0.4rem 0.5rem;" class="mono">10</td></tr>
-                <tr style="border-bottom: 1px solid var(--border);"><td style="padding: 0.4rem 0.5rem;">AI Outbound Call</td><td style="text-align: right; padding: 0.4rem 0.5rem;" class="mono">5</td></tr>
-                <tr style="border-bottom: 1px solid var(--border);"><td style="padding: 0.4rem 0.5rem;">SMS Send</td><td style="text-align: right; padding: 0.4rem 0.5rem;" class="mono">1</td></tr>
-                <tr style="border-bottom: 1px solid var(--border);"><td style="padding: 0.4rem 0.5rem;">Email Send</td><td style="text-align: right; padding: 0.4rem 0.5rem;" class="mono">1</td></tr>
-                <tr><td style="padding: 0.4rem 0.5rem;">PDF Report</td><td style="text-align: right; padding: 0.4rem 0.5rem;" class="mono">2</td></tr>
+                <tr style="border-bottom: 1px solid var(--border);"><td style="padding: 0.4rem 0.5rem;">Lead Scrape (per lead)</td><td style="text-align: right; padding: 0.4rem 0.5rem;" class="mono">25 ($0.25)</td></tr>
+                <tr style="border-bottom: 1px solid var(--border);"><td style="padding: 0.4rem 0.5rem;">Email Scrape (per lead)</td><td style="text-align: right; padding: 0.4rem 0.5rem;" class="mono">1 ($0.01)</td></tr>
+                <tr style="border-bottom: 1px solid var(--border);"><td style="padding: 0.4rem 0.5rem;">Email Validation</td><td style="text-align: right; padding: 0.4rem 0.5rem;" class="mono">2 ($0.02)</td></tr>
+                <tr style="border-bottom: 1px solid var(--border);"><td style="padding: 0.4rem 0.5rem;">Website Score</td><td style="text-align: right; padding: 0.4rem 0.5rem;" class="mono">8 ($0.08)</td></tr>
+                <tr style="border-bottom: 1px solid var(--border);"><td style="padding: 0.4rem 0.5rem;">Website Rebuild (AI)</td><td style="text-align: right; padding: 0.4rem 0.5rem;" class="mono">30 ($0.30)</td></tr>
+                <tr style="border-bottom: 1px solid var(--border);"><td style="padding: 0.4rem 0.5rem;">AI/Softphone Call</td><td style="text-align: right; padding: 0.4rem 0.5rem;" class="mono">4/min ($0.04)</td></tr>
+                <tr style="border-bottom: 1px solid var(--border);"><td style="padding: 0.4rem 0.5rem;">SMS Send</td><td style="text-align: right; padding: 0.4rem 0.5rem;" class="mono">3 ($0.03)</td></tr>
+                <tr style="border-bottom: 1px solid var(--border);"><td style="padding: 0.4rem 0.5rem;">Email Send</td><td style="text-align: right; padding: 0.4rem 0.5rem;" class="mono">1 ($0.01)</td></tr>
+                <tr><td style="padding: 0.4rem 0.5rem;">PDF Report</td><td style="text-align: right; padding: 0.4rem 0.5rem;" class="mono">8 ($0.08)</td></tr>
               </tbody>
             </table>
           </details>
@@ -3338,9 +3337,16 @@
           <details style="margin-bottom: 1.5rem;">
             <summary style="cursor: pointer; color: var(--accent); font-size: 0.85rem;">Monthly Credit Grants by Plan</summary>
             <div style="margin-top: 0.5rem; font-size: 0.8rem; color: var(--text-dim); line-height: 2;">
-              <div style="display: flex; justify-content: space-between; padding: 0.3rem 0.5rem; border-bottom: 1px solid var(--border);"><span>Free Plan</span><span class="mono">50 credits/month</span></div>
-              <div style="display: flex; justify-content: space-between; padding: 0.3rem 0.5rem; border-bottom: 1px solid var(--border);"><span>Paid Plan</span><span class="mono">1,000 credits/month</span></div>
-              <div style="display: flex; justify-content: space-between; padding: 0.3rem 0.5rem;"><span>Unlimited Plan</span><span class="mono">10,000 credits/month</span></div>
+              <div style="display: flex; justify-content: space-between; padding: 0.3rem 0.5rem; border-bottom: 1px solid var(--border);"><span>Free Plan</span><span class="mono">500 credits/month ($5)</span></div>
+              <div style="display: flex; justify-content: space-between; padding: 0.3rem 0.5rem; border-bottom: 1px solid var(--border);"><span>Starter Plan</span><span class="mono">5,000 credits/month ($50)</span></div>
+              <div style="display: flex; justify-content: space-between; padding: 0.3rem 0.5rem; border-bottom: 1px solid var(--border);"><span>Pro Plan</span><span class="mono">10,000 credits/month ($100)</span></div>
+              <div style="display: flex; justify-content: space-between; padding: 0.3rem 0.5rem; border-bottom: 1px solid var(--border);"><span>Unlimited Plan</span><span class="mono">50,000 credits/month ($500)</span></div>
+              <div style="font-size: 0.7rem; color: var(--text-dimmer); margin-top: 0.5rem; padding: 0.3rem 0.5rem; border-top: 1px solid var(--border);">
+                <strong>Lifetime Plans (one-time):</strong><br>
+                Starter $250 — 10K emails/mo + free scraping<br>
+                Pro $450 — 100K emails/mo + free scraping & validation<br>
+                Enterprise $900 — 500K emails/mo + free scraping & validation
+              </div>
             </div>
           </details>
 
