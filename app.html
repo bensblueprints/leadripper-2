@@ -6662,25 +6662,53 @@ I noticed {{business_name}} in {{city}} and wanted to reach out..."></textarea>
     }
 
     async function purchaseCredits(amount, price) {
-      if (!confirm(`Purchase ${amount.toLocaleString()} credits for $${price}?\n\n(Payment integration coming soon — credits will be added directly for now)`)) return;
+      if (!confirm(`Purchase ${amount.toLocaleString()} credits for $${price}?`)) return;
+
+      showToast('Creating payment...', 'info');
 
       try {
-        const resp = await fetch(`${API_BASE}/credits`, {
+        // Create Airwallex payment intent for credit purchase
+        const resp = await fetch(`${API_BASE}/create-airwallex-payment`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${authToken}` },
-          body: JSON.stringify({ action: 'purchase', amount })
+          body: JSON.stringify({
+            plan: 'credits',
+            amount: price,
+            credits: amount,
+            description: `${amount.toLocaleString()} LeadRipper Credits`
+          })
         });
         const data = await resp.json();
-        if (resp.ok && data.success) {
-          showToast(`Added ${amount.toLocaleString()} credits! New balance: ${data.balance.toLocaleString()}`, 'success');
-          creditBalance = data.balance;
-          updateCreditDisplays();
-          loadCredits(); // Refresh full data
+
+        if (resp.ok && data.paymentUrl) {
+          // Redirect to Airwallex payment page
+          window.open(data.paymentUrl, '_blank');
+          showToast('Payment page opened — complete payment to receive credits', 'success');
+        } else if (resp.ok && data.clientSecret) {
+          // If using embedded checkout
+          window.open(`https://checkout.airwallex.com/pay/${data.clientSecret}`, '_blank');
+          showToast('Payment page opened — complete payment to receive credits', 'success');
         } else {
-          showToast(data.error || 'Failed to purchase credits', 'error');
+          // Fallback: if payment gateway not configured, allow direct add for admin
+          if (currentUser?.is_admin) {
+            const addResp = await fetch(`${API_BASE}/credits`, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${authToken}` },
+              body: JSON.stringify({ action: 'purchase', amount })
+            });
+            const addData = await addResp.json();
+            if (addResp.ok && addData.success) {
+              showToast(`Admin: Added ${amount.toLocaleString()} credits directly`, 'success');
+              creditBalance = addData.balance;
+              updateCreditDisplays();
+              loadCredits();
+            }
+          } else {
+            showToast(data.error || 'Payment system error — please contact support', 'error');
+          }
         }
       } catch (e) {
-        showToast('Network error: ' + e.message, 'error');
+        showToast('Payment error: ' + e.message, 'error');
       }
     }
 

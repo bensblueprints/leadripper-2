@@ -55,7 +55,45 @@ exports.handler = async (event, context) => {
   }
 
   try {
-    const { plan, userId, couponCode, email, name } = JSON.parse(event.body);
+    const { plan, userId, couponCode, email, name, amount, credits, description } = JSON.parse(event.body);
+
+    // Handle credit purchases
+    if (plan === 'credits' && amount && credits) {
+      const token = await getAirwallexToken();
+      const intentResp = await fetch('https://api.airwallex.com/api/v1/pa/payment_intents/create', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer ' + token
+        },
+        body: JSON.stringify({
+          amount: amount,
+          currency: 'USD',
+          merchant_order_id: 'credits-' + Date.now(),
+          metadata: { type: 'credit_purchase', credits: credits, userId: userId || 'unknown' },
+          request_id: 'cr-' + Date.now() + '-' + Math.random().toString(36).slice(2),
+          descriptor: description || `${credits} LeadRipper Credits`,
+          return_url: 'https://leadripper.com/app?credits_purchased=' + credits
+        })
+      });
+      const intentData = await intentResp.json();
+
+      if (!intentResp.ok) {
+        return { statusCode: 502, headers, body: JSON.stringify({ error: 'Payment creation failed', details: intentData }) };
+      }
+
+      return {
+        statusCode: 200, headers,
+        body: JSON.stringify({
+          success: true,
+          clientSecret: intentData.client_secret,
+          paymentIntentId: intentData.id,
+          paymentUrl: intentData.url || null,
+          amount: amount,
+          credits: credits
+        })
+      };
+    }
 
     // Validate plan
     if (!PLANS[plan]) {
