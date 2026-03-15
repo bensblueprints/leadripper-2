@@ -7948,6 +7948,74 @@ I noticed {{business_name}} in {{city}} and wanted to reach out..."></textarea>
 
     // Score a single lead's website
     // =====================================
+    // EXPORT ALL LEADS TO CSV
+    // =====================================
+    async function exportAllLeadsCSV() {
+      showToast('Fetching all leads for export...', 'info');
+
+      try {
+        // Fetch ALL leads in batches
+        let allLeads = [];
+        let offset = 0;
+        const batchSize = 200;
+
+        while (true) {
+          const resp = await fetch(`${API_BASE}/get-leads?limit=${batchSize}&offset=${offset}`, {
+            headers: { 'Authorization': `Bearer ${authToken}` }
+          });
+          if (!resp.ok) throw new Error('HTTP ' + resp.status);
+          const batch = await resp.json();
+          allLeads = allLeads.concat(batch.leads || []);
+          if (!batch.leads || batch.leads.length < batchSize) break;
+          offset += batchSize;
+          showToast(`Fetching leads... ${allLeads.length} so far`, 'info');
+        }
+
+        if (allLeads.length === 0) {
+          showToast('No leads to export', 'warning');
+          return;
+        }
+
+        // Build CSV
+        const headers = ['Business Name', 'Contact Name', 'Phone', 'Email', 'Address', 'City', 'State', 'Industry', 'Website', 'Rating', 'Reviews', 'Tags', 'Email Verified', 'Website Score', 'GHL Synced'];
+        const rows = allLeads.map(l => [
+          l.business_name || '',
+          l.contact_name || '',
+          l.phone || '',
+          l.email || '',
+          l.address || '',
+          l.city || '',
+          l.state || '',
+          l.industry || '',
+          l.website || '',
+          l.rating || '',
+          l.reviews || '',
+          (l.tags || []).join('; '),
+          l.email_verified ? 'Yes' : 'No',
+          l.website_score != null ? l.website_score : '',
+          l.ghl_synced ? 'Yes' : 'No'
+        ]);
+
+        const csvContent = [headers, ...rows]
+          .map(row => row.map(cell => '"' + String(cell).replace(/"/g, '""') + '"').join(','))
+          .join('\n');
+
+        // Download
+        const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = 'leadripper-leads-' + new Date().toISOString().slice(0, 10) + '.csv';
+        a.click();
+        URL.revokeObjectURL(url);
+
+        showToast(`Exported ${allLeads.length} leads to CSV`, 'success');
+      } catch (e) {
+        showToast('Export failed: ' + e.message, 'error');
+      }
+    }
+
+    // =====================================
     // REMOVE DUPLICATE LEADS
     // =====================================
     async function removeDuplicateLeads() {
