@@ -2425,7 +2425,7 @@
               <button class="btn-bulk score-sites" id="score-sites-btn" onclick="scoreAllWebsites()">🌐 Score Websites</button>
               <button class="btn-bulk validate" id="validate-all-btn" onclick="validateAllEmails()">✓ Validate All</button>
               <button class="btn-secondary" onclick="removeDuplicateLeads()" style="font-size:0.85rem;">🗑️ Remove Duplicates</button>
-              <button class="btn-secondary" id="export-leads-btn">⬇ Export CSV</button>
+              <button class="btn-secondary" onclick="exportAllLeadsCSV()">⬇ Export All CSV</button>
             </div>
             <!-- Progress bar for bulk operations -->
             <div id="bulk-progress" class="bulk-progress hidden">
@@ -6664,30 +6664,19 @@ I noticed {{business_name}} in {{city}} and wanted to reach out..."></textarea>
     async function purchaseCredits(amount, price) {
       if (!confirm(`Purchase ${amount.toLocaleString()} credits for $${price}?`)) return;
 
-      showToast('Creating payment...', 'info');
+      showToast('Creating checkout...', 'info');
 
       try {
-        // Create Airwallex payment intent for credit purchase
-        const resp = await fetch(`${API_BASE}/create-airwallex-payment`, {
+        const resp = await fetch(`${API_BASE}/stripe-checkout`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${authToken}` },
-          body: JSON.stringify({
-            plan: 'credits',
-            amount: price,
-            credits: amount,
-            description: `${amount.toLocaleString()} LeadRipper Credits`
-          })
+          body: JSON.stringify({ credits: amount, package: String(amount) })
         });
         const data = await resp.json();
 
-        if (resp.ok && data.paymentUrl) {
-          // Redirect to Airwallex payment page
-          window.open(data.paymentUrl, '_blank');
-          showToast('Payment page opened — complete payment to receive credits', 'success');
-        } else if (resp.ok && data.clientSecret) {
-          // If using embedded checkout
-          window.open(`https://checkout.airwallex.com/pay/${data.clientSecret}`, '_blank');
-          showToast('Payment page opened — complete payment to receive credits', 'success');
+        if (resp.ok && data.url) {
+          // Redirect to Stripe Checkout hosted page
+          window.location.href = data.url;
         } else {
           // Fallback: if payment gateway not configured, allow direct add for admin
           if (currentUser?.is_admin) {
@@ -6954,12 +6943,17 @@ I noticed {{business_name}} in {{city}} and wanted to reach out..."></textarea>
         // Apply rating filter
         if (filterRating) {
           if (filterRating === 'none') {
-            leadsData = leadsData.filter(lead => !lead.rating || lead.rating === 0);
+            leadsData = leadsData.filter(lead => !lead.rating || parseFloat(lead.rating) === 0);
           } else if (filterRating.includes('-')) {
-            const [min, max] = filterRating.split('-').map(Number);
-            leadsData = leadsData.filter(lead => lead.rating >= min && lead.rating <= max);
+            const parts = filterRating.split('-');
+            const min = parseFloat(parts[0]);
+            const max = parseFloat(parts[1]);
+            leadsData = leadsData.filter(lead => {
+              const r = parseFloat(lead.rating);
+              return r >= min && r <= max;
+            });
           } else {
-            leadsData = leadsData.filter(lead => lead.rating >= parseFloat(filterRating));
+            leadsData = leadsData.filter(lead => parseFloat(lead.rating) >= parseFloat(filterRating));
           }
         }
 
@@ -8824,6 +8818,26 @@ I noticed {{business_name}} in {{city}} and wanted to reach out..."></textarea>
       setTimeout(() => {
         alert('Payment successful! Your subscription is now active.');
         window.location.href = '/app';
+      }, 1000);
+    }
+
+    // Handle Stripe credit purchase return
+    if (urlParams.get('credits_purchased')) {
+      const creditsPurchased = parseInt(urlParams.get('credits_purchased'));
+      setTimeout(() => {
+        showToast(`Payment successful! ${creditsPurchased.toLocaleString()} credits are being added to your account.`, 'success');
+        // Refresh credits display after a short delay to let webhook process
+        setTimeout(() => {
+          if (typeof loadCredits === 'function') loadCredits();
+        }, 3000);
+        // Clean URL
+        window.history.replaceState({}, '', '/app');
+      }, 1000);
+    }
+    if (urlParams.get('credits_cancelled')) {
+      setTimeout(() => {
+        showToast('Credit purchase was cancelled.', 'info');
+        window.history.replaceState({}, '', '/app');
       }, 1000);
     }
 
