@@ -43,10 +43,12 @@ exports.handler = async (event, context) => {
       return { statusCode: 400, headers, body: JSON.stringify({ error: 'phoneNumber is required' }) };
     }
 
-    // Check credits
-    const creditCheck = await spendCredits(userId, CREDIT_COSTS.ai_call, 'ai_call', `AI call to ${phoneNumber}`, leadId ? String(leadId) : null);
+    // Hold credits for estimated 3 min call upfront (will adjust after call completes)
+    const estimatedMinutes = 3;
+    const holdAmount = (CREDIT_COSTS.ai_call_per_min || 48) * estimatedMinutes;
+    const creditCheck = await spendCredits(userId, holdAmount, 'ai_call', `AI call to ${phoneNumber} (${estimatedMinutes}min hold, adjusted after)`, leadId ? String(leadId) : null);
     if (!creditCheck.success) {
-      return { statusCode: 402, headers, body: JSON.stringify({ error: 'Insufficient credits', balance: creditCheck.balance, required: CREDIT_COSTS.ai_call }) };
+      return { statusCode: 402, headers, body: JSON.stringify({ error: 'Insufficient credits', balance: creditCheck.balance, required: holdAmount, rate: `${CREDIT_COSTS.ai_call_per_min || 48} credits/min ($${((CREDIT_COSTS.ai_call_per_min || 48) * 0.01).toFixed(2)}/min)` }) };
     }
 
     // Get user's ElevenLabs API key from settings
