@@ -783,6 +783,74 @@
       border-left-color: var(--accent);
     }
 
+    .nav-parent {
+      position: relative;
+    }
+
+    .nav-arrow {
+      margin-left: auto;
+      font-size: 0.7rem;
+      transition: transform 0.2s;
+    }
+
+    .nav-arrow.open {
+      transform: rotate(90deg);
+    }
+
+    .nav-sub-items {
+      background: rgba(0,0,0,0.2);
+      border-left: 1px solid var(--border);
+      margin-left: 1.5rem;
+    }
+
+    .nav-sub-item {
+      padding: 0.6rem 1rem 0.6rem 1.5rem !important;
+      font-size: 0.82rem !important;
+      gap: 0.5rem !important;
+      border-left: 2px solid transparent !important;
+    }
+
+    .nav-sub-item.active-sub {
+      color: var(--accent) !important;
+      border-left-color: var(--accent) !important;
+      background: var(--surface-elevated);
+    }
+
+    .email-ripper-tabs {
+      display: flex;
+      gap: 0;
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      overflow: hidden;
+      margin-bottom: 1.5rem;
+    }
+
+    .email-ripper-tab {
+      flex: 1;
+      padding: 0.75rem 1rem;
+      background: transparent;
+      border: none;
+      color: var(--text-dim);
+      cursor: pointer;
+      font-weight: 600;
+      font-size: 0.85rem;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      transition: all 0.2s;
+      text-align: center;
+    }
+
+    .email-ripper-tab:hover {
+      background: var(--surface);
+      color: var(--text);
+    }
+
+    .email-ripper-tab.active {
+      background: var(--surface-elevated);
+      color: var(--accent);
+      border-bottom: 2px solid var(--accent);
+    }
+
     .nav-icon {
       font-size: 1.2rem;
     }
@@ -2254,13 +2322,21 @@
           <span class="nav-icon">📈</span>
           <span>Pipeline Board</span>
         </div>
-        <div class="nav-item" data-section="email-outreach">
+        <div class="nav-item nav-parent" data-section="email-outreach">
           <span class="nav-icon">🚀</span>
           <span>Email Ripper</span>
+          <span class="nav-arrow" id="email-ripper-arrow">▸</span>
         </div>
-        <div class="nav-item" data-section="email-accounts">
-          <span class="nav-icon">📧</span>
-          <span>Email Accounts</span>
+        <div class="nav-sub-items" id="email-ripper-submenu" style="display:none;">
+          <div class="nav-item nav-sub-item active-sub" data-section="email-outreach" data-subtab="campaigns">
+            <span>📨 Campaigns</span>
+          </div>
+          <div class="nav-item nav-sub-item" data-section="email-outreach" data-subtab="accounts">
+            <span>📧 Email Accounts</span>
+          </div>
+          <div class="nav-item nav-sub-item" data-section="email-outreach" data-subtab="templates">
+            <span>📝 Templates</span>
+          </div>
         </div>
         <div class="nav-item" data-section="ai-calling">
           <span class="nav-icon">🤖</span>
@@ -2426,6 +2502,8 @@
               <button class="btn-bulk validate" id="validate-all-btn" onclick="validateAllEmails()">✓ Validate All</button>
               <button class="btn-secondary" onclick="removeDuplicateLeads()" style="font-size:0.85rem;">🗑️ Remove Duplicates</button>
               <button class="btn-secondary" onclick="exportAllLeadsCSV()">⬇ Export All CSV</button>
+              <button class="btn-secondary" onclick="openImportCSVModal()">⬆ Import CSV</button>
+              <input type="file" id="csv-import-input" accept=".csv" style="display:none;" onchange="handleCSVImport(event)">
             </div>
             <!-- Progress bar for bulk operations -->
             <div id="bulk-progress" class="bulk-progress hidden">
@@ -3514,9 +3592,20 @@
             </div>
             <div class="header-actions">
               <button class="btn" onclick="openNewTemplateModal()">+ New Template</button>
+              <button class="btn-secondary" onclick="showSection('leads')">📋 Build a List</button>
             </div>
           </div>
         </div>
+
+        <!-- Email Ripper Tab Navigation -->
+        <div class="email-ripper-tabs">
+          <button class="email-ripper-tab active" onclick="switchEmailRipperTab('campaigns')">📨 Campaigns</button>
+          <button class="email-ripper-tab" onclick="switchEmailRipperTab('accounts')">📧 Email Accounts</button>
+          <button class="email-ripper-tab" onclick="switchEmailRipperTab('templates')">📝 Templates</button>
+        </div>
+
+        <!-- Campaigns Tab Content -->
+        <div id="er-tab-campaigns">
 
         <div class="stats-grid">
           <div class="stat-card">
@@ -3732,18 +3821,6 @@ I noticed {{business_name}} in {{city}} and wanted to reach out..."></textarea>
             </div>
             </div>
           </div>
-
-        <!-- Email Templates -->
-        <div class="card">
-          <div class="card-header">
-            <h2 class="card-title display">Email Templates</h2>
-          </div>
-          <div id="email-templates-list">
-            <p style="color: var(--text-dim); text-align: center; padding: 2rem;">
-              No templates yet. Create your first template above.
-            </p>
-          </div>
-        </div>
 
         <!-- Sent Emails History -->
         <div class="card">
@@ -3970,34 +4047,49 @@ I noticed {{business_name}} in {{city}} and wanted to reach out..."></textarea>
             </div>
           </div>
         </div>
-      </section>
 
-      <!-- Email Accounts Section -->
-      <section id="email-accounts-section" class="section">
-        <div class="header">
-          <div class="header-top">
-            <div>
-              <h1 class="page-title display">EMAIL ACCOUNTS</h1>
-              <p class="page-subtitle mono">Connect your email providers</p>
-            </div>
-            <div class="header-actions">
+        </div><!-- End er-tab-campaigns -->
+
+        <!-- Email Accounts Tab Content -->
+        <div id="er-tab-accounts" style="display:none;">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1.5rem;flex-wrap:wrap;gap:0.75rem;">
+            <h2 class="display" style="font-size: 1.5rem; color: var(--text);">CONNECTED EMAIL ACCOUNTS</h2>
+            <div style="display:flex;gap:0.5rem;flex-wrap:wrap;">
               <button class="btn" onclick="connectEmailAccount('gmail')">+ Connect Gmail</button>
               <button class="btn-secondary" onclick="connectEmailAccount('outlook')">+ Connect Outlook</button>
               <button class="btn-secondary" onclick="openImapModal()">+ Add IMAP</button>
             </div>
           </div>
-        </div>
+          <div class="card">
+            <div class="card-header">
+              <h2 class="card-title display">Connected Accounts</h2>
+            </div>
+            <div id="email-accounts-list">
+              <p style="color: var(--text-dim); text-align: center; padding: 2rem;">
+                No email accounts connected yet. Add your first account above.
+              </p>
+            </div>
+          </div>
+        </div><!-- End er-tab-accounts -->
 
-        <div class="card">
-          <div class="card-header">
-            <h2 class="card-title display">Connected Accounts</h2>
+        <!-- Templates Tab Content -->
+        <div id="er-tab-templates" style="display:none;">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1.5rem;flex-wrap:wrap;gap:0.75rem;">
+            <h2 class="display" style="font-size: 1.5rem; color: var(--text);">EMAIL TEMPLATES</h2>
+            <button class="btn" onclick="openNewTemplateModal()">+ New Template</button>
           </div>
-          <div id="email-accounts-list">
-            <p style="color: var(--text-dim); text-align: center; padding: 2rem;">
-              No email accounts connected yet. Add your first account above.
-            </p>
+          <div class="card">
+            <div class="card-header">
+              <h2 class="card-title display">Saved Templates</h2>
+            </div>
+            <div id="email-templates-list">
+              <p style="color: var(--text-dim); text-align: center; padding: 2rem;">
+                No templates yet. Create your first template above.
+              </p>
+            </div>
           </div>
-        </div>
+        </div><!-- End er-tab-templates -->
+
       </section>
 
       <!-- AI Calling Section (CRM Only) -->
@@ -8016,6 +8108,196 @@ I noticed {{business_name}} in {{city}} and wanted to reach out..."></textarea>
     }
 
     // =====================================
+    // IMPORT CSV LEADS
+    // =====================================
+    function openImportCSVModal() {
+      const root = document.getElementById('modal-root');
+      root.innerHTML = `<div class="modal-overlay" id="modal-overlay" onclick="if(event.target.id==='modal-overlay')this.innerHTML=''">
+        <div class="modal" style="max-width:600px;">
+          <h3>Import Leads from CSV</h3>
+          <p style="color:var(--text-dim);margin-bottom:1rem;font-size:0.85rem;">Upload a CSV file with your leads. The first row should contain column headers.</p>
+          <div style="background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:1.5rem;margin-bottom:1.5rem;">
+            <p style="font-size:0.8rem;color:var(--text-dim);margin-bottom:1rem;">Expected columns (order doesn't matter, case-insensitive):</p>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:0.25rem;font-family:'JetBrains Mono',monospace;font-size:0.75rem;color:var(--green);">
+              <span>Business Name *</span><span>Contact Name</span>
+              <span>Phone</span><span>Email</span>
+              <span>Address</span><span>City</span>
+              <span>State</span><span>Industry</span>
+              <span>Website</span><span>Rating</span>
+              <span>Reviews</span><span>Tags</span>
+            </div>
+          </div>
+          <div style="border:2px dashed var(--border);border-radius:8px;padding:2rem;text-align:center;cursor:pointer;transition:border-color 0.2s;"
+               onclick="document.getElementById('csv-import-input').click()"
+               ondragover="event.preventDefault();this.style.borderColor='var(--accent)'"
+               ondragleave="this.style.borderColor='var(--border)'"
+               ondrop="event.preventDefault();this.style.borderColor='var(--border)';handleCSVImportFile(event.dataTransfer.files[0])">
+            <div style="font-size:2rem;margin-bottom:0.5rem;">📂</div>
+            <div style="color:var(--text);margin-bottom:0.25rem;">Click to select or drag & drop CSV file</div>
+            <div style="color:var(--text-dim);font-size:0.8rem;">.csv files only</div>
+          </div>
+          <div id="import-preview" style="display:none;margin-top:1.5rem;"></div>
+          <div style="display:flex;gap:0.5rem;justify-content:flex-end;margin-top:1rem;">
+            <button class="btn-secondary" onclick="document.getElementById('modal-root').innerHTML=''">Cancel</button>
+          </div>
+        </div>
+      </div>`;
+    }
+
+    function handleCSVImport(event) {
+      const file = event.target.files[0];
+      if (file) handleCSVImportFile(file);
+      event.target.value = '';
+    }
+
+    async function handleCSVImportFile(file) {
+      if (!file || !file.name.endsWith('.csv')) {
+        showToast('Please select a CSV file', 'error');
+        return;
+      }
+
+      showToast('Reading CSV file...', 'info');
+
+      const text = await file.text();
+      const lines = text.split(/\r?\n/).filter(l => l.trim());
+      if (lines.length < 2) {
+        showToast('CSV must have headers and at least one data row', 'error');
+        return;
+      }
+
+      // Parse headers
+      const headers = parseCSVRow(lines[0]).map(h => h.toLowerCase().trim());
+
+      // Map column indices
+      const colMap = {};
+      const fieldAliases = {
+        business_name: ['business name', 'business_name', 'company', 'company name', 'name', 'business'],
+        contact_name: ['contact name', 'contact_name', 'contact', 'full name', 'owner'],
+        phone: ['phone', 'phone number', 'telephone', 'tel', 'mobile'],
+        email: ['email', 'email address', 'e-mail'],
+        address: ['address', 'street', 'street address', 'location'],
+        city: ['city', 'town'],
+        state: ['state', 'province', 'region'],
+        industry: ['industry', 'business type', 'niche', 'category', 'type'],
+        website: ['website', 'url', 'web', 'site', 'domain'],
+        rating: ['rating', 'stars', 'score'],
+        reviews: ['reviews', 'review count', 'num reviews'],
+        tags: ['tags', 'labels', 'categories']
+      };
+
+      for (const [field, aliases] of Object.entries(fieldAliases)) {
+        const idx = headers.findIndex(h => aliases.includes(h));
+        if (idx !== -1) colMap[field] = idx;
+      }
+
+      if (colMap.business_name === undefined) {
+        showToast('CSV must have a "Business Name" column', 'error');
+        return;
+      }
+
+      // Parse data rows
+      const leads = [];
+      for (let i = 1; i < lines.length; i++) {
+        const cols = parseCSVRow(lines[i]);
+        const lead = {};
+        for (const [field, idx] of Object.entries(colMap)) {
+          lead[field] = (cols[idx] || '').trim();
+        }
+        if (lead.business_name) leads.push(lead);
+      }
+
+      if (leads.length === 0) {
+        showToast('No valid leads found in CSV', 'error');
+        return;
+      }
+
+      // Show preview
+      const preview = document.getElementById('import-preview');
+      if (preview) {
+        preview.style.display = 'block';
+        preview.innerHTML = `
+          <div style="background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:1rem;margin-bottom:1rem;">
+            <div style="font-size:1.2rem;font-weight:bold;color:var(--accent);margin-bottom:0.5rem;">${leads.length} leads found</div>
+            <div style="font-size:0.8rem;color:var(--text-dim);">Mapped columns: ${Object.keys(colMap).join(', ')}</div>
+            <div style="font-size:0.8rem;color:var(--text-dim);margin-top:0.25rem;">First lead: ${escapeHtml(leads[0].business_name)} ${leads[0].city ? '(' + escapeHtml(leads[0].city) + ')' : ''}</div>
+          </div>
+          <button class="btn" onclick="executeCSVImport()" style="width:100%;">Import ${leads.length} Leads</button>
+        `;
+        window._pendingImportLeads = leads;
+      }
+    }
+
+    function parseCSVRow(row) {
+      const result = [];
+      let current = '';
+      let inQuotes = false;
+      for (let i = 0; i < row.length; i++) {
+        const char = row[i];
+        if (char === '"') {
+          if (inQuotes && row[i + 1] === '"') { current += '"'; i++; }
+          else inQuotes = !inQuotes;
+        } else if (char === ',' && !inQuotes) {
+          result.push(current); current = '';
+        } else {
+          current += char;
+        }
+      }
+      result.push(current);
+      return result;
+    }
+
+    async function executeCSVImport() {
+      const leads = window._pendingImportLeads;
+      if (!leads || leads.length === 0) return;
+
+      document.getElementById('modal-root').innerHTML = '';
+      showToast(`Importing ${leads.length} leads...`, 'info');
+
+      let imported = 0;
+      let failed = 0;
+      const batchSize = 25;
+
+      for (let i = 0; i < leads.length; i += batchSize) {
+        const batch = leads.slice(i, i + batchSize);
+        try {
+          const resp = await fetch(`${API_BASE}/save-leads`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${authToken}` },
+            body: JSON.stringify({ leads: batch.map(l => ({
+              business_name: l.business_name || '',
+              contact_name: l.contact_name || '',
+              phone: l.phone || '',
+              email: l.email || '',
+              address: l.address || '',
+              city: l.city || '',
+              state: l.state || '',
+              industry: l.industry || '',
+              website: l.website || '',
+              rating: parseFloat(l.rating) || 0,
+              reviews: parseInt(l.reviews) || 0,
+              tags: l.tags ? l.tags.split(/[;,]/).map(t => t.trim()).filter(Boolean) : []
+            }))})
+          });
+          if (resp.ok) {
+            const data = await resp.json();
+            imported += data.imported || batch.length;
+          } else {
+            failed += batch.length;
+          }
+        } catch (e) {
+          failed += batch.length;
+        }
+        if (i + batchSize < leads.length) {
+          showToast(`Importing... ${Math.min(i + batchSize, leads.length)} / ${leads.length}`, 'info');
+        }
+      }
+
+      showToast(`Import complete: ${imported} imported, ${failed} failed`, imported > 0 ? 'success' : 'error');
+      window._pendingImportLeads = null;
+      loadLeads();
+    }
+
+    // =====================================
     // REMOVE DUPLICATE LEADS
     // =====================================
     async function removeDuplicateLeads() {
@@ -8643,18 +8925,78 @@ I noticed {{business_name}} in {{city}} and wanted to reach out..."></textarea>
     }
 
     // Navigation
-    document.querySelectorAll('.nav-item').forEach(item => {
+    document.querySelectorAll('.nav-item:not(.nav-sub-item)').forEach(item => {
       item.addEventListener('click', () => {
         const section = item.dataset.section;
+        // Toggle submenu for Email Ripper
+        if (item.classList.contains('nav-parent')) {
+          const submenu = document.getElementById('email-ripper-submenu');
+          const arrow = document.getElementById('email-ripper-arrow');
+          if (submenu.style.display === 'none') {
+            submenu.style.display = 'block';
+            arrow.classList.add('open');
+          } else {
+            submenu.style.display = 'none';
+            arrow.classList.remove('open');
+          }
+        }
         showSection(section);
       });
     });
 
+    // Sub-item navigation
+    document.querySelectorAll('.nav-sub-item').forEach(item => {
+      item.addEventListener('click', (e) => {
+        e.stopPropagation();
+        const section = item.dataset.section;
+        const subtab = item.dataset.subtab;
+        showSection(section);
+        if (subtab) switchEmailRipperTab(subtab);
+        // Update sub-item active state
+        document.querySelectorAll('.nav-sub-item').forEach(si => si.classList.remove('active-sub'));
+        item.classList.add('active-sub');
+      });
+    });
+
+    // Email Ripper tab switching
+    function switchEmailRipperTab(tab) {
+      // Update tab buttons
+      document.querySelectorAll('.email-ripper-tab').forEach(btn => {
+        btn.classList.toggle('active', btn.textContent.toLowerCase().includes(tab));
+      });
+      // Show/hide tab content
+      ['campaigns', 'accounts', 'templates'].forEach(t => {
+        const el = document.getElementById(`er-tab-${t}`);
+        if (el) el.style.display = (t === tab) ? 'block' : 'none';
+      });
+      // Update sub-nav active state
+      document.querySelectorAll('.nav-sub-item').forEach(si => {
+        si.classList.toggle('active-sub', si.dataset.subtab === tab);
+      });
+      // Load data for the tab
+      if (tab === 'accounts') loadEmailAccounts();
+      if (tab === 'templates') renderEmailTemplates();
+    }
+
     function showSection(section) {
-      // Update nav
-      document.querySelectorAll('.nav-item').forEach(item => {
+      // Redirect email-accounts to email-outreach accounts tab
+      if (section === 'email-accounts') {
+        section = 'email-outreach';
+        setTimeout(() => switchEmailRipperTab('accounts'), 50);
+      }
+
+      // Update nav (parent items only)
+      document.querySelectorAll('.nav-item:not(.nav-sub-item)').forEach(item => {
         item.classList.toggle('active', item.dataset.section === section);
       });
+
+      // Auto-expand email ripper submenu when it's active
+      if (section === 'email-outreach') {
+        const submenu = document.getElementById('email-ripper-submenu');
+        const arrow = document.getElementById('email-ripper-arrow');
+        if (submenu) submenu.style.display = 'block';
+        if (arrow) arrow.classList.add('open');
+      }
 
       // Update sections
       document.querySelectorAll('.section').forEach(sec => {
@@ -8666,8 +9008,6 @@ I noticed {{business_name}} in {{city}} and wanted to reach out..."></textarea>
         loadEmailOutreachData();
       } else if (section === 'pipeline') {
         loadPipelines();
-      } else if (section === 'email-accounts') {
-        loadEmailAccounts();
       } else if (section === 'settings') {
         // Load AI agents (available in all modes)
         loadAgents();
@@ -9225,11 +9565,6 @@ I noticed {{business_name}} in {{city}} and wanted to reach out..."></textarea>
     document.querySelector('[data-section="email-validation"]').addEventListener('click', () => {
       loadEmailValidationStats();
       loadEmailDiscoveryStats();
-    });
-
-    // Load email accounts when section is opened
-    document.querySelector('[data-section="email-accounts"]').addEventListener('click', () => {
-      loadEmailAccounts();
     });
 
     // Load lead lists when leads section is opened
@@ -10023,6 +10358,11 @@ I noticed {{business_name}} in {{city}} and wanted to reach out..."></textarea>
       const subject = document.getElementById('outreach-subject').value;
       const body = document.getElementById('outreach-body').value;
 
+      if (!subject && !body) {
+        showToast('Enter a subject and body to preview', 'warning');
+        return;
+      }
+
       // Sample lead data for preview
       const sampleLead = {
         business_name: 'Acme Corporation',
@@ -10031,26 +10371,52 @@ I noticed {{business_name}} in {{city}} and wanted to reach out..."></textarea>
         phone: '(555) 123-4567',
         website: 'www.acme.com',
         city: 'New York',
+        state: 'NY',
         industry: 'Technology',
-        address: '123 Main St'
+        address: '123 Main St',
+        rating: '4.5',
+        reviews: '127'
       };
 
-      const previewSubject = subject
-        .replace(/{{business_name}}/gi, sampleLead.business_name)
-        .replace(/{{first_name}}/gi, sampleLead.first_name)
-        .replace(/{{city}}/gi, sampleLead.city);
+      function replaceTags(text) {
+        return text
+          .replace(/\{\{business_name\}\}/gi, sampleLead.business_name)
+          .replace(/\{\{first_name\}\}/gi, sampleLead.first_name)
+          .replace(/\{\{email\}\}/gi, sampleLead.email)
+          .replace(/\{\{phone\}\}/gi, sampleLead.phone)
+          .replace(/\{\{website\}\}/gi, sampleLead.website)
+          .replace(/\{\{city\}\}/gi, sampleLead.city)
+          .replace(/\{\{state\}\}/gi, sampleLead.state)
+          .replace(/\{\{industry\}\}/gi, sampleLead.industry)
+          .replace(/\{\{address\}\}/gi, sampleLead.address)
+          .replace(/\{\{rating\}\}/gi, sampleLead.rating)
+          .replace(/\{\{reviews\}\}/gi, sampleLead.reviews)
+          .replace(/\{\{unsubscribe\}\}/gi, '<a href="#" style="color:#888;font-size:12px;">Unsubscribe</a>');
+      }
 
-      const previewBody = body
-        .replace(/{{business_name}}/gi, sampleLead.business_name)
-        .replace(/{{first_name}}/gi, sampleLead.first_name)
-        .replace(/{{email}}/gi, sampleLead.email)
-        .replace(/{{phone}}/gi, sampleLead.phone)
-        .replace(/{{website}}/gi, sampleLead.website)
-        .replace(/{{city}}/gi, sampleLead.city)
-        .replace(/{{industry}}/gi, sampleLead.industry)
-        .replace(/{{address}}/gi, sampleLead.address);
+      const previewSubject = replaceTags(subject);
+      const previewBody = replaceTags(body).replace(/\n/g, '<br>');
 
-      showToast('Preview generated — check the subject and body fields above', 'info');
+      const root = document.getElementById('modal-root');
+      root.innerHTML = `<div class="modal-overlay" id="modal-overlay" onclick="if(event.target.id==='modal-overlay')this.innerHTML=''">
+        <div class="modal" style="max-width:700px;">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1.5rem;">
+            <h3 style="margin:0;">Email Preview</h3>
+            <button class="btn-mini" onclick="document.getElementById('modal-root').innerHTML=''">Close</button>
+          </div>
+          <div style="background:#fff;border-radius:8px;padding:2rem;color:#333;font-family:Arial,Helvetica,sans-serif;">
+            <div style="border-bottom:1px solid #eee;padding-bottom:1rem;margin-bottom:1rem;">
+              <div style="font-size:0.8rem;color:#999;margin-bottom:0.25rem;">From: you@yourdomain.com</div>
+              <div style="font-size:0.8rem;color:#999;margin-bottom:0.5rem;">To: ${escapeHtml(sampleLead.email)}</div>
+              <div style="font-size:1.1rem;font-weight:bold;color:#222;">${escapeHtml(previewSubject)}</div>
+            </div>
+            <div style="font-size:0.95rem;line-height:1.7;color:#444;">${previewBody}</div>
+          </div>
+          <div style="margin-top:1rem;color:var(--text-dim);font-size:0.75rem;text-align:center;">
+            Sample preview using dummy lead data. Merge tags will be replaced with real lead data when sent.
+          </div>
+        </div>
+      </div>`;
     }
 
     // Render email templates list

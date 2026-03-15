@@ -313,9 +313,9 @@ exports.handler = async (event, context) => {
     }
 
     // Check credits before scraping
-    // Each lead costs 2 credits (1 text search + 1 place details)
+    // Each lead costs CREDIT_COSTS.scrape credits
     const estimatedLeadsPerCity = Math.min(maxResults || 50, 20);
-    const estimatedCost = citiesToScrape.length * estimatedLeadsPerCity * 2;
+    const estimatedCost = citiesToScrape.length * estimatedLeadsPerCity * CREDIT_COSTS.scrape;
     const creditBalance = await getBalance(decoded.userId);
 
     if (creditBalance.balance < estimatedCost) {

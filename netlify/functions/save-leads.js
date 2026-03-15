@@ -82,15 +82,19 @@ exports.handler = async (event, context) => {
     let savedCount = 0;
     let duplicateCount = 0;
 
+    // Ensure contact_name column exists
+    await pool.query('ALTER TABLE lr_leads ADD COLUMN IF NOT EXISTS contact_name VARCHAR(255)').catch(() => {});
+
     for (const lead of leads) {
       try {
         await pool.query(
-          `INSERT INTO lr_leads (user_id, business_name, phone, email, address, city, state, industry, website, rating, reviews)
-           VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
+          `INSERT INTO lr_leads (user_id, business_name, contact_name, phone, email, address, city, state, industry, website, rating, reviews)
+           VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
            ON CONFLICT DO NOTHING`,
           [
             decoded.userId,
             lead.business_name || lead.name || '',
+            lead.contact_name || '',
             lead.phone || '',
             lead.email || '',
             lead.address || '',
@@ -132,6 +136,7 @@ exports.handler = async (event, context) => {
         success: true,
         message: `Saved ${savedCount} leads`,
         savedCount,
+        imported: savedCount,
         duplicateCount,
         city,
         industry
