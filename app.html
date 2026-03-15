@@ -8772,7 +8772,7 @@ I noticed {{business_name}} in {{city}} and wanted to reach out..."></textarea>
       e.preventDefault();
 
       if (selectedCities.length === 0) {
-        alert('Please add at least one city to scrape');
+        showToast('Please add at least one city to scrape', 'warning');
         return;
       }
 
@@ -8787,7 +8787,7 @@ I noticed {{business_name}} in {{city}} and wanted to reach out..."></textarea>
             showSection('subscription');
           }
         } else {
-          alert('You have reached your lead limit for this billing period.');
+          showToast('You have reached your lead limit for this billing period.', 'error');
         }
         return;
       }
@@ -8828,7 +8828,7 @@ I noticed {{business_name}} in {{city}} and wanted to reach out..."></textarea>
 
         if (response.ok) {
           const creditsMsg = result.creditsUsed ? ` (${result.creditsUsed} credits used)` : '';
-          alert(`Scraping started! ${result.citiesToScrape || selectedCities.length} cities queued.${creditsMsg}`);
+          showToast(`Scraping started! ${result.citiesToScrape || selectedCities.length} cities queued.${creditsMsg}`, 'success');
           // Auto-add industry to pipeline mappings
           autoAddIndustryToMappings(industry);
           selectedCities = [];
@@ -8840,10 +8840,10 @@ I noticed {{business_name}} in {{city}} and wanted to reach out..."></textarea>
         } else if (response.status === 402) {
           showInsufficientCreditsToast(result.required || 0, result.balance || 0);
         } else {
-          alert(result.error || 'Scraping failed');
+          showToast(result.error || 'Scraping failed', 'error');
         }
       } catch (error) {
-        alert('Network error. Please try again.');
+        showToast('Network error. Please try again.', 'error');
       } finally {
         btn.disabled = false;
         updateScrapeButton();
@@ -8884,7 +8884,7 @@ I noticed {{business_name}} in {{city}} and wanted to reach out..."></textarea>
     const urlParams = new URLSearchParams(window.location.search);
     if (urlParams.get('payment') === 'success') {
       setTimeout(() => {
-        alert('Payment successful! Your subscription is now active.');
+        showToast('Payment successful! Your subscription is now active.', 'success');
         window.location.href = '/app';
       }, 1000);
     }
@@ -8953,12 +8953,12 @@ I noticed {{business_name}} in {{city}} and wanted to reach out..."></textarea>
       const company = document.getElementById('discover-company').value.trim();
 
       if (!firstName) {
-        alert('First name is required');
+        showToast('First name is required', 'warning');
         return;
       }
 
       if (!domain && !company) {
-        alert('Please enter either a domain or company name');
+        showToast('Please enter either a domain or company name', 'warning');
         return;
       }
 
@@ -9003,7 +9003,7 @@ I noticed {{business_name}} in {{city}} and wanted to reach out..."></textarea>
         }
       } catch (error) {
         console.error('Email discovery error:', error);
-        alert('Error discovering email: ' + error.message);
+        showToast('Error discovering email: ' + error.message, 'error');
       } finally {
         btn.disabled = false;
         btnText.textContent = '🔍 Find Email';
@@ -9015,7 +9015,7 @@ I noticed {{business_name}} in {{city}} and wanted to reach out..."></textarea>
       const email = document.getElementById('discovery-result-email').textContent;
       if (email && email !== 'Email not found') {
         navigator.clipboard.writeText(email).then(() => {
-          alert('Email copied to clipboard!');
+          showToast('Email copied to clipboard!', 'success');
         });
       }
     }
@@ -9292,7 +9292,7 @@ I noticed {{business_name}} in {{city}} and wanted to reach out..."></textarea>
       const locationId = document.getElementById('ghl-location-id').value;
 
       if (!locationId) {
-        alert('Please enter your GHL Location ID');
+        showToast('Please enter your GHL Location ID', 'warning');
         return;
       }
 
@@ -9313,15 +9313,15 @@ I noticed {{business_name}} in {{city}} and wanted to reach out..."></textarea>
 
         const data = await response.json();
         if (data.success) {
-          alert('GHL integration settings saved!');
+          showToast('GHL integration settings saved!', 'success');
           document.getElementById('ghl-api-key').value = '';
           document.getElementById('ghl-api-key').placeholder = '••••••••••••••••';
         } else {
-          alert('Failed to save settings: ' + (data.error || 'Unknown error'));
+          showToast('Failed to save: ' + (data.error || 'Unknown error'), 'error');
         }
       } catch (error) {
         console.error('Save GHL settings error:', error);
-        alert('Failed to save settings');
+        showToast('Failed to save settings', 'error');
       }
     }
 
@@ -9344,7 +9344,7 @@ I noticed {{business_name}} in {{city}} and wanted to reach out..."></textarea>
 
         const data = await response.json();
         if (data.success) {
-          alert('Drip sync settings saved!');
+          showToast('Drip sync settings saved!', 'success');
 
           // Show/hide queue card based on drip enabled
           const queueCard = document.getElementById('drip-queue-card');
@@ -9355,11 +9355,11 @@ I noticed {{business_name}} in {{city}} and wanted to reach out..."></textarea>
             queueCard.style.display = 'none';
           }
         } else {
-          alert('Failed to save settings: ' + (data.error || 'Unknown error'));
+          showToast('Failed to save: ' + (data.error || 'Unknown error'), 'error');
         }
       } catch (error) {
         console.error('Save drip settings error:', error);
-        alert('Failed to save settings');
+        showToast('Failed to save settings', 'error');
       }
     }
 
@@ -9637,13 +9637,13 @@ I noticed {{business_name}} in {{city}} and wanted to reach out..."></textarea>
 
         const data = await response.json();
         if (data.success) {
-          alert('Industry pipeline mappings saved!');
+          showToast('Industry pipeline mappings saved!', 'success');
         } else {
-          alert('Failed to save mappings: ' + (data.error || 'Unknown error'));
+          showToast('Failed to save mappings: ' + (data.error || 'Unknown error'), 'error');
         }
       } catch (error) {
         console.error('Save industry mappings error:', error);
-        alert('Failed to save mappings');
+        showToast('Failed to save mappings', 'error');
       }
     }
 
@@ -9874,48 +9874,59 @@ I noticed {{business_name}} in {{city}} and wanted to reach out..."></textarea>
       const listId = document.getElementById('outreach-filter-list')?.value || '';
       const verifiedOnly = document.getElementById('outreach-verified-only')?.checked;
       const excludeRecent = document.getElementById('outreach-exclude-recent')?.checked;
-      const limit = parseInt(document.getElementById('outreach-limit')?.value) || 25;
 
       try {
-        let query = `limit=${limit}`;
-        if (city) query += `&city=${encodeURIComponent(city)}`;
-        if (industry) query += `&industry=${encodeURIComponent(industry)}`;
-        if (verifiedOnly) query += `&emailVerified=true`;
-
-        const response = await fetch(`${API_BASE}/get-leads?${query}`, {
-          headers: { 'Authorization': `Bearer ${authToken}` }
-        });
-        if (response.ok) {
+        // Fetch all leads with emails in batches
+        let allLeads = [];
+        let offset = 0;
+        const batchSize = 200;
+        while (true) {
+          let query = `limit=${batchSize}&offset=${offset}`;
+          if (city) query += `&city=${encodeURIComponent(city)}`;
+          if (industry) query += `&industry=${encodeURIComponent(industry)}`;
+          const response = await fetch(`${API_BASE}/get-leads?${query}`, {
+            headers: { 'Authorization': `Bearer ${authToken}` }
+          });
+          if (!response.ok) break;
           const data = await response.json();
-          let leads = Array.isArray(data.leads) ? data.leads : [];
-
-          if (listId) {
-            try {
-              const listResp = await fetch(`${API_BASE}/lead-list-items?listId=${encodeURIComponent(listId)}`, {
-                headers: { 'Authorization': `Bearer ${authToken}` }
-              });
-              if (listResp.ok) {
-                const listData = await listResp.json();
-                const allowedIds = new Set((listData.items || []).map(item => item.lead_id || item.id));
-                leads = leads.filter(lead => allowedIds.has(lead.id));
-              }
-            } catch (listError) {
-              console.error('Failed to filter outreach count by list:', listError);
-            }
-          }
-
-          if (excludeRecent) {
-            const recentEmails = new Set(
-              sentEmails
-                .filter(email => email.sent_at && (Date.now() - new Date(email.sent_at).getTime()) < (7 * 24 * 60 * 60 * 1000))
-                .map(email => (email.to_email || '').toLowerCase())
-            );
-            leads = leads.filter(lead => !recentEmails.has((lead.email || '').toLowerCase()));
-          }
-
-          const count = Math.min(leads.length || 0, limit);
-          document.getElementById('outreach-recipient-count').textContent = count;
+          allLeads = allLeads.concat(data.leads || []);
+          if (!data.leads || data.leads.length < batchSize) break;
+          offset += batchSize;
         }
+
+        // Filter: must have email
+        let leads = allLeads.filter(l => l.email && l.email.trim());
+
+        // Filter by verified only
+        if (verifiedOnly) {
+          leads = leads.filter(l => l.email_verified);
+        }
+
+        // Filter by list
+        if (listId) {
+          try {
+            const listResp = await fetch(`${API_BASE}/lead-list-items?listId=${encodeURIComponent(listId)}`, {
+              headers: { 'Authorization': `Bearer ${authToken}` }
+            });
+            if (listResp.ok) {
+              const listData = await listResp.json();
+              const allowedIds = new Set((listData.items || []).map(item => item.lead_id || item.id));
+              leads = leads.filter(lead => allowedIds.has(lead.id));
+            }
+          } catch {}
+        }
+
+        // Exclude recently emailed
+        if (excludeRecent) {
+          const recentEmails = new Set(
+            sentEmails
+              .filter(email => email.sent_at && (Date.now() - new Date(email.sent_at).getTime()) < (7 * 24 * 60 * 60 * 1000))
+              .map(email => (email.to_email || '').toLowerCase())
+          );
+          leads = leads.filter(lead => !recentEmails.has((lead.email || '').toLowerCase()));
+        }
+
+        document.getElementById('outreach-recipient-count').textContent = leads.length;
       } catch (error) {
         console.error('Failed to update recipient count:', error);
       }
@@ -10039,7 +10050,7 @@ I noticed {{business_name}} in {{city}} and wanted to reach out..."></textarea>
         .replace(/{{industry}}/gi, sampleLead.industry)
         .replace(/{{address}}/gi, sampleLead.address);
 
-      alert(`Subject: ${previewSubject}\n\n${previewBody}`);
+      showToast('Preview generated — check the subject and body fields above', 'info');
     }
 
     // Render email templates list
@@ -11239,7 +11250,7 @@ I noticed {{business_name}} in {{city}} and wanted to reach out..."></textarea>
         const result = await response.json();
         if (result.success && result.list) {
           const leads = result.leads || [];
-          alert(`List: ${result.list.name}\n${leads.length} leads:\n\n${leads.map(l => `${l.business_name || 'Unknown'} - ${l.phone || 'No phone'} - ${l.email || 'No email'}`).join('\n')}`);
+          showToast(`${result.list.name}: ${leads.length} leads`, 'info');
         }
       } catch (error) {
         showToast('Failed to load list', 'error');
@@ -11402,7 +11413,7 @@ I noticed {{business_name}} in {{city}} and wanted to reach out..."></textarea>
         if (errors.length > 0) {
           console.error('Call errors:', errors);
           const errorSummary = errors.slice(0, 5).map(e => `${e.name || e.phone}: ${typeof e.error === 'object' ? JSON.stringify(e.error) : e.error}`).join('\n');
-          alert(`${failed} calls failed:\n\n${errorSummary}${errors.length > 5 ? `\n\n...and ${errors.length - 5} more` : ''}`);
+          showToast(`${failed} calls failed. Check console for details.`, 'error');
         }
 
         // Final refresh
