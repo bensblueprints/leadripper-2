@@ -184,7 +184,7 @@ exports.handler = async (event) => {
       if (action === 'purchase') {
         const creditAmount = parseInt(body.amount) || 0;
         if (creditAmount <= 0) return { statusCode: 400, headers, body: JSON.stringify({ error: 'Invalid credit amount' }) };
-        const packageNames = { 1000: '$10 - 1,000 Credits', 5000: '$50 - 5,000 Credits', 10000: '$100 - 10,000 Credits', 50000: '$500 - 50,000 Credits' };
+        const packageNames = { 1000: '$10 - 1,000 Credits', 6000: '$50 - 6,000 Credits (+20%)', 13000: '$100 - 13,000 Credits (+30%)', 75000: '$500 - 75,000 Credits (+50%)', 165000: '$1,000 - 165,000 Credits (+65%)' };
         const result = await addCredits(userId, creditAmount, 'purchase', packageNames[creditAmount] || `Purchased ${creditAmount} credits`);
         return { statusCode: 200, headers, body: JSON.stringify({ success: true, ...result, message: `Added ${creditAmount} credits` }) };
       }
