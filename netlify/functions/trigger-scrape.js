@@ -1,5 +1,6 @@
 const { Pool } = require('pg');
 const jwt = require('jsonwebtoken');
+const { spendCredits, getBalance, CREDIT_COSTS } = require('./credits');
 
 const pool = new Pool({
   connectionString: process.env.DATABASE_URL || "postgresql://neondb_owner:npg_sK7M4EbyDBiz@ep-aged-river-ah63sktg-pooler.c-3.us-east-1.aws.neon.tech/neondb?sslmode=require",
@@ -311,6 +312,25 @@ exports.handler = async (event, context) => {
       };
     }
 
+    // Check credits before scraping
+    const estimatedLeadsPerCity = Math.min(maxResults || 50, 20);
+    const estimatedCost = citiesToScrape.length * estimatedLeadsPerCity * CREDIT_COSTS.scrape;
+    const creditBalance = await getBalance(decoded.userId);
+
+    if (creditBalance.balance < estimatedCost) {
+      return {
+        statusCode: 402,
+        headers,
+        body: JSON.stringify({
+          error: 'Insufficient credits',
+          balance: creditBalance.balance,
+          required: estimatedCost,
+          estimatedLeads: citiesToScrape.length * estimatedLeadsPerCity,
+          message: `Estimated cost: ${estimatedCost} credits ($${(estimatedCost * 0.01).toFixed(2)}) for ${citiesToScrape.length} cities × ~${estimatedLeadsPerCity} leads × ${CREDIT_COSTS.scrape} credits/lead. You have ${creditBalance.balance} credits ($${(creditBalance.balance * 0.01).toFixed(2)}).`
+        })
+      };
+    }
+
     // Scrape directly using Google Places API
     let totalLeadsGenerated = 0;
     let usedRealScraping = false;
@@ -369,6 +389,16 @@ exports.handler = async (event, context) => {
         `UPDATE lr_users SET leads_used = leads_used + $1, updated_at = NOW() WHERE id = $2`,
         [totalLeadsGenerated, decoded.userId]
       );
+
+      // Spend credits for actual leads scraped
+      if (totalLeadsGenerated > 0) {
+        const actualCost = totalLeadsGenerated * CREDIT_COSTS.scrape;
+        await spendCredits(
+          decoded.userId, actualCost, 'scrape',
+          `Scraped ${totalLeadsGenerated} leads from ${citiesToScrape.length} cities (${industry})`,
+          `job_${Date.now()}`
+        ).catch(err => console.error('Credit spend error (non-blocking):', err.message));
+      }
     }
 
     return {
@@ -383,6 +413,7 @@ exports.handler = async (event, context) => {
         citiesSkipped: cities.length - citiesToScrape.length,
         cities: citiesToScrape,
         leadsGenerated: totalLeadsGenerated,
+        creditsUsed: totalLeadsGenerated * CREDIT_COSTS.scrape,
         realData: usedRealScraping,
         jobId: `job_${Date.now()}`
       })
