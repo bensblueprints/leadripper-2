@@ -16,7 +16,7 @@ const CREDIT_COSTS = {
   scrape: 25, place_details: 3,
   email_scrape: 1, email_validate: 2,  // email scrape free on all plans, validation costs 2
   website_score: 8, website_rebuild: 30,
-  ai_call_per_min: 48, sms: 3, email_send: 1, pdf_report: 8
+  ai_call_per_min: 4, softphone_per_min: 4, sms: 3, email_send: 1, pdf_report: 8
 };
 
 // Monthly credit grants by plan
