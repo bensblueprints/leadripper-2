@@ -6,25 +6,47 @@
   <title>LeadRipper | Industrial Lead Generation Platform</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&family=Bebas+Neue&family=IBM+Plex+Sans:wght@300;400;600&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=DM+Sans:wght@400;500;700&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
 
   <style>
     :root {
-      --bg: #0a0a0a;
-      --surface: #121212;
-      --surface-elevated: #1a1a1a;
-      --border: #222;
-      --border-bright: #333;
-      --text: #ffffff;
-      --text-dim: #888;
-      --text-dimmer: #555;
+      --bg: #0a0a0f;
+      --surface: #111118;
+      --surface-elevated: #1a1a24;
+      --border: #252530;
+      --border-bright: #35354a;
+      --text: #f0f0f5;
+      --text-dim: #8888a0;
+      --text-dimmer: #55556a;
       --accent: #ff3e00;
-      --accent-glow: rgba(255, 62, 0, 0.3);
-      --green: #00ff41;
-      --green-dim: #00cc33;
-      --red: #ff0033;
-      --yellow: #ffcc00;
-      --grid: #151515;
+      --accent-glow: rgba(255, 62, 0, 0.25);
+      --green: #10B981;
+      --green-dim: #059669;
+      --red: #EF4444;
+      --yellow: #F59E0B;
+      --grid: #14141c;
+
+      /* Module accent colors */
+      --mod-lead: #3B82F6;
+      --mod-lead-glow: rgba(59, 130, 246, 0.15);
+      --mod-lead-dim: #2563EB;
+      --mod-email: #10B981;
+      --mod-email-glow: rgba(16, 185, 129, 0.15);
+      --mod-email-dim: #059669;
+      --mod-sales: #8B5CF6;
+      --mod-sales-glow: rgba(139, 92, 246, 0.15);
+      --mod-sales-dim: #7C3AED;
+      --mod-web: #06B6D4;
+      --mod-web-glow: rgba(6, 182, 212, 0.15);
+      --mod-web-dim: #0891B2;
+      --mod-pipeline: #F59E0B;
+      --mod-pipeline-glow: rgba(245, 158, 11, 0.15);
+      --mod-pipeline-dim: #D97706;
+      --mod-workflow: #EC4899;
+      --mod-workflow-glow: rgba(236, 72, 153, 0.15);
+      --mod-workflow-dim: #DB2777;
+      --mod-validate: #10B981;
+      --mod-validate-glow: rgba(16, 185, 129, 0.15);
     }
 
     * {
@@ -34,7 +56,7 @@
     }
 
     body {
-      font-family: 'IBM Plex Sans', -apple-system, sans-serif;
+      font-family: 'DM Sans', -apple-system, sans-serif;
       background: var(--bg);
       color: var(--text);
       line-height: 1.6;
@@ -58,7 +80,7 @@
       pointer-events: none;
     }
 
-    /* Scanline effect */
+    /* Subtle noise texture (premium feel, replaces scanline CRT) */
     body::after {
       content: '';
       position: fixed;
@@ -66,16 +88,10 @@
       left: 0;
       width: 100%;
       height: 100%;
-      background: repeating-linear-gradient(
-        0deg,
-        rgba(0, 0, 0, 0.1),
-        rgba(0, 0, 0, 0.1) 1px,
-        transparent 1px,
-        transparent 2px
-      );
+      opacity: 0.015;
       pointer-events: none;
       z-index: 1000;
-      mix-blend-mode: overlay;
+      background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
     }
 
     .mono {
@@ -84,9 +100,10 @@
     }
 
     .display {
-      font-family: 'Bebas Neue', sans-serif;
-      letter-spacing: 0.05em;
+      font-family: 'Space Grotesk', sans-serif;
+      letter-spacing: 0.02em;
       text-transform: uppercase;
+      font-weight: 700;
     }
 
     /* Auth Screen */
@@ -884,6 +901,15 @@
       border-top: 1px solid var(--border);
     }
 
+    /* Module color dots in nav */
+    .nav-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      flex-shrink: 0;
+    }
+    .nav-item.active .nav-dot { box-shadow: 0 0 8px currentColor; }
+
     .main-content {
       margin-left: 280px;
       min-height: 100vh;
@@ -893,6 +919,169 @@
 
     .header {
       margin-bottom: 3rem;
+    }
+
+    /* ─── Module Section Branding ─── */
+    .module-header {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+      margin-bottom: 0.5rem;
+    }
+
+    .module-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      padding: 0.35rem 0.85rem;
+      border-radius: 6px;
+      font-family: 'Space Grotesk', sans-serif;
+      font-size: 0.7rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+    }
+
+    .module-badge.lead { background: var(--mod-lead-glow); color: var(--mod-lead); border: 1px solid rgba(59,130,246,0.25); }
+    .module-badge.email { background: var(--mod-email-glow); color: var(--mod-email); border: 1px solid rgba(16,185,129,0.25); }
+    .module-badge.sales { background: var(--mod-sales-glow); color: var(--mod-sales); border: 1px solid rgba(139,92,246,0.25); }
+    .module-badge.web { background: var(--mod-web-glow); color: var(--mod-web); border: 1px solid rgba(6,182,212,0.25); }
+    .module-badge.pipeline { background: var(--mod-pipeline-glow); color: var(--mod-pipeline); border: 1px solid rgba(245,158,11,0.25); }
+    .module-badge.workflow { background: var(--mod-workflow-glow); color: var(--mod-workflow); border: 1px solid rgba(236,72,153,0.25); }
+
+    .module-credit-cost {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.35rem;
+      padding: 0.25rem 0.6rem;
+      background: rgba(255,255,255,0.04);
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.65rem;
+      color: var(--text-dim);
+    }
+
+    .module-credit-cost .cost-value { color: var(--yellow); font-weight: 700; }
+
+    /* Module section accent bars */
+    .section[data-module="lead"] .page-title { color: var(--mod-lead); }
+    .section[data-module="email"] .page-title { color: var(--mod-email); }
+    .section[data-module="sales"] .page-title { color: var(--mod-sales); }
+    .section[data-module="web"] .page-title { color: var(--mod-web); }
+    .section[data-module="pipeline"] .page-title { color: var(--mod-pipeline); }
+    .section[data-module="workflow"] .page-title { color: var(--mod-workflow); }
+
+    .section[data-module] .card {
+      border-top: 2px solid transparent;
+    }
+    .section[data-module="lead"] .card { border-top-color: rgba(59,130,246,0.2); }
+    .section[data-module="email"] .card { border-top-color: rgba(16,185,129,0.2); }
+    .section[data-module="sales"] .card { border-top-color: rgba(139,92,246,0.2); }
+    .section[data-module="web"] .card { border-top-color: rgba(6,182,212,0.2); }
+    .section[data-module="pipeline"] .card { border-top-color: rgba(245,158,11,0.2); }
+    .section[data-module="workflow"] .card { border-top-color: rgba(236,72,153,0.2); }
+
+    .section[data-module] .stat-card {
+      border-left: 3px solid transparent;
+    }
+    .section[data-module="lead"] .stat-card { border-left-color: var(--mod-lead); }
+    .section[data-module="email"] .stat-card { border-left-color: var(--mod-email); }
+    .section[data-module="sales"] .stat-card { border-left-color: var(--mod-sales); }
+    .section[data-module="web"] .stat-card { border-left-color: var(--mod-web); }
+    .section[data-module="pipeline"] .stat-card { border-left-color: var(--mod-pipeline); }
+    .section[data-module="workflow"] .stat-card { border-left-color: var(--mod-workflow); }
+
+    /* Bento Grid for Dashboard product overview */
+    .bento-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 1rem;
+      margin-bottom: 2rem;
+    }
+
+    .bento-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 1.5rem;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .bento-card::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 3px;
+      border-radius: 12px 12px 0 0;
+    }
+
+    .bento-card:hover {
+      border-color: var(--border-bright);
+      transform: translateY(-2px);
+      box-shadow: 0 8px 24px rgba(0,0,0,0.3);
+    }
+
+    .bento-card.mod-lead::before { background: var(--mod-lead); }
+    .bento-card.mod-email::before { background: var(--mod-email); }
+    .bento-card.mod-sales::before { background: var(--mod-sales); }
+    .bento-card.mod-web::before { background: var(--mod-web); }
+    .bento-card.mod-pipeline::before { background: var(--mod-pipeline); }
+    .bento-card.mod-workflow::before { background: var(--mod-workflow); }
+
+    .bento-card:hover.mod-lead { border-color: rgba(59,130,246,0.4); box-shadow: 0 8px 24px var(--mod-lead-glow); }
+    .bento-card:hover.mod-email { border-color: rgba(16,185,129,0.4); box-shadow: 0 8px 24px var(--mod-email-glow); }
+    .bento-card:hover.mod-sales { border-color: rgba(139,92,246,0.4); box-shadow: 0 8px 24px var(--mod-sales-glow); }
+    .bento-card:hover.mod-web { border-color: rgba(6,182,212,0.4); box-shadow: 0 8px 24px var(--mod-web-glow); }
+    .bento-card:hover.mod-pipeline { border-color: rgba(245,158,11,0.4); box-shadow: 0 8px 24px var(--mod-pipeline-glow); }
+    .bento-card:hover.mod-workflow { border-color: rgba(236,72,153,0.4); box-shadow: 0 8px 24px var(--mod-workflow-glow); }
+
+    .bento-title {
+      font-family: 'Space Grotesk', sans-serif;
+      font-weight: 600;
+      font-size: 1rem;
+      margin-bottom: 0.25rem;
+    }
+
+    .bento-card.mod-lead .bento-title { color: var(--mod-lead); }
+    .bento-card.mod-email .bento-title { color: var(--mod-email); }
+    .bento-card.mod-sales .bento-title { color: var(--mod-sales); }
+    .bento-card.mod-web .bento-title { color: var(--mod-web); }
+    .bento-card.mod-pipeline .bento-title { color: var(--mod-pipeline); }
+    .bento-card.mod-workflow .bento-title { color: var(--mod-workflow); }
+
+    .bento-desc {
+      font-size: 0.8rem;
+      color: var(--text-dim);
+      margin-bottom: 1rem;
+    }
+
+    .bento-stat {
+      font-family: 'Space Grotesk', sans-serif;
+      font-size: 1.5rem;
+      font-weight: 700;
+      color: var(--text);
+    }
+
+    .bento-meta {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-top: 0.75rem;
+    }
+
+    .bento-cost {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.65rem;
+      color: var(--text-dimmer);
+      padding: 0.2rem 0.5rem;
+      background: rgba(255,255,255,0.03);
+      border-radius: 3px;
     }
 
     .header-top {
@@ -2311,7 +2500,7 @@
     <aside class="sidebar">
       <div class="sidebar-header">
         <div style="display: flex; align-items: center; justify-content: space-between;">
-          <div class="sidebar-logo mono display">LEADRIPPER</div>
+          <div class="sidebar-logo display" style="font-family:'Space Grotesk',sans-serif;font-size:1.4rem;letter-spacing:0.03em;">LEAD<span style="color:var(--accent);">RIPPER</span></div>
           <button class="sp-toggle-btn" onclick="toggleSoftphone()" title="Softphone">
             📞
             <div class="sp-badge" id="sp-incoming-badge"></div>
@@ -2327,59 +2516,69 @@
 
       <nav class="sidebar-nav">
         <div class="nav-item active" data-section="dashboard">
-          <span class="nav-icon">📊</span>
+          <span class="nav-dot" style="background:var(--accent);"></span>
           <span>Dashboard</span>
         </div>
+
+        <div style="padding:0.5rem 1.5rem 0.25rem;font-size:0.6rem;text-transform:uppercase;letter-spacing:0.15em;color:var(--text-dimmer);font-family:'Space Grotesk',sans-serif;font-weight:600;">Data</div>
         <div class="nav-item" data-section="scrape">
-          <span class="nav-icon">🔍</span>
-          <span>Scrape Leads</span>
+          <span class="nav-dot" style="background:var(--mod-lead);"></span>
+          <span>LeadEngine</span>
         </div>
         <div class="nav-item" data-section="leads">
-          <span class="nav-icon">📋</span>
+          <span class="nav-dot" style="background:var(--mod-lead);"></span>
           <span>My Leads</span>
         </div>
-        <div class="nav-item" data-section="email-validation">
-          <span class="nav-icon">✉️</span>
-          <span>Email Validation</span>
-        </div>
-        <div class="nav-item" data-section="pipeline">
-          <span class="nav-icon">📈</span>
-          <span>Pipeline Board</span>
-        </div>
+
+        <div style="padding:0.5rem 1.5rem 0.25rem;font-size:0.6rem;text-transform:uppercase;letter-spacing:0.15em;color:var(--text-dimmer);font-family:'Space Grotesk',sans-serif;font-weight:600;">Outreach</div>
         <div class="nav-item nav-parent" data-section="email-outreach">
-          <span class="nav-icon">🚀</span>
-          <span>Email Ripper</span>
-          <span class="nav-arrow" id="email-ripper-arrow">▸</span>
+          <span class="nav-dot" style="background:var(--mod-email);"></span>
+          <span>EmailRipper</span>
+          <span class="nav-arrow" id="email-ripper-arrow">&#9656;</span>
         </div>
         <div class="nav-sub-items" id="email-ripper-submenu" style="display:none;">
           <div class="nav-item nav-sub-item active-sub" data-section="email-outreach" data-subtab="campaigns">
-            <span>📨 Campaigns</span>
+            <span>Campaigns</span>
           </div>
           <div class="nav-item nav-sub-item" data-section="email-outreach" data-subtab="accounts">
-            <span>📧 Email Accounts</span>
+            <span>Accounts</span>
           </div>
           <div class="nav-item nav-sub-item" data-section="email-outreach" data-subtab="templates">
-            <span>📝 Templates</span>
+            <span>Templates</span>
           </div>
         </div>
+        <div class="nav-item" data-section="email-validation">
+          <span class="nav-dot" style="background:var(--mod-email);"></span>
+          <span>Email Validation</span>
+        </div>
+
+        <div style="padding:0.5rem 1.5rem 0.25rem;font-size:0.6rem;text-transform:uppercase;letter-spacing:0.15em;color:var(--text-dimmer);font-family:'Space Grotesk',sans-serif;font-weight:600;">AI Tools</div>
         <div class="nav-item" data-section="ai-calling">
-          <span class="nav-icon">🤖</span>
-          <span>Sales Ripper AI</span>
+          <span class="nav-dot" style="background:var(--mod-sales);"></span>
+          <span>SalesRipper AI</span>
         </div>
         <div class="nav-item" data-section="web-ripper">
-          <span class="nav-icon">🌐</span>
-          <span>Web Ripper AI</span>
+          <span class="nav-dot" style="background:var(--mod-web);"></span>
+          <span>WebRipper AI</span>
+        </div>
+
+        <div style="padding:0.5rem 1.5rem 0.25rem;font-size:0.6rem;text-transform:uppercase;letter-spacing:0.15em;color:var(--text-dimmer);font-family:'Space Grotesk',sans-serif;font-weight:600;">Manage</div>
+        <div class="nav-item" data-section="pipeline">
+          <span class="nav-dot" style="background:var(--mod-pipeline);"></span>
+          <span>Pipeline</span>
         </div>
         <div class="nav-item" data-section="workflows">
-          <span class="nav-icon">⚡</span>
+          <span class="nav-dot" style="background:var(--mod-workflow);"></span>
           <span>Workflows</span>
         </div>
+
+        <div style="padding:0.5rem 1.5rem 0.25rem;font-size:0.6rem;text-transform:uppercase;letter-spacing:0.15em;color:var(--text-dimmer);font-family:'Space Grotesk',sans-serif;font-weight:600;">Account</div>
         <div class="nav-item" data-section="subscription">
-          <span class="nav-icon">💳</span>
+          <span class="nav-dot" style="background:var(--yellow);"></span>
           <span>Subscription</span>
         </div>
         <div class="nav-item" data-section="settings">
-          <span class="nav-icon">⚙️</span>
+          <span class="nav-dot" style="background:var(--text-dim);"></span>
           <span>Settings</span>
         </div>
       </nav>
@@ -2398,59 +2597,117 @@
         <div class="header">
           <div class="header-top">
             <div>
-              <h1 class="page-title display">DASHBOARD</h1>
-              <p class="page-subtitle mono">System Overview</p>
+              <h1 class="page-title display" style="font-size:1.8rem;">Command Center</h1>
+              <p class="page-subtitle" style="font-family:'DM Sans',sans-serif;color:var(--text-dim);">Your outbound sales operating system</p>
             </div>
-            <div class="header-actions">
-              <button class="btn-secondary" onclick="window.location.reload()">↻ Refresh</button>
+            <div class="header-actions" style="display:flex;gap:0.75rem;align-items:center;">
+              <div style="cursor:pointer;padding:0.5rem 1rem;background:var(--surface);border:1px solid var(--border);border-radius:8px;display:flex;align-items:center;gap:0.5rem;" onclick="showSection('settings');setTimeout(()=>document.getElementById('credits-section-card')?.scrollIntoView({behavior:'smooth'}),200)">
+                <span style="font-size:0.7rem;color:var(--text-dim);font-family:'Space Grotesk',sans-serif;">CREDITS</span>
+                <span style="font-family:'JetBrains Mono',monospace;font-weight:700;font-size:1.1rem;color:var(--green);" id="stat-credits">--</span>
+              </div>
+              <div style="padding:0.5rem 1rem;background:var(--surface);border:1px solid var(--border);border-radius:8px;display:flex;align-items:center;gap:0.5rem;">
+                <span style="font-size:0.7rem;color:var(--text-dim);font-family:'Space Grotesk',sans-serif;">PLAN</span>
+                <span style="font-family:'Space Grotesk',sans-serif;font-weight:600;font-size:0.9rem;color:var(--yellow);" id="stat-plan">FREE</span>
+              </div>
             </div>
           </div>
         </div>
 
-        <div class="stats-grid">
-          <div class="stat-card">
-            <div class="stat-label mono">Total Leads</div>
+        <!-- Overview Stats -->
+        <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:1rem;margin-bottom:2rem;">
+          <div class="stat-card" style="border-left:3px solid var(--mod-lead);">
+            <div class="stat-label" style="font-family:'DM Sans',sans-serif;">Total Leads</div>
             <div class="stat-value mono" id="stat-total-leads">0</div>
-            <div class="stat-change mono">+0 this month</div>
           </div>
-          <div class="stat-card">
-            <div class="stat-label mono">Leads Used</div>
+          <div class="stat-card" style="border-left:3px solid var(--mod-lead);">
+            <div class="stat-label" style="font-family:'DM Sans',sans-serif;">Leads Used</div>
             <div class="stat-value mono" id="stat-leads-used">0</div>
-            <div class="stat-change mono" id="stat-leads-limit">/ 50 limit</div>
+            <div class="stat-change mono" id="stat-leads-limit" style="font-size:0.7rem;">/ 50 limit</div>
           </div>
-          <div class="stat-card">
-            <div class="stat-label mono">Current Plan</div>
-            <div class="stat-value mono" id="stat-plan">FREE</div>
-            <div class="stat-change mono">50 leads included</div>
-          </div>
-          <div class="stat-card">
-            <div class="stat-label mono">Cities Scraped</div>
+          <div class="stat-card" style="border-left:3px solid var(--mod-lead);">
+            <div class="stat-label" style="font-family:'DM Sans',sans-serif;">Cities Scraped</div>
             <div class="stat-value mono" id="stat-cities">0</div>
-            <div class="stat-change mono">Unique locations</div>
           </div>
-          <div class="stat-card" style="cursor:pointer;" onclick="showSection('settings');setTimeout(()=>document.getElementById('credits-section-card')?.scrollIntoView({behavior:'smooth'}),200)">
-            <div class="stat-label mono">Credit Balance</div>
-            <div class="stat-value mono" id="stat-credits" style="color: var(--green);">--</div>
-            <div class="stat-change mono" id="stat-credits-lifetime">0 lifetime</div>
+          <div class="stat-card" style="border-left:3px solid var(--green);cursor:pointer;" onclick="showSection('settings');setTimeout(()=>document.getElementById('credits-section-card')?.scrollIntoView({behavior:'smooth'}),200)">
+            <div class="stat-label" style="font-family:'DM Sans',sans-serif;">Lifetime Credits</div>
+            <div class="stat-value mono" id="stat-credits-lifetime" style="color:var(--text-dim);">0</div>
           </div>
         </div>
 
-        <div class="card">
-          <div class="card-header">
-            <h2 class="card-title display">Quick Actions</h2>
+        <!-- Product Suite - Bento Grid -->
+        <h2 class="display" style="font-size:1.1rem;margin-bottom:1rem;color:var(--text-dim);">Your Product Suite</h2>
+        <div class="bento-grid">
+          <div class="bento-card mod-lead" onclick="showSection('scrape')">
+            <div class="bento-title">LeadEngine</div>
+            <div class="bento-desc">Scrape business data from Google Maps. Names, phones, emails, websites, ratings.</div>
+            <div class="bento-stat" id="dash-lead-count">0 <span style="font-size:0.8rem;font-weight:400;color:var(--text-dim);">leads</span></div>
+            <div class="bento-meta">
+              <span class="bento-cost">25 credits / lead</span>
+              <span style="font-size:0.75rem;color:var(--mod-lead);">Open &rarr;</span>
+            </div>
           </div>
-          <div class="form-row">
-            <button class="btn" onclick="showSection('scrape')">🔍 Start Scraping</button>
-            <button class="btn-secondary" onclick="showSection('subscription')">💳 Upgrade Plan</button>
+
+          <div class="bento-card mod-email" onclick="showSection('email-outreach')">
+            <div class="bento-title">EmailRipper</div>
+            <div class="bento-desc">Cold email sequences with A/B testing, tracking, warmup & deliverability.</div>
+            <div class="bento-stat" id="dash-email-sent">0 <span style="font-size:0.8rem;font-weight:400;color:var(--text-dim);">sent</span></div>
+            <div class="bento-meta">
+              <span class="bento-cost">1 credit / email</span>
+              <span style="font-size:0.75rem;color:var(--mod-email);">Open &rarr;</span>
+            </div>
+          </div>
+
+          <div class="bento-card mod-sales" onclick="showSection('ai-calling')">
+            <div class="bento-title">SalesRipper AI</div>
+            <div class="bento-desc">AI voice agents powered by ElevenLabs + Twilio. Outbound at scale.</div>
+            <div class="bento-stat" id="dash-calls">0 <span style="font-size:0.8rem;font-weight:400;color:var(--text-dim);">calls</span></div>
+            <div class="bento-meta">
+              <span class="bento-cost">4 credits / min</span>
+              <span style="font-size:0.75rem;color:var(--mod-sales);">Open &rarr;</span>
+            </div>
+          </div>
+
+          <div class="bento-card mod-web" onclick="showSection('web-ripper')">
+            <div class="bento-title">WebRipper AI</div>
+            <div class="bento-desc">Score websites, rebuild with AI, deploy to Netlify. Sell the upgrade.</div>
+            <div class="bento-stat" id="dash-sites">0 <span style="font-size:0.8rem;font-weight:400;color:var(--text-dim);">scored</span></div>
+            <div class="bento-meta">
+              <span class="bento-cost">8-30 credits / site</span>
+              <span style="font-size:0.75rem;color:var(--mod-web);">Open &rarr;</span>
+            </div>
+          </div>
+
+          <div class="bento-card mod-pipeline" onclick="showSection('pipeline')">
+            <div class="bento-title">Pipeline</div>
+            <div class="bento-desc">Kanban CRM board. Track deals from lead to close with drag-and-drop.</div>
+            <div class="bento-stat" id="dash-deals">0 <span style="font-size:0.8rem;font-weight:400;color:var(--text-dim);">deals</span></div>
+            <div class="bento-meta">
+              <span class="bento-cost">Free</span>
+              <span style="font-size:0.75rem;color:var(--mod-pipeline);">Open &rarr;</span>
+            </div>
+          </div>
+
+          <div class="bento-card mod-workflow" onclick="showSection('workflows')">
+            <div class="bento-title">Workflows</div>
+            <div class="bento-desc">Visual automation builder. Triggers, actions, conditions, delays.</div>
+            <div class="bento-stat" id="dash-workflows">0 <span style="font-size:0.8rem;font-weight:400;color:var(--text-dim);">active</span></div>
+            <div class="bento-meta">
+              <span class="bento-cost">Per action cost</span>
+              <span style="font-size:0.75rem;color:var(--mod-workflow);">Open &rarr;</span>
+            </div>
           </div>
         </div>
       </section>
 
       <!-- Scrape Section -->
-      <section id="scrape-section" class="section">
+      <section id="scrape-section" class="section" data-module="lead">
         <div class="header">
-          <h1 class="page-title display">SCRAPE LEADS</h1>
-          <p class="page-subtitle mono">Extract leads from any market</p>
+          <div class="module-header">
+            <h1 class="page-title display">LeadEngine</h1>
+            <span class="module-badge lead">Data Extraction</span>
+            <span class="module-credit-cost">Cost: <span class="cost-value">25</span> credits / lead</span>
+          </div>
+          <p class="page-subtitle" style="font-family:'DM Sans',sans-serif;color:var(--text-dim);">Extract real business data from Google Maps</p>
         </div>
 
         <div class="card">
@@ -2512,12 +2769,15 @@
       </section>
 
       <!-- Leads Section -->
-      <section id="leads-section" class="section">
+      <section id="leads-section" class="section" data-module="lead">
         <div class="header">
           <div class="header-top">
             <div>
-              <h1 class="page-title display">MY LEADS</h1>
-              <p class="page-subtitle mono">Extracted business data</p>
+              <div class="module-header">
+                <h1 class="page-title display">My Leads</h1>
+                <span class="module-badge lead">LeadEngine</span>
+              </div>
+              <p class="page-subtitle" style="font-family:'DM Sans',sans-serif;color:var(--text-dim);">Manage your extracted business data</p>
             </div>
             <div class="header-actions">
               <button class="btn" onclick="addNoEmailToCallList()" style="background: var(--accent); font-size: 0.85rem;">📞 Add No-Email Leads to Call List</button>
@@ -2766,9 +3026,9 @@
       </section>
 
       <!-- Email Validation Section -->
-      <section id="email-validation-section" class="section">
+      <section id="email-validation-section" class="section" data-module="email">
         <div class="header">
-          <h1 class="page-title display">EMAIL TOOLS</h1>
+          <div class="module-header"><h1 class="page-title display">Email Validation</h1><span class="module-badge email">EmailRipper Suite</span><span class="module-credit-cost">Cost: <span class="cost-value">2</span> credits / validate</span></div>
           <p class="page-subtitle mono">Discover missing emails & validate existing ones with StartupHub.ai</p>
         </div>
 
@@ -3556,12 +3816,12 @@
       </section>
 
       <!-- Pipeline Board Section (CRM Only) -->
-      <section id="pipeline-section" class="section">
+      <section id="pipeline-section" class="section" data-module="pipeline">
         <div class="header">
           <div class="header-top">
             <div>
-              <h1 class="page-title display">PIPELINE BOARD</h1>
-              <p class="page-subtitle mono">Manage your deals with drag-and-drop</p>
+              <div class="module-header"><h1 class="page-title display">Pipeline</h1><span class="module-badge pipeline">Deal Management</span><span class="module-credit-cost"><span class="cost-value">Free</span></span></div>
+              <p class="page-subtitle" style="font-family:'DM Sans',sans-serif;color:var(--text-dim);">Kanban CRM board with drag-and-drop</p>
             </div>
             <div class="header-actions">
               <button class="btn" onclick="openNewDealModal()">+ New Deal</button>
@@ -3607,12 +3867,12 @@
       </section>
 
       <!-- Email Outreach Section -->
-      <section id="email-outreach-section" class="section">
+      <section id="email-outreach-section" class="section" data-module="email">
         <div class="header">
           <div class="header-top">
             <div>
-              <h1 class="page-title display">EMAIL RIPPER</h1>
-              <p class="page-subtitle mono">Cold email outreach engine</p>
+              <div class="module-header"><h1 class="page-title display">EmailRipper</h1><span class="module-badge email">Cold Outreach Engine</span><span class="module-credit-cost">Cost: <span class="cost-value">1</span> credit / email</span></div>
+              <p class="page-subtitle" style="font-family:'DM Sans',sans-serif;color:var(--text-dim);">Multi-step sequences with tracking, warmup & deliverability</p>
             </div>
             <div class="header-actions">
               <button class="btn" onclick="openNewTemplateModal()">+ New Template</button>
@@ -4117,12 +4377,12 @@ I noticed {{business_name}} in {{city}} and wanted to reach out..."></textarea>
       </section>
 
       <!-- AI Calling Section (CRM Only) -->
-      <section id="ai-calling-section" class="section">
+      <section id="ai-calling-section" class="section" data-module="sales">
         <div class="header">
           <div class="header-top">
             <div>
-              <h1 class="page-title display">SALES RIPPER AI</h1>
-              <p class="page-subtitle mono">AI-powered outbound sales calling</p>
+              <div class="module-header"><h1 class="page-title display">SalesRipper AI</h1><span class="module-badge sales">AI Voice Sales</span><span class="module-credit-cost">Cost: <span class="cost-value">4</span> credits / min</span></div>
+              <p class="page-subtitle" style="font-family:'DM Sans',sans-serif;color:var(--text-dim);">ElevenLabs voice agents + Twilio outbound calling</p>
             </div>
             <div class="header-actions">
               <button class="btn" onclick="openNewAgentModal()">+ New Agent</button>
@@ -4213,12 +4473,12 @@ I noticed {{business_name}} in {{city}} and wanted to reach out..."></textarea>
       </section>
 
       <!-- Web Ripper AI Section -->
-      <section id="web-ripper-section" class="section">
+      <section id="web-ripper-section" class="section" data-module="web">
         <div class="header">
           <div class="header-top">
             <div>
-              <h1 class="page-title display">WEB RIPPER AI</h1>
-              <p class="page-subtitle mono">AI-powered website rebuilding for your leads</p>
+              <div class="module-header"><h1 class="page-title display">WebRipper AI</h1><span class="module-badge web">Website Intelligence</span><span class="module-credit-cost">Score: <span class="cost-value">8</span> | Rebuild: <span class="cost-value">30</span> credits</span></div>
+              <p class="page-subtitle" style="font-family:'DM Sans',sans-serif;color:var(--text-dim);">Score websites, rebuild with AI, deploy to Netlify</p>
             </div>
             <div class="header-actions">
               <button class="btn" onclick="loadWebRipperLeads()">🔄 Refresh</button>
@@ -4291,12 +4551,12 @@ I noticed {{business_name}} in {{city}} and wanted to reach out..."></textarea>
       </section>
 
       <!-- Workflows Section -->
-      <section id="workflows-section" class="section">
+      <section id="workflows-section" class="section" data-module="workflow">
         <div class="header">
           <div class="header-top">
             <div>
-              <h1 class="page-title display">WORKFLOWS</h1>
-              <p class="page-subtitle mono">Visual automation builder</p>
+              <div class="module-header"><h1 class="page-title display">Workflows</h1><span class="module-badge workflow">Automation Engine</span><span class="module-credit-cost">Per action credit cost</span></div>
+              <p class="page-subtitle" style="font-family:'DM Sans',sans-serif;color:var(--text-dim);">Visual drag-and-drop automation builder</p>
             </div>
             <div class="header-actions">
               <button class="btn" onclick="openWorkflowBuilder()">+ New Workflow</button>
