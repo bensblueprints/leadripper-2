@@ -11,8 +11,8 @@ const JWT_SECRET = process.env.JWT_SECRET || 'leadripper-secret-key-2026';
 // Credit costs per action
 /* eslint-disable */
 // @formatter:off
-const CREDIT_COSTS = { scrape: 1, place_details: 1, email_scrape: 1, email_validate: 1, website_score: 2, website_rebuild: 10, ai_call: 5, sms: 1, email_send: 1, pdf_report: 2 };
-const PLAN_CREDITS = { free: 50, starter: 1000, pro: 1000, growth: 1000, paid: 1000, unlimited: 10000 };
+const CREDIT_COSTS = { scrape: 25, place_details: 3, email_scrape: 1, email_validate: 1, website_score: 8, website_rebuild: 30, ai_call: 150, sms: 3, email_send: 1, pdf_report: 8 };
+const PLAN_CREDITS = { free: 500, starter: 5000, pro: 10000, growth: 10000, paid: 10000, unlimited: 50000 };
 // @formatter:on
 /* eslint-enable */
 
