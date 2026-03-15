@@ -1,5 +1,6 @@
 const { Pool } = require('pg');
 const jwt = require('jsonwebtoken');
+const { getBalance, CREDIT_COSTS, PLAN_CREDITS } = require('./credits');
 
 const pool = new Pool({
   connectionString: process.env.DATABASE_URL || "postgresql://neondb_owner:npg_sK7M4EbyDBiz@ep-aged-river-ah63sktg-pooler.c-3.us-east-1.aws.neon.tech/neondb?sslmode=require",
@@ -54,6 +55,12 @@ exports.handler = async (event, context) => {
       [decoded.userId]
     );
 
+    // Get credits (works regardless of settings row existence)
+    let creditData = { balance: 0, lifetime_credits: 0 };
+    try {
+      creditData = await getBalance(decoded.userId);
+    } catch {}
+
     if (result.rows.length === 0) {
       return {
         statusCode: 200,
@@ -71,7 +78,11 @@ exports.handler = async (event, context) => {
           calendarTimezone: null, calendarWorkingHours: null,
           twilioAccountSid: null, twilioPhoneNumber: null, hasTwilioCredentials: false,
           netlifyToken: null, githubToken: null, githubUsername: null,
-          hasNetlifyToken: false, hasGithubToken: false
+          hasNetlifyToken: false, hasGithubToken: false,
+          creditBalance: creditData.balance,
+          lifetimeCredits: creditData.lifetime_credits,
+          creditCosts: CREDIT_COSTS,
+          planCredits: PLAN_CREDITS
         })
       };
     }
@@ -122,7 +133,11 @@ exports.handler = async (event, context) => {
         githubToken: settings.github_token ? settings.github_token.slice(0, 6) + '····' + settings.github_token.slice(-4) : null,
         githubUsername: settings.github_username || null,
         hasNetlifyToken: !!settings.netlify_token,
-        hasGithubToken: !!settings.github_token
+        hasGithubToken: !!settings.github_token,
+        creditBalance: creditData.balance,
+        lifetimeCredits: creditData.lifetime_credits,
+        creditCosts: CREDIT_COSTS,
+        planCredits: PLAN_CREDITS
       })
     };
   } catch (error) {

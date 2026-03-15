@@ -2131,6 +2131,27 @@
       box-shadow: 0 0 0 1px var(--accent);
     }
 
+    /* Credit package hover */
+    .credit-package:hover {
+      border-color: var(--accent) !important;
+      transform: translateY(-2px);
+      transition: all 0.2s;
+    }
+
+    /* Credit transaction row */
+    .credit-tx-row {
+      display: grid;
+      grid-template-columns: 1fr auto auto;
+      gap: 0.5rem;
+      padding: 0.5rem 0.75rem;
+      border-bottom: 1px solid var(--border);
+      font-size: 0.8rem;
+      align-items: center;
+    }
+    .credit-tx-row:last-child { border-bottom: none; }
+    .credit-tx-amount-pos { color: var(--green); font-weight: 600; }
+    .credit-tx-amount-neg { color: var(--red); font-weight: 600; }
+
   </style>
 </head>
 <body>
@@ -2205,6 +2226,11 @@
           </button>
         </div>
         <div class="sidebar-user mono" id="user-email">loading...</div>
+        <div id="sidebar-credits" style="display: flex; align-items: center; gap: 0.5rem; margin-top: 0.5rem; padding: 0.4rem 0.6rem; background: var(--surface-elevated); border: 1px solid var(--border); border-radius: 4px; cursor: pointer;" onclick="showSection('settings');setTimeout(()=>document.getElementById('credits-section-card')?.scrollIntoView({behavior:'smooth'}),200)">
+          <span style="font-size: 0.75rem; color: var(--yellow);">&#9733;</span>
+          <span class="mono" style="font-size: 0.75rem; color: var(--text-dim);">Credits:</span>
+          <span class="mono" style="font-size: 0.8rem; font-weight: 600; color: var(--green);" id="sidebar-credit-balance">--</span>
+        </div>
       </div>
 
       <nav class="sidebar-nav">
@@ -2301,6 +2327,11 @@
             <div class="stat-label mono">Cities Scraped</div>
             <div class="stat-value mono" id="stat-cities">0</div>
             <div class="stat-change mono">Unique locations</div>
+          </div>
+          <div class="stat-card" style="cursor:pointer;" onclick="showSection('settings');setTimeout(()=>document.getElementById('credits-section-card')?.scrollIntoView({behavior:'smooth'}),200)">
+            <div class="stat-label mono">Credit Balance</div>
+            <div class="stat-value mono" id="stat-credits" style="color: var(--green);">--</div>
+            <div class="stat-change mono" id="stat-credits-lifetime">0 lifetime</div>
           </div>
         </div>
 
@@ -3230,6 +3261,94 @@
   -d '{"action":"get_leads","city":"Miami","industry":"plumbing","limit":10}'</pre>
             </div>
           </details>
+        </div>
+
+        <!-- Credits Card -->
+        <div class="card" id="credits-section-card">
+          <div class="card-header" style="display: flex; justify-content: space-between; align-items: center;">
+            <h2 class="card-title display">Credits</h2>
+            <button class="btn-mini" onclick="grantMonthlyCredits()">Grant Monthly Credits</button>
+          </div>
+
+          <!-- Balance Display -->
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1.5rem;">
+            <div style="text-align: center; padding: 1.5rem; background: var(--surface); border: 1px solid var(--border-bright); border-radius: 6px;">
+              <div class="mono" style="font-size: 2.5rem; font-weight: 700; color: var(--green);" id="credits-balance-display">--</div>
+              <div class="mono" style="font-size: 0.8rem; color: var(--text-dim); margin-top: 0.25rem;">Available Credits</div>
+            </div>
+            <div style="text-align: center; padding: 1.5rem; background: var(--surface); border: 1px solid var(--border); border-radius: 6px;">
+              <div class="mono" style="font-size: 2.5rem; font-weight: 700; color: var(--text-dim);" id="credits-lifetime-display">--</div>
+              <div class="mono" style="font-size: 0.8rem; color: var(--text-dimmer); margin-top: 0.25rem;">Lifetime Credits</div>
+            </div>
+          </div>
+
+          <!-- Buy Credits -->
+          <h3 style="color: var(--text); font-size: 0.95rem; margin-bottom: 0.75rem;">Buy Credits</h3>
+          <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 0.75rem; margin-bottom: 1.5rem;">
+            <div class="credit-package" onclick="purchaseCredits(100, 10)" style="text-align: center; padding: 1rem; background: var(--surface-elevated); border: 1px solid var(--border); border-radius: 6px; cursor: pointer; transition: border-color 0.2s;">
+              <div class="mono" style="font-size: 1.3rem; font-weight: 700; color: var(--accent);">100</div>
+              <div style="font-size: 0.75rem; color: var(--text-dim); margin: 0.25rem 0;">credits</div>
+              <div class="mono" style="font-size: 1rem; font-weight: 600; color: var(--green);">$10</div>
+            </div>
+            <div class="credit-package" onclick="purchaseCredits(500, 40)" style="text-align: center; padding: 1rem; background: var(--surface-elevated); border: 1px solid var(--border); border-radius: 6px; cursor: pointer; transition: border-color 0.2s;">
+              <div class="mono" style="font-size: 1.3rem; font-weight: 700; color: var(--accent);">500</div>
+              <div style="font-size: 0.75rem; color: var(--text-dim); margin: 0.25rem 0;">credits</div>
+              <div class="mono" style="font-size: 1rem; font-weight: 600; color: var(--green);">$40</div>
+              <div style="font-size: 0.65rem; color: var(--yellow); margin-top: 0.25rem;">SAVE 20%</div>
+            </div>
+            <div class="credit-package" onclick="purchaseCredits(1000, 70)" style="text-align: center; padding: 1rem; background: var(--surface-elevated); border: 1px solid var(--accent-glow); border-radius: 6px; cursor: pointer; transition: border-color 0.2s;">
+              <div class="mono" style="font-size: 1.3rem; font-weight: 700; color: var(--accent);">1,000</div>
+              <div style="font-size: 0.75rem; color: var(--text-dim); margin: 0.25rem 0;">credits</div>
+              <div class="mono" style="font-size: 1rem; font-weight: 600; color: var(--green);">$70</div>
+              <div style="font-size: 0.65rem; color: var(--yellow); margin-top: 0.25rem;">BEST VALUE</div>
+            </div>
+            <div class="credit-package" onclick="purchaseCredits(5000, 300)" style="text-align: center; padding: 1rem; background: var(--surface-elevated); border: 1px solid var(--border); border-radius: 6px; cursor: pointer; transition: border-color 0.2s;">
+              <div class="mono" style="font-size: 1.3rem; font-weight: 700; color: var(--accent);">5,000</div>
+              <div style="font-size: 0.75rem; color: var(--text-dim); margin: 0.25rem 0;">credits</div>
+              <div class="mono" style="font-size: 1rem; font-weight: 600; color: var(--green);">$300</div>
+              <div style="font-size: 0.65rem; color: var(--yellow); margin-top: 0.25rem;">SAVE 40%</div>
+            </div>
+          </div>
+
+          <!-- Credit Cost Reference -->
+          <details style="margin-bottom: 1.5rem;">
+            <summary style="cursor: pointer; color: var(--accent); font-size: 0.85rem; margin-bottom: 0.5rem;">Credit Cost Reference</summary>
+            <table style="width: 100%; font-size: 0.8rem; border-collapse: collapse; margin-top: 0.5rem;">
+              <thead>
+                <tr style="border-bottom: 1px solid var(--border);">
+                  <th style="text-align: left; padding: 0.5rem; color: var(--text-dim);">Action</th>
+                  <th style="text-align: right; padding: 0.5rem; color: var(--text-dim);">Credits</th>
+                </tr>
+              </thead>
+              <tbody id="credit-costs-table">
+                <tr style="border-bottom: 1px solid var(--border);"><td style="padding: 0.4rem 0.5rem;">Lead Scrape (per lead)</td><td style="text-align: right; padding: 0.4rem 0.5rem;" class="mono">2</td></tr>
+                <tr style="border-bottom: 1px solid var(--border);"><td style="padding: 0.4rem 0.5rem;">Email Scrape (per lead)</td><td style="text-align: right; padding: 0.4rem 0.5rem;" class="mono">1</td></tr>
+                <tr style="border-bottom: 1px solid var(--border);"><td style="padding: 0.4rem 0.5rem;">Email Validation</td><td style="text-align: right; padding: 0.4rem 0.5rem;" class="mono">1</td></tr>
+                <tr style="border-bottom: 1px solid var(--border);"><td style="padding: 0.4rem 0.5rem;">Website Score</td><td style="text-align: right; padding: 0.4rem 0.5rem;" class="mono">2</td></tr>
+                <tr style="border-bottom: 1px solid var(--border);"><td style="padding: 0.4rem 0.5rem;">Website Rebuild</td><td style="text-align: right; padding: 0.4rem 0.5rem;" class="mono">10</td></tr>
+                <tr style="border-bottom: 1px solid var(--border);"><td style="padding: 0.4rem 0.5rem;">AI Outbound Call</td><td style="text-align: right; padding: 0.4rem 0.5rem;" class="mono">5</td></tr>
+                <tr style="border-bottom: 1px solid var(--border);"><td style="padding: 0.4rem 0.5rem;">SMS Send</td><td style="text-align: right; padding: 0.4rem 0.5rem;" class="mono">1</td></tr>
+                <tr style="border-bottom: 1px solid var(--border);"><td style="padding: 0.4rem 0.5rem;">Email Send</td><td style="text-align: right; padding: 0.4rem 0.5rem;" class="mono">1</td></tr>
+                <tr><td style="padding: 0.4rem 0.5rem;">PDF Report</td><td style="text-align: right; padding: 0.4rem 0.5rem;" class="mono">2</td></tr>
+              </tbody>
+            </table>
+          </details>
+
+          <!-- Subscription Credit Grants -->
+          <details style="margin-bottom: 1.5rem;">
+            <summary style="cursor: pointer; color: var(--accent); font-size: 0.85rem;">Monthly Credit Grants by Plan</summary>
+            <div style="margin-top: 0.5rem; font-size: 0.8rem; color: var(--text-dim); line-height: 2;">
+              <div style="display: flex; justify-content: space-between; padding: 0.3rem 0.5rem; border-bottom: 1px solid var(--border);"><span>Free Plan</span><span class="mono">50 credits/month</span></div>
+              <div style="display: flex; justify-content: space-between; padding: 0.3rem 0.5rem; border-bottom: 1px solid var(--border);"><span>Paid Plan</span><span class="mono">1,000 credits/month</span></div>
+              <div style="display: flex; justify-content: space-between; padding: 0.3rem 0.5rem;"><span>Unlimited Plan</span><span class="mono">10,000 credits/month</span></div>
+            </div>
+          </details>
+
+          <!-- Transaction History -->
+          <h3 style="color: var(--text); font-size: 0.95rem; margin-bottom: 0.75rem;">Transaction History</h3>
+          <div id="credit-transactions" style="max-height: 400px; overflow-y: auto;">
+            <div style="text-align: center; padding: 2rem; color: var(--text-dim);">Loading transactions...</div>
+          </div>
         </div>
 
         <!-- AI Agents Manager Card (available in all modes) -->
@@ -4392,6 +4511,11 @@ I noticed {{business_name}} in {{city}} and wanted to reach out..."></textarea>
     let selectedCities = [];
     let scrapedCities = [];
     const API_BASE = '/.netlify/functions';
+
+    // Credits State
+    let creditBalance = 0;
+    let creditLifetime = 0;
+    let creditCosts = {};
 
     // CRM State
     let crmMode = 'ghl'; // 'ghl' or 'internal'
@@ -6268,6 +6392,7 @@ I noticed {{business_name}} in {{city}} and wanted to reach out..."></textarea>
       updateDashboard();
       loadGhlSettings();
       loadLeads();
+      loadCredits();
 
       // Load CRM settings
       loadCrmSettings();
@@ -6426,6 +6551,157 @@ I noticed {{business_name}} in {{city}} and wanted to reach out..."></textarea>
           if (leadsUsedEl) leadsUsedEl.textContent = data.total || currentUser.leadsUsed || 0;
         }
       } catch {}
+    }
+
+    // =====================================
+    // CREDITS FUNCTIONS
+    // =====================================
+
+    async function loadCredits() {
+      try {
+        const resp = await fetch(`${API_BASE}/credits`, {
+          headers: { 'Authorization': `Bearer ${authToken}` }
+        });
+        if (!resp.ok) return;
+        const data = await resp.json();
+
+        creditBalance = data.balance || 0;
+        creditLifetime = data.lifetime_credits || 0;
+        creditCosts = data.costs || {};
+
+        // Update all credit displays
+        updateCreditDisplays();
+
+        // Render transaction history
+        renderCreditTransactions(data.transactions || []);
+      } catch (e) {
+        console.error('Failed to load credits:', e);
+      }
+    }
+
+    function updateCreditDisplays() {
+      // Sidebar
+      const sidebarEl = document.getElementById('sidebar-credit-balance');
+      if (sidebarEl) sidebarEl.textContent = creditBalance.toLocaleString();
+
+      // Dashboard stat
+      const statEl = document.getElementById('stat-credits');
+      if (statEl) statEl.textContent = creditBalance.toLocaleString();
+      const statLifetime = document.getElementById('stat-credits-lifetime');
+      if (statLifetime) statLifetime.textContent = `${creditLifetime.toLocaleString()} lifetime`;
+
+      // Settings balance
+      const balEl = document.getElementById('credits-balance-display');
+      if (balEl) balEl.textContent = creditBalance.toLocaleString();
+      const lifeEl = document.getElementById('credits-lifetime-display');
+      if (lifeEl) lifeEl.textContent = creditLifetime.toLocaleString();
+
+      // Color the balance based on level
+      if (sidebarEl) {
+        sidebarEl.style.color = creditBalance < 10 ? 'var(--red)' : creditBalance < 50 ? 'var(--yellow)' : 'var(--green)';
+      }
+      if (statEl) {
+        statEl.style.color = creditBalance < 10 ? 'var(--red)' : creditBalance < 50 ? 'var(--yellow)' : 'var(--green)';
+      }
+    }
+
+    function renderCreditTransactions(transactions) {
+      const container = document.getElementById('credit-transactions');
+      if (!container) return;
+
+      if (transactions.length === 0) {
+        container.innerHTML = '<div style="text-align: center; padding: 2rem; color: var(--text-dim);">No transactions yet.</div>';
+        return;
+      }
+
+      container.innerHTML = transactions.map(tx => {
+        const isPositive = tx.amount > 0;
+        const date = new Date(tx.created_at);
+        const dateStr = date.toLocaleDateString() + ' ' + date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+        const typeLabels = {
+          purchase: 'Purchase',
+          subscription: 'Subscription',
+          scrape: 'Lead Scrape',
+          email_scrape: 'Email Scrape',
+          website_score: 'Website Score',
+          website_rebuild: 'Website Rebuild',
+          ai_call: 'AI Call',
+          sms: 'SMS Send',
+          email_send: 'Email Send',
+          pdf_report: 'PDF Report',
+          refund: 'Refund',
+          bonus: 'Bonus',
+        };
+        return `
+          <div class="credit-tx-row">
+            <div>
+              <div style="color: var(--text); font-size: 0.8rem;">${typeLabels[tx.type] || tx.type}</div>
+              <div style="color: var(--text-dimmer); font-size: 0.7rem;">${tx.description || ''}</div>
+            </div>
+            <div class="mono ${isPositive ? 'credit-tx-amount-pos' : 'credit-tx-amount-neg'}">
+              ${isPositive ? '+' : ''}${tx.amount}
+            </div>
+            <div style="color: var(--text-dimmer); font-size: 0.7rem; white-space: nowrap;" class="mono">
+              ${dateStr}
+            </div>
+          </div>`;
+      }).join('');
+    }
+
+    async function purchaseCredits(amount, price) {
+      if (!confirm(`Purchase ${amount.toLocaleString()} credits for $${price}?\n\n(Payment integration coming soon — credits will be added directly for now)`)) return;
+
+      try {
+        const resp = await fetch(`${API_BASE}/credits`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${authToken}` },
+          body: JSON.stringify({ action: 'purchase', amount })
+        });
+        const data = await resp.json();
+        if (resp.ok && data.success) {
+          showToast(`Added ${amount.toLocaleString()} credits! New balance: ${data.balance.toLocaleString()}`, 'success');
+          creditBalance = data.balance;
+          updateCreditDisplays();
+          loadCredits(); // Refresh full data
+        } else {
+          showToast(data.error || 'Failed to purchase credits', 'error');
+        }
+      } catch (e) {
+        showToast('Network error: ' + e.message, 'error');
+      }
+    }
+
+    async function grantMonthlyCredits() {
+      if (!confirm('Grant monthly subscription credits based on your current plan?')) return;
+
+      try {
+        const resp = await fetch(`${API_BASE}/credits`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${authToken}` },
+          body: JSON.stringify({ action: 'grant_monthly' })
+        });
+        const data = await resp.json();
+        if (resp.ok && data.success) {
+          showToast(`Granted ${data.granted.toLocaleString()} credits for ${data.plan} plan! New balance: ${data.balance.toLocaleString()}`, 'success');
+          creditBalance = data.balance;
+          updateCreditDisplays();
+          loadCredits();
+        } else {
+          showToast(data.error || 'Failed to grant credits', 'error');
+        }
+      } catch (e) {
+        showToast('Network error: ' + e.message, 'error');
+      }
+    }
+
+    function showInsufficientCreditsToast(required, balance) {
+      const needed = required - balance;
+      const toast = document.createElement('div');
+      toast.className = 'toast toast-error';
+      toast.innerHTML = `Insufficient credits — need ${needed} more. <a href="#" onclick="showSection('settings');setTimeout(()=>document.getElementById('credits-section-card')?.scrollIntoView({behavior:'smooth'}),200);this.parentElement.remove();return false;" style="color: var(--accent); text-decoration: underline; margin-left: 4px;">Buy credits</a>`;
+      document.body.appendChild(toast);
+      setTimeout(() => toast.classList.add('show'), 10);
+      setTimeout(() => { toast.classList.remove('show'); setTimeout(() => toast.remove(), 300); }, 5000);
     }
 
     // Leads state
@@ -6704,7 +6980,10 @@ I noticed {{business_name}} in {{city}} and wanted to reach out..."></textarea>
 
         const data = await response.json();
 
-        if (response.ok && data.email) {
+        if (response.status === 402) {
+          showInsufficientCreditsToast(data.required || 1, data.balance || 0);
+          if (btn) { btn.innerHTML = 'Scrape Email'; btn.disabled = false; }
+        } else if (response.ok && data.email) {
           const lead = leadsData.find(l => l.id === leadId);
           if (lead) {
             lead.email = data.email;
@@ -6712,6 +6991,7 @@ I noticed {{business_name}} in {{city}} and wanted to reach out..."></textarea>
           }
           showToast('Email found: ' + data.email, 'success');
           renderLeadsTable();
+          loadCredits();
         } else {
           // Mark as attempted even if no email found
           const lead = leadsData.find(l => l.id === leadId);
@@ -7269,7 +7549,13 @@ I noticed {{business_name}} in {{city}} and wanted to reach out..."></textarea>
         return;
       }
 
-      if (!confirm(`This will scrape emails for ${leadsToScrape.length} leads. Continue?`)) return;
+      // Credit check for bulk email scrape
+      const emailScrapeCost = leadsToScrape.length * (creditCosts.email_scrape || 1);
+      if (creditBalance < emailScrapeCost) {
+        showInsufficientCreditsToast(emailScrapeCost, creditBalance);
+        return;
+      }
+      if (!confirm(`This will scrape emails for ${leadsToScrape.length} leads.\n\nEstimated cost: ${emailScrapeCost} credits (you have ${creditBalance}).\n\nContinue?`)) return;
 
       bulkOperationActive = true;
       bulkOperationCancelled = false;
@@ -7330,6 +7616,7 @@ I noticed {{business_name}} in {{city}} and wanted to reach out..."></textarea>
       renderLeadsTable();
       setTimeout(hideBulkProgress, 3000);
       showToast(`Scraping complete! Found ${bulkSuccessCount} emails, ${bulkFailCount} failed`, bulkSuccessCount > 0 ? 'success' : 'warning');
+      loadCredits();
     }
 
     // Score All Websites
@@ -7366,7 +7653,13 @@ I noticed {{business_name}} in {{city}} and wanted to reach out..."></textarea>
         return;
       }
 
-      if (!confirm(`This will score ${leadsToScore.length} websites. Continue?`)) return;
+      // Credit check for bulk website scoring
+      const websiteScoreCost = leadsToScore.length * (creditCosts.website_score || 2);
+      if (creditBalance < websiteScoreCost) {
+        showInsufficientCreditsToast(websiteScoreCost, creditBalance);
+        return;
+      }
+      if (!confirm(`This will score ${leadsToScore.length} websites.\n\nEstimated cost: ${websiteScoreCost} credits (you have ${creditBalance}).\n\nContinue?`)) return;
 
       bulkOperationActive = true;
       bulkOperationCancelled = false;
@@ -7441,6 +7734,7 @@ I noticed {{business_name}} in {{city}} and wanted to reach out..."></textarea>
       renderLeadsTable();
       setTimeout(hideBulkProgress, 5000);
       showToast(`Website scoring complete! ${bulkSuccessCount} analyzed. ${gradeF} need new websites (Grade F), ${gradeD} poor websites (Grade D)`, 'success');
+      loadCredits();
     }
 
     // Validate All Emails (cron-style with rate limiting)
@@ -7820,6 +8114,7 @@ I noticed {{business_name}} in {{city}} and wanted to reach out..."></textarea>
 
       setTimeout(hideBulkProgress, 3000);
       showToast(`Scraping complete! Found ${bulkSuccessCount} emails, ${bulkFailCount} failed`, bulkSuccessCount > 0 ? 'success' : 'warning');
+      loadCredits();
     }
 
     async function loadTagFilter() {
@@ -7858,11 +8153,14 @@ I noticed {{business_name}} in {{city}} and wanted to reach out..."></textarea>
 
         const data = await response.json();
 
-        if (response.ok && data.success) {
+        if (response.status === 402) {
+          showInsufficientCreditsToast(data.required || 2, data.balance || 0);
+        } else if (response.ok && data.success) {
           lead.website_score = data.score;
           lead.website_grade = data.grade;
           lead.website_analyzed_at = data.analyzedAt;
           renderLeadsTable();
+          loadCredits();
           const emoji = data.grade === 'F' ? '🔥' : data.grade === 'D' ? '⚠️' : '✓';
           showToast(`${emoji} ${lead.business_name}: Grade ${data.grade} (${data.score}/100) - ${data.gradeLabel}`, data.score < 50 ? 'warning' : 'success');
         } else {
@@ -8269,6 +8567,7 @@ I noticed {{business_name}} in {{city}} and wanted to reach out..."></textarea>
         loadAgents();
         populateAgentDropdowns();
         loadApiKey();
+        loadCredits();
         // Load email accounts only for internal CRM mode
         if (crmMode === 'internal') {
           loadEmailAccounts();
@@ -8412,7 +8711,8 @@ I noticed {{business_name}} in {{city}} and wanted to reach out..."></textarea>
         const result = await response.json();
 
         if (response.ok) {
-          alert(`Scraping started! ${result.citiesToScrape || selectedCities.length} cities queued.`);
+          const creditsMsg = result.creditsUsed ? ` (${result.creditsUsed} credits used)` : '';
+          alert(`Scraping started! ${result.citiesToScrape || selectedCities.length} cities queued.${creditsMsg}`);
           // Auto-add industry to pipeline mappings
           autoAddIndustryToMappings(industry);
           selectedCities = [];
@@ -8420,6 +8720,9 @@ I noticed {{business_name}} in {{city}} and wanted to reach out..."></textarea>
           updateScrapeButton();
           // Reload dashboard
           updateDashboard();
+          loadCredits();
+        } else if (response.status === 402) {
+          showInsufficientCreditsToast(result.required || 0, result.balance || 0);
         } else {
           alert(result.error || 'Scraping failed');
         }

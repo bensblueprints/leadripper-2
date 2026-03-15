@@ -2,6 +2,7 @@ const { Pool } = require('pg');
 const jwt = require('jsonwebtoken');
 const nodemailer = require('nodemailer');
 const crypto = require('crypto');
+const { spendCredits, CREDIT_COSTS } = require('./credits');
 
 const pool = new Pool({
   connectionString: process.env.DATABASE_URL || "postgresql://neondb_owner:npg_sK7M4EbyDBiz@ep-aged-river-ah63sktg-pooler.c-3.us-east-1.aws.neon.tech/neondb?sslmode=require",
@@ -158,6 +159,12 @@ exports.handler = async (event, context) => {
 
       if (!acctId || !toEmail || !subject) {
         return { statusCode: 400, headers, body: JSON.stringify({ error: 'accountId, toEmail, and subject are required' }) };
+      }
+
+      // Check credits
+      const creditCheck = await spendCredits(userId, CREDIT_COSTS.email_send, 'email_send', `Email to ${toEmail}`, campaignId ? String(campaignId) : null);
+      if (!creditCheck.success) {
+        return { statusCode: 402, headers, body: JSON.stringify({ error: 'Insufficient credits', balance: creditCheck.balance, required: CREDIT_COSTS.email_send }) };
       }
 
       // Look up email account credentials
@@ -341,6 +348,14 @@ async function handleBulkSend(userId, accountId, subject, emailBody, filters, ca
       return { statusCode: 200, headers, body: JSON.stringify({ success: true, message: 'No matching leads found', sent: 0 }) };
     }
 
+    // Check credits for bulk send (1 credit per email)
+    const totalCreditCost = leads.length * CREDIT_COSTS.email_send;
+    const { getBalance } = require('./credits');
+    const bulkBalance = await getBalance(userId);
+    if (bulkBalance.balance < totalCreditCost) {
+      return { statusCode: 402, headers, body: JSON.stringify({ error: 'Insufficient credits', balance: bulkBalance.balance, required: totalCreditCost, message: `Need ${totalCreditCost} credits to send ${leads.length} emails. You have ${bulkBalance.balance}.` }) };
+    }
+
     // Create transporter
     const transporter = nodemailer.createTransport({
       host: account.smtp_host,
@@ -385,6 +400,9 @@ async function handleBulkSend(userId, accountId, subject, emailBody, filters, ca
           [userId, accountId, lead.id, lead.email, lead.contact_name || lead.business_name,
            leadSubject, trackedBody, trackingId, campaignId || null]
         );
+
+        // Spend credit for this email
+        await spendCredits(userId, CREDIT_COSTS.email_send, 'email_send', `Bulk email to ${lead.email}`, campaignId ? String(campaignId) : null).catch(() => {});
 
         sentCount++;
       } catch (sendError) {

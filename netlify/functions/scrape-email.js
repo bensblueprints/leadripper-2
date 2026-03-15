@@ -1,5 +1,6 @@
 const { Pool } = require('pg');
 const jwt = require('jsonwebtoken');
+const { spendCredits, CREDIT_COSTS } = require('./credits');
 
 const pool = new Pool({
   connectionString: process.env.DATABASE_URL || "postgresql://neondb_owner:npg_sK7M4EbyDBiz@ep-aged-river-ah63sktg-pooler.c-3.us-east-1.aws.neon.tech/neondb?sslmode=require",
@@ -223,6 +224,12 @@ exports.handler = async (event, context) => {
         headers,
         body: JSON.stringify({ error: 'Lead ID is required' })
       };
+    }
+
+    // Check credits
+    const creditCheck = await spendCredits(decoded.userId, CREDIT_COSTS.email_scrape, 'email_scrape', `Email scrape for lead #${leadId}`, String(leadId));
+    if (!creditCheck.success) {
+      return { statusCode: 402, headers, body: JSON.stringify({ error: 'Insufficient credits', balance: creditCheck.balance, required: CREDIT_COSTS.email_scrape }) };
     }
 
     // Get the lead

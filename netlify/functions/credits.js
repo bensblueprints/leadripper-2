@@ -11,26 +11,28 @@ const JWT_SECRET = process.env.JWT_SECRET || 'leadripper-secret-key-2026';
 // ═══════════════════════════════════════════
 // CREDIT COSTS PER ACTION (configurable)
 // ═══════════════════════════════════════════
+// 1 credit = $0.01 (1 penny). All prices set at 3x API cost.
 const CREDIT_COSTS = {
-  scrape: 1,
-  place_details: 1,
-  email_scrape: 1,
-  email_validate: 1,
-  website_score: 2,
-  website_rebuild: 10,
-  ai_call: 5,
-  sms: 1,
-  email_send: 1,
-  pdf_report: 2,
+  scrape: 17,          // Lead scrape per lead ($0.057 cost × 3 = $0.17)
+  place_details: 3,    // Place Details only
+  email_scrape: 1,     // Email scrape (near-zero cost)
+  email_validate: 1,   // Email validation (near-zero cost)
+  website_score: 8,    // Website score ($0.025 × 3)
+  website_rebuild: 30, // AI website rebuild ($0.10 × 3)
+  ai_call: 150,        // AI outbound call ($0.50 × 3)
+  sms: 3,              // SMS ($0.008 × 3)
+  email_send: 1,       // Email send (near-zero)
+  pdf_report: 8,       // PDF report
 };
 
+// Subscription credit grants (1 credit = $0.01)
 const PLAN_CREDITS = {
-  free: 50,
-  starter: 1000,
-  pro: 1000,
-  growth: 1000,
-  paid: 1000,
-  unlimited: 10000,
+  free: 500,           // $5 worth
+  starter: 5000,       // $50 worth
+  pro: 10000,          // $100 worth
+  growth: 10000,       // $100 worth
+  paid: 10000,         // $100 worth
+  unlimited: 50000,    // $500 worth
 };
 
 function verifyToken(authHeader) {

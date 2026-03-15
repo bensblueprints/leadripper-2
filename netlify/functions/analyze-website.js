@@ -1,5 +1,6 @@
 const { Pool } = require('pg');
 const jwt = require('jsonwebtoken');
+const { spendCredits, CREDIT_COSTS } = require('./credits');
 
 const pool = new Pool({
   connectionString: process.env.DATABASE_URL || "postgresql://neondb_owner:npg_sK7M4EbyDBiz@ep-aged-river-ah63sktg-pooler.c-3.us-east-1.aws.neon.tech/neondb?sslmode=require",
@@ -359,6 +360,14 @@ exports.handler = async (event) => {
   try {
     const { url, leadId, businessName, address } = JSON.parse(event.body);
     if (!url) return { statusCode: 400, headers, body: JSON.stringify({ error: 'URL is required' }) };
+
+    // Check credits (skip for internal calls)
+    if (!event.headers.authorization?.includes('internal-bypass')) {
+      const creditCheck = await spendCredits(decoded.userId, CREDIT_COSTS.website_score, 'website_score', `Website analysis: ${url}`, leadId ? String(leadId) : null);
+      if (!creditCheck.success) {
+        return { statusCode: 402, headers, body: JSON.stringify({ error: 'Insufficient credits', balance: creditCheck.balance, required: CREDIT_COSTS.website_score }) };
+      }
+    }
 
     // Run both analyses in parallel
     const [websiteResult, gbpResult] = await Promise.all([

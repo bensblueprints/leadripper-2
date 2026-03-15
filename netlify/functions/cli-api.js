@@ -7,6 +7,7 @@ const pool = new Pool({
 
 const jwt = require('jsonwebtoken');
 const crypto = require('crypto');
+const { getBalance, addCredits: addCreditsHelper, CREDIT_COSTS, PLAN_CREDITS } = require('./credits');
 
 const JWT_SECRET = process.env.JWT_SECRET || 'leadripper-secret-key-2026';
 const GOOGLE_MAPS_KEY = process.env.GOOGLE_MAPS_KEY || 'AIzaSyCngyzhiymWqY3ypkY4U5znvC_m18F1srA';
@@ -130,7 +131,14 @@ async function getStats({ userId }) {
       COUNT(DISTINCT industry) as industries
     FROM lr_leads WHERE user_id = $1
   `, [userId]);
-  return r.rows[0];
+
+  // Get credit balance
+  let credits = { balance: 0, lifetime_credits: 0 };
+  try {
+    credits = await getBalance(userId);
+  } catch {}
+
+  return { ...r.rows[0], credit_balance: credits.balance, lifetime_credits: credits.lifetime_credits };
 }
 
 async function searchLeads({ userId, query }) {
@@ -392,6 +400,16 @@ const ACTIONS = {
   get_agents: getAgents,
   assign_phone: assignPhone,
 
+  // Credits
+  get_credits: async ({ userId }) => {
+    const balance = await getBalance(userId);
+    return { ...balance, costs: CREDIT_COSTS, plan_credits: PLAN_CREDITS };
+  },
+  add_credits: async ({ userId, amount, description }) => {
+    if (!amount || amount <= 0) return { error: 'amount must be positive' };
+    return await addCreditsHelper(userId, parseInt(amount), 'bonus', description || `CLI bonus: ${amount} credits`);
+  },
+
   // Help
   help: async () => ({
     actions: Object.keys(ACTIONS),
@@ -410,6 +428,8 @@ const ACTIONS = {
       get_phone_numbers: {},
       get_agents: {},
       assign_phone: { phoneNumberId: 'phnum_xxx', agentId: 'agent_xxx' },
+      get_credits: {},
+      add_credits: { amount: 100, description: 'Bonus credits' },
     }
   })
 };
