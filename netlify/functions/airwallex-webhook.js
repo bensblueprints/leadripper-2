@@ -1,5 +1,12 @@
 const { createClient } = require('@supabase/supabase-js');
+const { Pool } = require('pg');
 const fetch = require('node-fetch');
+const { addCredits, PLAN_CREDITS } = require('./credits');
+
+const pool = new Pool({
+  connectionString: process.env.DATABASE_URL || "postgresql://neondb_owner:npg_sK7M4EbyDBiz@ep-aged-river-ah63sktg-pooler.c-3.us-east-1.aws.neon.tech/neondb?sslmode=require",
+  ssl: { rejectUnauthorized: false }
+});
 
 // Supabase client
 const supabase = createClient(
@@ -117,6 +124,36 @@ exports.handler = async (event, context) => {
       const metadata = data.metadata || {};
       let userId = metadata.user_id || metadata.userId;
       let plan = metadata.plan_id || metadata.plan;
+
+      // ── CREDIT PURCHASE ──
+      if (metadata.type === 'credit_purchase' && metadata.credits) {
+        const creditAmount = parseInt(metadata.credits);
+        // Find user by ID or by matching payment intent
+        if (!userId) {
+          // Try to find from pending payments or just log
+          console.log('Credit purchase succeeded but no userId in metadata:', paymentIntentId);
+          return { statusCode: 200, headers, body: JSON.stringify({ received: true, warning: 'no userId' }) };
+        }
+
+        console.log(`Credit purchase: ${creditAmount} credits for user ${userId}`);
+        const result = await addCredits(parseInt(userId), creditAmount, 'purchase', `Purchased ${creditAmount.toLocaleString()} credits (Payment: ${paymentIntentId})`);
+        console.log('Credits added:', result);
+
+        return { statusCode: 200, headers, body: JSON.stringify({ received: true, credits_added: creditAmount }) };
+      }
+
+      // ── SUBSCRIPTION RENEWAL — grant monthly credits ──
+      if (plan && userId) {
+        const planCredits = PLAN_CREDITS[plan] || PLAN_CREDITS.free;
+        if (planCredits > 0) {
+          try {
+            await addCredits(parseInt(userId), planCredits, 'subscription', `Monthly credit grant (${plan} plan): ${planCredits.toLocaleString()} credits`);
+            console.log(`Granted ${planCredits} monthly credits to user ${userId} (${plan} plan)`);
+          } catch (e) {
+            console.error('Failed to grant monthly credits:', e.message);
+          }
+        }
+      }
 
       // If user_id not in metadata, check subscription table using Supabase
       if (!userId || !plan) {
