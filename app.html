@@ -2710,6 +2710,8 @@
           <p class="page-subtitle" style="font-family:'DM Sans',sans-serif;color:var(--text-dim);">Extract real business data from Google Maps</p>
         </div>
 
+        <div id="cw-lead"></div>
+
         <div class="card">
           <div class="card-header">
             <h2 class="card-title display">Scrape Configuration</h2>
@@ -3881,6 +3883,8 @@
           </div>
         </div>
 
+        <div id="cw-email"></div>
+
         <!-- Email Ripper Tab Navigation -->
         <div class="email-ripper-tabs">
           <button class="email-ripper-tab active" onclick="switchEmailRipperTab('campaigns')">📨 Campaigns</button>
@@ -4390,6 +4394,8 @@ I noticed {{business_name}} in {{city}} and wanted to reach out..."></textarea>
           </div>
         </div>
 
+        <div id="cw-sales"></div>
+
         <div class="stats-grid">
           <div class="stat-card">
             <div class="stat-value mono" id="stat-calls-today">0</div>
@@ -4486,6 +4492,8 @@ I noticed {{business_name}} in {{city}} and wanted to reach out..."></textarea>
           </div>
         </div>
 
+        <div id="cw-web"></div>
+
         <div class="stats-grid">
           <div class="stat-card">
             <div class="stat-value mono" id="stat-wr-total">0</div>
@@ -4563,6 +4571,8 @@ I noticed {{business_name}} in {{city}} and wanted to reach out..."></textarea>
             </div>
           </div>
         </div>
+
+        <div id="cw-workflow"></div>
 
         <!-- Workflow list -->
         <div id="workflows-list-container">
@@ -6786,6 +6796,9 @@ I noticed {{business_name}} in {{city}} and wanted to reach out..."></textarea>
       loadLeads();
       loadCredits();
 
+      // Initialize inline credit widgets in each module
+      setTimeout(initAllCreditWidgets, 500);
+
       // Load CRM settings
       loadCrmSettings();
     }
@@ -6995,6 +7008,15 @@ I noticed {{business_name}} in {{city}} and wanted to reach out..."></textarea>
       if (statEl) {
         statEl.style.color = creditBalance < 10 ? 'var(--red)' : creditBalance < 50 ? 'var(--yellow)' : 'var(--green)';
       }
+
+      // Update inline credit widgets in each module
+      ['cw-lead', 'cw-email', 'cw-sales', 'cw-web', 'cw-workflow'].forEach(id => {
+        const balEl = document.getElementById(id + '-bal');
+        if (balEl) {
+          balEl.textContent = creditBalance.toLocaleString();
+          balEl.style.color = creditBalance < 10 ? 'var(--red)' : creditBalance < 50 ? 'var(--yellow)' : 'var(--green)';
+        }
+      });
     }
 
     function renderCreditTransactions(transactions) {
@@ -7111,6 +7133,54 @@ I noticed {{business_name}} in {{city}} and wanted to reach out..."></textarea>
       document.body.appendChild(toast);
       setTimeout(() => toast.classList.add('show'), 10);
       setTimeout(() => { toast.classList.remove('show'); setTimeout(() => toast.remove(), 300); }, 5000);
+    }
+
+    // =====================================
+    // INLINE CREDIT WIDGET (per module)
+    // =====================================
+    function renderInlineCreditWidget(containerId, moduleColor, moduleName, costs) {
+      const el = document.getElementById(containerId);
+      if (!el) return;
+
+      const costsHtml = costs.map(c =>
+        `<span style="font-family:'JetBrains Mono',monospace;font-size:0.7rem;color:var(--text-dim);">${c.action}: <span style="color:${moduleColor};">${c.cost}</span></span>`
+      ).join('<span style="color:var(--border);">|</span>');
+
+      el.innerHTML = `
+        <div style="background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:1rem 1.25rem;margin-bottom:1.5rem;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:0.75rem;">
+          <div style="display:flex;align-items:center;gap:1rem;flex-wrap:wrap;">
+            <div style="display:flex;align-items:center;gap:0.5rem;">
+              <span style="font-family:'Space Grotesk',sans-serif;font-size:0.75rem;font-weight:600;color:var(--text-dim);">CREDITS</span>
+              <span style="font-family:'JetBrains Mono',monospace;font-weight:700;font-size:1.1rem;color:var(--green);" id="${containerId}-bal">${(creditBalance || 0).toLocaleString()}</span>
+            </div>
+            <div style="display:flex;align-items:center;gap:0.75rem;flex-wrap:wrap;">${costsHtml}</div>
+          </div>
+          <div style="display:flex;gap:0.4rem;flex-wrap:wrap;">
+            <button class="btn-mini" onclick="purchaseCredits(1000, 10)" style="font-size:0.65rem;padding:4px 8px;">$10<span style="color:var(--text-dimmer);margin-left:2px;">1K</span></button>
+            <button class="btn-mini" onclick="purchaseCredits(6000, 50)" style="font-size:0.65rem;padding:4px 8px;">$50<span style="color:var(--text-dimmer);margin-left:2px;">6K</span></button>
+            <button class="btn-mini" onclick="purchaseCredits(13000, 100)" style="font-size:0.65rem;padding:4px 8px;border-color:${moduleColor};">$100<span style="color:${moduleColor};margin-left:2px;">13K</span></button>
+            <button class="btn-mini" onclick="purchaseCredits(75000, 500)" style="font-size:0.65rem;padding:4px 8px;">$500<span style="color:var(--text-dimmer);margin-left:2px;">75K</span></button>
+          </div>
+        </div>
+      `;
+    }
+
+    function initAllCreditWidgets() {
+      renderInlineCreditWidget('cw-lead', 'var(--mod-lead)', 'LeadEngine', [
+        {action: 'Scrape', cost: '25/lead'}, {action: 'Details', cost: '3/lead'}
+      ]);
+      renderInlineCreditWidget('cw-email', 'var(--mod-email)', 'EmailRipper', [
+        {action: 'Send', cost: '1/email'}, {action: 'Validate', cost: '2/email'}
+      ]);
+      renderInlineCreditWidget('cw-sales', 'var(--mod-sales)', 'SalesRipper', [
+        {action: 'AI Call', cost: '4/min'}, {action: 'SMS', cost: '3/msg'}
+      ]);
+      renderInlineCreditWidget('cw-web', 'var(--mod-web)', 'WebRipper', [
+        {action: 'Score', cost: '8/site'}, {action: 'Rebuild', cost: '30/site'}
+      ]);
+      renderInlineCreditWidget('cw-workflow', 'var(--mod-workflow)', 'Workflows', [
+        {action: 'Email', cost: '1'}, {action: 'Call', cost: '4/min'}, {action: 'SMS', cost: '3'}
+      ]);
     }
 
     // Leads state
