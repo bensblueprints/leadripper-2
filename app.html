@@ -5816,7 +5816,7 @@ I noticed {{business_name}} in {{city}} and wanted to reach out..."></textarea>
     }
 
     async function removeEmailAccount(accountId) {
-      if (!confirm('Remove this email account?')) return;
+      if (!(await awaitConfirm('Remove this email account?'))) return;
       try {
         await fetch(`${API_BASE}/email-accounts`, {
           method: 'DELETE',
@@ -5891,7 +5891,7 @@ I noticed {{business_name}} in {{city}} and wanted to reach out..."></textarea>
     }
 
     async function revokeApiKey() {
-      if (!confirm('Revoke your API key? Any integrations using it will stop working.')) return;
+      if (!(await awaitConfirm('Revoke your API key? Any integrations using it will stop working.'))) return;
       try {
         const resp = await fetch(`${API_BASE}/cli-api`, {
           method: 'POST',
@@ -6435,7 +6435,7 @@ I noticed {{business_name}} in {{city}} and wanted to reach out..."></textarea>
     }
 
     async function deleteAgent(agentId) {
-      if (!confirm('Delete this AI agent?')) return;
+      if (!(await awaitConfirm('Delete this AI agent?'))) return;
       try {
         await fetch(`${API_BASE}/ai-agents`, {
           method: 'DELETE',
@@ -6677,6 +6677,49 @@ I noticed {{business_name}} in {{city}} and wanted to reach out..."></textarea>
         toast.classList.remove('show');
         setTimeout(() => toast.remove(), 300);
       }, 3000);
+    }
+
+    // Branded confirmation modal (replaces native confirm())
+    function brandedConfirm(message, onConfirm, options = {}) {
+      const { confirmText = 'Confirm', cancelText = 'Cancel', accent = 'var(--accent)', danger = false } = options;
+      const root = document.getElementById('modal-root');
+      const msgHtml = message.replace(/\n/g, '<br>');
+      const btnColor = danger ? 'var(--red)' : accent;
+      root.innerHTML = `<div class="modal-overlay" id="modal-overlay" onclick="if(event.target.id==='modal-overlay'){document.getElementById('modal-root').innerHTML=''}">
+        <div class="modal" style="max-width:480px;">
+          <div style="font-size:0.95rem;color:var(--text);line-height:1.7;margin-bottom:1.5rem;">${msgHtml}</div>
+          <div style="display:flex;gap:0.75rem;justify-content:flex-end;">
+            <button class="btn-secondary" onclick="document.getElementById('modal-root').innerHTML=''" style="min-width:80px;">${cancelText}</button>
+            <button class="btn" id="branded-confirm-btn" style="min-width:80px;background:${btnColor};border-color:${btnColor};">${confirmText}</button>
+          </div>
+        </div>
+      </div>`;
+      document.getElementById('branded-confirm-btn').addEventListener('click', () => {
+        root.innerHTML = '';
+        onConfirm();
+      });
+    }
+
+    // Async branded confirm - use with: if (!(await awaitConfirm('msg'))) return;
+    function awaitConfirm(message, options = {}) {
+      const { confirmText = 'Confirm', cancelText = 'Cancel', accent = 'var(--accent)' } = options;
+      return new Promise(resolve => {
+        const root = document.getElementById('modal-root');
+        if (!root) { resolve(confirm(message)); return; }
+        const msgHtml = String(message).replace(/\n/g, '<br>');
+        root.innerHTML = `<div class="modal-overlay" id="modal-overlay" style="z-index:99999;">
+          <div class="modal" style="max-width:480px;">
+            <div style="font-size:0.95rem;color:var(--text);line-height:1.7;margin-bottom:1.5rem;">${msgHtml}</div>
+            <div style="display:flex;gap:0.75rem;justify-content:flex-end;">
+              <button class="btn-secondary" id="bc-cancel" style="min-width:80px;">${cancelText}</button>
+              <button class="btn" id="bc-ok" style="min-width:80px;background:${accent};border-color:${accent};">${confirmText}</button>
+            </div>
+          </div>
+        </div>`;
+        document.getElementById('bc-ok').onclick = () => { root.innerHTML = ''; resolve(true); };
+        document.getElementById('bc-cancel').onclick = () => { root.innerHTML = ''; resolve(false); };
+        document.getElementById('modal-overlay').onclick = (e) => { if (e.target.id === 'modal-overlay') { root.innerHTML = ''; resolve(false); } };
+      });
     }
 
     // Check for existing session
@@ -6939,21 +6982,86 @@ I noticed {{business_name}} in {{city}} and wanted to reach out..."></textarea>
       if (subLimit) subLimit.textContent = limitDisplay;
       if (subUsed) subUsed.textContent = currentUser.leadsUsed || 0;
 
-      // Fetch live stats from get-leads
+      // Fetch live stats from get-stats API
       try {
-        const resp = await fetch(`${API_BASE}/get-leads?limit=1`, {
+        const resp = await fetch(`${API_BASE}/get-stats`, {
           headers: { 'Authorization': `Bearer ${authToken}` }
         });
         if (resp.ok) {
           const data = await resp.json();
+
+          // Overview stats
           const totalEl = document.getElementById('stat-total-leads');
-          if (totalEl) totalEl.textContent = data.total || 0;
+          if (totalEl) totalEl.textContent = (data.stats?.totalLeads || 0).toLocaleString();
 
           const citiesEl = document.getElementById('stat-cities');
-          if (citiesEl) citiesEl.textContent = data.availableCities?.length || 0;
+          if (citiesEl) citiesEl.textContent = (data.stats?.citiesScraped || 0).toLocaleString();
 
           const leadsUsedEl = document.getElementById('stat-leads-used');
-          if (leadsUsedEl) leadsUsedEl.textContent = data.total || currentUser.leadsUsed || 0;
+          if (leadsUsedEl) leadsUsedEl.textContent = (data.stats?.totalLeads || currentUser.leadsUsed || 0).toLocaleString();
+
+          // Bento Grid product suite stats
+          const setHtml = (id, num, label) => {
+            const el = document.getElementById(id);
+            if (el) el.innerHTML = `${Number(num).toLocaleString()} <span style="font-size:0.8rem;font-weight:400;color:var(--text-dim);">${label}</span>`;
+          };
+
+          setHtml('dash-lead-count', data.stats?.totalLeads || 0, 'leads');
+          setHtml('dash-sites', data.stats?.citiesScraped || 0, 'cities');
+        }
+      } catch (e) {
+        console.error('Dashboard stats error:', e);
+      }
+
+      // Fetch email stats
+      try {
+        const resp = await fetch(`${API_BASE}/campaigns?stats_only=true`, {
+          headers: { 'Authorization': `Bearer ${authToken}` }
+        });
+        if (resp.ok) {
+          const data = await resp.json();
+          const sent = data.stats?.totalSent || data.totalSent || 0;
+          const el = document.getElementById('dash-email-sent');
+          if (el) el.innerHTML = `${Number(sent).toLocaleString()} <span style="font-size:0.8rem;font-weight:400;color:var(--text-dim);">sent</span>`;
+        }
+      } catch {}
+
+      // Fetch call stats
+      try {
+        const resp = await fetch(`${API_BASE}/call-logs?limit=1`, {
+          headers: { 'Authorization': `Bearer ${authToken}` }
+        });
+        if (resp.ok) {
+          const data = await resp.json();
+          const count = data.total || data.logs?.length || 0;
+          const el = document.getElementById('dash-calls');
+          if (el) el.innerHTML = `${count} <span style="font-size:0.8rem;font-weight:400;color:var(--text-dim);">calls</span>`;
+        }
+      } catch {}
+
+      // Fetch pipeline deals
+      try {
+        const resp = await fetch(`${API_BASE}/crm-deals`, {
+          headers: { 'Authorization': `Bearer ${authToken}` }
+        });
+        if (resp.ok) {
+          const data = await resp.json();
+          const count = data.deals?.length || 0;
+          const el = document.getElementById('dash-deals');
+          if (el) el.innerHTML = `${count} <span style="font-size:0.8rem;font-weight:400;color:var(--text-dim);">deals</span>`;
+        }
+      } catch {}
+
+      // Fetch workflow count
+      try {
+        const resp = await fetch(`${API_BASE}/workflows`, {
+          headers: { 'Authorization': `Bearer ${authToken}` }
+        });
+        if (resp.ok) {
+          const data = await resp.json();
+          const active = (data.workflows || []).filter(w => w.status === 'active').length;
+          const el = document.getElementById('dash-workflows');
+          if (el) el.innerHTML = `${active} <span style="font-size:0.8rem;font-weight:400;color:var(--text-dim);">active</span>`;
         }
       } catch {}
     }
@@ -7063,8 +7171,14 @@ I noticed {{business_name}} in {{city}} and wanted to reach out..."></textarea>
     }
 
     async function purchaseCredits(amount, price) {
-      if (!confirm(`Purchase ${amount.toLocaleString()} credits for $${price}?`)) return;
+      brandedConfirm(
+        `Purchase <strong style="color:var(--green);">${amount.toLocaleString()} credits</strong> for <strong>$${price}</strong>?\n\nYou'll be redirected to Stripe's secure checkout.`,
+        () => _executePurchase(amount, price),
+        { confirmText: `Buy $${price}`, accent: 'var(--green)' }
+      );
+    }
 
+    async function _executePurchase(amount, price) {
       showToast('Creating checkout...', 'info');
 
       try {
@@ -7103,7 +7217,9 @@ I noticed {{business_name}} in {{city}} and wanted to reach out..."></textarea>
     }
 
     async function grantMonthlyCredits() {
-      if (!confirm('Grant monthly subscription credits based on your current plan?')) return;
+      brandedConfirm('Grant monthly subscription credits based on your current plan?', () => _executeGrantMonthly(), { confirmText: 'Grant Credits' }); return;
+    }
+    async function _executeGrantMonthly() {
 
       try {
         const resp = await fetch(`${API_BASE}/credits`, {
@@ -7850,7 +7966,7 @@ I noticed {{business_name}} in {{city}} and wanted to reach out..."></textarea>
         return;
       }
 
-      if (!confirm(`Send rebuilt website to ${lead.business_name}?\n\nThis will:\n1. Email the preview link to ${lead.email}\n2. Make an AI call to ${lead.phone || 'N/A'}\n\nPreview: ${previewUrl}`)) {
+      if (!(await awaitConfirm(`Send rebuilt website to ${lead.business_name}?\n\nThis will:\n1. Email the preview link to ${lead.email}\n2. Make an AI call to ${lead.phone || 'N/A'}\n\nPreview: ${previewUrl}`))) {
         return;
       }
 
@@ -8042,7 +8158,7 @@ I noticed {{business_name}} in {{city}} and wanted to reach out..."></textarea>
         showInsufficientCreditsToast(emailScrapeCost, creditBalance);
         return;
       }
-      if (!confirm(`This will scrape emails for ${leadsToScrape.length} leads.\n\nEstimated cost: ${emailScrapeCost} credits (you have ${creditBalance}).\n\nContinue?`)) return;
+      if (!(await awaitConfirm(`This will scrape emails for ${leadsToScrape.length} leads.\n\nEstimated cost: ${emailScrapeCost} credits (you have ${creditBalance}).\n\nContinue?`))) return;
 
       bulkOperationActive = true;
       bulkOperationCancelled = false;
@@ -8146,7 +8262,7 @@ I noticed {{business_name}} in {{city}} and wanted to reach out..."></textarea>
         showInsufficientCreditsToast(websiteScoreCost, creditBalance);
         return;
       }
-      if (!confirm(`This will score ${leadsToScore.length} websites.\n\nEstimated cost: ${websiteScoreCost} credits (you have ${creditBalance}).\n\nContinue?`)) return;
+      if (!(await awaitConfirm(`This will score ${leadsToScore.length} websites.\n\nEstimated cost: ${websiteScoreCost} credits (you have ${creditBalance}).\n\nContinue?`))) return;
 
       bulkOperationActive = true;
       bulkOperationCancelled = false;
@@ -8658,7 +8774,7 @@ I noticed {{business_name}} in {{city}} and wanted to reach out..."></textarea>
     // REMOVE DUPLICATE LEADS
     // =====================================
     async function removeDuplicateLeads() {
-      if (!confirm('This will scan all leads and remove duplicates with the same phone number (keeping the one with the most data). Continue?')) return;
+      if (!(await awaitConfirm('This will scan all leads and remove duplicates with the same phone number (keeping the one with the most data). Continue?'))) return;
 
       showToast('Scanning for duplicates...', 'info');
 
@@ -9278,6 +9394,29 @@ I noticed {{business_name}} in {{city}} and wanted to reach out..."></textarea>
         }
       });
 
+      // Add bottom pagination
+      if (leadsTotal > leadsPerPage) {
+        const totalPages = Math.ceil(leadsTotal / leadsPerPage);
+        html += `
+          <tr class="pagination-row">
+            <td colspan="9" style="background: var(--surface); padding: 12px;">
+              <div style="display: flex; justify-content: space-between; align-items: center;">
+                <span class="mono" style="color: var(--text-dim);">
+                  Page ${leadsPage} of ${totalPages}
+                </span>
+                <div style="display: flex; gap: 8px;">
+                  <button class="btn-mini" onclick="loadLeads(1)" ${leadsPage === 1 ? 'disabled' : ''}>First</button>
+                  <button class="btn-mini" onclick="loadLeads(${leadsPage - 1})" ${leadsPage === 1 ? 'disabled' : ''}>Prev</button>
+                  <span class="mono" style="padding: 0 12px; color: var(--text);">Page ${leadsPage}/${totalPages}</span>
+                  <button class="btn-mini" onclick="loadLeads(${leadsPage + 1})" ${leadsPage >= totalPages ? 'disabled' : ''}>Next</button>
+                  <button class="btn-mini" onclick="loadLeads(${totalPages})" ${leadsPage >= totalPages ? 'disabled' : ''}>Last</button>
+                </div>
+              </div>
+            </td>
+          </tr>
+        `;
+      }
+
       tbody.innerHTML = html;
     }
 
@@ -9480,9 +9619,7 @@ I noticed {{business_name}} in {{city}} and wanted to reach out..."></textarea>
       const leadsRemaining = isUnlimited ? Infinity : (leadsLimit || 100) - leadsUsed;
       if (!isUnlimited && leadsRemaining <= 0) {
         if (currentUser?.plan === 'free') {
-          if (confirm(`You've used all ${currentUser.leadsLimit} free leads!\n\nUpgrade to continue scraping unlimited leads.`)) {
-            showSection('subscription');
-          }
+          brandedConfirm(`You've used all <strong>${currentUser.leadsLimit}</strong> free leads!\n\nUpgrade to continue scraping unlimited leads.`, () => showSection('subscription'), { confirmText: 'Upgrade Now', accent: 'var(--green)' });
         } else {
           showToast('You have reached your lead limit for this billing period.', 'error');
         }
@@ -9499,7 +9636,7 @@ I noticed {{business_name}} in {{city}} and wanted to reach out..."></textarea>
         showInsufficientCreditsToast(estimatedCredits, creditBalance);
         return;
       }
-      if (!confirm(`Estimated cost: ~${estimatedCredits} credits for ~${estimatedLeads} leads.\nYou have ${creditBalance} credits.\n\nContinue?`)) return;
+      if (!(await awaitConfirm(`Estimated cost: ~${estimatedCredits} credits for ~${estimatedLeads} leads.\nYou have ${creditBalance} credits.\n\nContinue?`))) return;
 
       const btn = document.getElementById('scrape-submit-btn');
       const btnText = document.getElementById('scrape-btn-text');
@@ -10308,7 +10445,7 @@ I noticed {{business_name}} in {{city}} and wanted to reach out..."></textarea>
     }
 
     function removeIndustryMapping(industry) {
-      if (confirm(`Remove "${industry}" from pipeline mappings?`)) {
+      if (await awaitConfirm(`Remove "${industry}" from pipeline mappings?`)) {
         delete industryMappings[industry];
         renderIndustryMappings();
       }
@@ -10665,7 +10802,7 @@ I noticed {{business_name}} in {{city}} and wanted to reach out..."></textarea>
         return;
       }
 
-      if (!confirm(`Send emails to ${count} recipients?`)) return;
+      if (!(await awaitConfirm(`Send emails to ${count} recipients?`))) return;
 
       try {
         showToast('Sending emails...', 'info');
@@ -10950,7 +11087,7 @@ I noticed {{business_name}} in {{city}} and wanted to reach out..."></textarea>
 
     // Delete email template
     async function deleteTemplate(id) {
-      if (!confirm('Delete this template?')) return;
+      if (!(await awaitConfirm('Delete this template?'))) return;
 
       try {
         const response = await fetch(`${API_BASE}/email-templates`, {
@@ -11414,7 +11551,7 @@ I noticed {{business_name}} in {{city}} and wanted to reach out..."></textarea>
     }
 
     async function deleteCampaign(id) {
-      if (!confirm('Delete this campaign?')) return;
+      if (!(await awaitConfirm('Delete this campaign?'))) return;
       try {
         const response = await fetch(`${API_BASE}/campaigns`, {
           method: 'DELETE',
@@ -11951,7 +12088,7 @@ I noticed {{business_name}} in {{city}} and wanted to reach out..."></textarea>
     }
 
     async function deleteList(listId) {
-      if (!confirm('Delete this list? Leads will not be deleted.')) return;
+      if (!(await awaitConfirm('Delete this list? Leads will not be deleted.'))) return;
       try {
         await fetch(`${API_BASE}/lead-lists`, {
           method: 'DELETE',
@@ -12019,7 +12156,7 @@ I noticed {{business_name}} in {{city}} and wanted to reach out..."></textarea>
         loadLeadLists();
 
         // Ask if they want to start calling now
-        if (confirm(`${noEmailLeads.length} leads added to call list. Start calling them now?`)) {
+        if (await awaitConfirm(`${noEmailLeads.length} leads added to call list. Start calling them now?`, { confirmText: 'Start Calling', accent: 'var(--mod-sales)' })) {
           await startCallingList(listId);
         }
       } catch (error) {
@@ -12029,7 +12166,7 @@ I noticed {{business_name}} in {{city}} and wanted to reach out..."></textarea>
 
     async function callSelectedLeads() {
       if (selectedLeadIds.size === 0) { showToast('No leads selected', 'warning'); return; }
-      if (!confirm(`Start calling ${selectedLeadIds.size} selected leads to collect email addresses?`)) return;
+      if (!(await awaitConfirm(`Start calling ${selectedLeadIds.size} selected leads to collect email addresses?`))) return;
 
       // Create a temporary list and call it
       const name = 'Quick Call - ' + new Date().toLocaleString();
@@ -12047,7 +12184,7 @@ I noticed {{business_name}} in {{city}} and wanted to reach out..."></textarea>
     }
 
     async function callList(listId, listName) {
-      if (!confirm(`Start calling all leads in "${listName}" to collect email addresses?`)) return;
+      if (!(await awaitConfirm(`Start calling all leads in "${listName}" to collect email addresses?`))) return;
       await startCallingList(listId);
     }
 
@@ -12805,7 +12942,7 @@ I noticed {{business_name}} in {{city}} and wanted to reach out..."></textarea>
     }
 
     async function deleteWorkflow(id) {
-      if (!confirm('Delete this workflow?')) return;
+      if (!(await awaitConfirm('Delete this workflow?'))) return;
       try {
         await fetch(`${API_BASE}/workflows`, {
           method: 'DELETE',
